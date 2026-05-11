@@ -21,4 +21,4 @@ Feature: Pengajuan Investasi Lender
   Scenario: [IL-04] Pengajuan investasi jika nominal melebihi target
     Given Loan dengan status FUNDING
     When Lender input dana yang ingin diberikan > target
-    Then Sistem akan menolak dengan pesan error
+    Then Sistem akan menolak investasi dengan pesan error

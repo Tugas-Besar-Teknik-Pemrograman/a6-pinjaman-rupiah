@@ -17,18 +17,19 @@ public class FundingService {
     }
 
     public void invest(String lenderId, String loanId, Money amount) throws Exception {
-        // Minta data Loan dari Repository
+        if (amount.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new Exception("Nominal investasi harus lebih dari 0");
+        }
+
         Loan loan = loanRepository.findById(loanId);
         
         if (!"FUNDING".equals(loan.getStatus())) {
             throw new Exception("Investasi ditolak, status Loan bukan FUNDING");
         }
-
-        // Kalau statusnya aman (FUNDING), baru jalankan penambahan dana
         loan.tambahPendanaan(lenderId, amount);
-        
-        // Simpan perubahan datanya ke repository
+
         loanRepository.save(loan);
     }
+
 
 }

@@ -18,16 +18,16 @@ import java.math.BigDecimal;
 public class PembayaranCicilanSteps {
 
     @Mock
-    private LoanRepository loanRepository; // [cite: 28]
+    private LoanRepository loanRepository;
 
     @InjectMocks
-    private LoanService loanService; // [cite: 28]
+    private LoanService loanService;
 
     private Loan loan;
     private Exception exception;
 
     public PembayaranCicilanSteps() {
-        MockitoAnnotations.openMocks(this); // Inisialisasi Mocking [cite: 25]
+        MockitoAnnotations.openMocks(this);
     }
 
     // --- GIVEN ---
@@ -35,9 +35,8 @@ public class PembayaranCicilanSteps {
     public void setupLoan(String id, long amount, int tenor) {
         Money target = new Money(new BigDecimal(amount), "IDR");
         this.loan = new Loan(id, "BR-001", target, tenor);
-        this.loan.ubahStatus("DISBURSED"); // Simulasi status cair [cite: 72]
+        this.loan.ubahStatus("DISBURSED");
         
-        // Mockito Stubbing [cite: 30]
         when(loanRepository.findById(id)).thenReturn(loan);
     }
 

@@ -15,7 +15,7 @@ public class Lender {
 
     public void kurangiSaldoUntukInvestasi(Money nominalInvestasi) {
         
-    // 1. Ambil nilai BigDecimal dari objek Money 
+    // 1. Ambil nilai BigDecimal dari objek Money
     BigDecimal amountToInvest = nominalInvestasi.getAmount();
     BigDecimal currentBalance = this.saldoBalance.getAmount();
 
@@ -25,7 +25,7 @@ public class Lender {
         throw new IllegalArgumentException("Saldo tidak mencukupi untuk melakukan investasi.");
     }
 
-    // 3. Update saldo dengan membuat objek Money baru (Immutability) 
+    // 3. Update saldo dengan membuat objek Money baru (Immutability)
     // Mengurangi saldo saat ini dengan nominal investasi
     BigDecimal newBalanceAmount = currentBalance.subtract(amountToInvest);
     

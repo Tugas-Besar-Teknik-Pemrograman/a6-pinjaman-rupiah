@@ -70,7 +70,6 @@ public class PencairanNotifikasiSteps {
 
     @Given("pencairan untuk Loan {string} ditolak karena dana belum terpenuhi")
     public void pencairan_untuk_loan_ditolak_karena_dana_belum_terpenuhi(String loanId) {
-        System.out.println("DEBUG borrowerId: " + currentLoan.getBorrowerId());
         when(loanRepository.findById(loanId)).thenReturn(currentLoan);
     }
 

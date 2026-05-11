@@ -9,6 +9,7 @@ public class Loan {
     private String id;
     private String borrowerId;
     private Money targetNominal;
+    private Money totalTerkumpul;
     private Money remainingPrincipal;
     private int tenor;
     private String status;
@@ -63,6 +64,25 @@ public class Loan {
         this.status = status; 
     }
 
+    public void setTotalTerkumpul(Money totalTerkumpul) {
+        this.totalTerkumpul = totalTerkumpul;
+    }
+
+    public Money getTotalTerkumpul() {
+        return totalTerkumpul;
+    }
+
+    public Money getTargetNominal() {
+        return targetNominal;
+    }
+
+    public boolean isLayakNotifikasiPencairan() {
+    return this.status.equals("DISBURSED");
+}
+
+    public String getId() { return id; }
+    public String getBorrowerId() { return borrowerId; }
+    public String getStatus() { return status; }
     public Money getCurrentMonthBill() { 
         return currentMonthBill; 
     }

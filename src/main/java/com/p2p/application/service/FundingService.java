@@ -16,15 +16,19 @@ public class FundingService {
         this.lenderRepository = lenderRepository;
     }
 
-    // Fungsi utama yang akan dites
     public void invest(String lenderId, String loanId, Money amount) throws Exception {
-        // 1. Minta repository mencarikan data Loan berdasarkan ID
+        // Minta data Loan dari Repository
         Loan loan = loanRepository.findById(loanId);
         
-        // 2. Suruh entitas Loan untuk menambahkan dana investasi
+        if (!"FUNDING".equals(loan.getStatus())) {
+            throw new Exception("Investasi ditolak, status Loan bukan FUNDING");
+        }
+
+        // Kalau statusnya aman (FUNDING), baru jalankan penambahan dana
         loan.tambahPendanaan(lenderId, amount);
         
-        // 3. Simpan perubahan datanya ke repository
+        // Simpan perubahan datanya ke repository
         loanRepository.save(loan);
     }
+
 }

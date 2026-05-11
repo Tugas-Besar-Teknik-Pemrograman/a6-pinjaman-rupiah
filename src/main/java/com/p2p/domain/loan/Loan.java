@@ -23,11 +23,13 @@ public class Loan {
         this.status = statusBaru;
     }
 
-    public void tambahPendanaan(String lenderId, Money investasiDiberikan) {
-        // Jumlahkan uang yang sudah ada dengan investasi yang baru masuk
+    public void tambahPendanaan(String lenderId, Money investasiDiberikan) throws Exception {
         java.math.BigDecimal totalBaru = this.totalTerkumpul.getAmount().add(investasiDiberikan.getAmount());
         
-        // Simpan uang barunya ke dalam variabel totalTerkumpul
+        if (totalBaru.compareTo(this.targetNominal.getAmount()) > 0) {
+            throw new Exception("Nominal investasi melebihi target pendanaan");
+        }      
+          
         this.totalTerkumpul = new Money(totalBaru, this.totalTerkumpul.getCurrency());
     }
 

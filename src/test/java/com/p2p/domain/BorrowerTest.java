@@ -33,8 +33,7 @@ class BorrowerTest {
         // Assert
         assertNotNull(loanBaru, "Loan harus berhasil dibuat");
         assertEquals("001", loanBaru.getId());
-
-        //
+        
         BigDecimal sisaLimitExpected = new BigDecimal("8000000");
         assertEquals(sisaLimitExpected, borrower.getLimitPinjaman().getAmount());
     }

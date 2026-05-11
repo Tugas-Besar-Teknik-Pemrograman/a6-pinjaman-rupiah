@@ -9,8 +9,6 @@ public class Loan {
 
     private String status;
 
-//    private List<Repayment> daftarCicilan = new ArrayList<>();
-
     public Loan(String id, String borrowerId, Money targetNominal) {
         this.id = id;
         this.borrowerId = borrowerId;

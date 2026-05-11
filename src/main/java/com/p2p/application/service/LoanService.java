@@ -23,7 +23,7 @@ public class LoanService {
             throw new IllegalArgumentException("Borrower tidak ditemukan");
         }
 
-        Loan loanBaru = borrower.ajukanPinjaman(nominalPinjaman);
+        Loan loanBaru = borrower.ajukanPinjaman(borrowerId, nominalPinjaman);
 
         borrowerRepository.save(borrower);
         loanRepository.save(loanBaru);

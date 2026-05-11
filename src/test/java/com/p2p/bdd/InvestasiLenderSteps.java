@@ -1,4 +1,4 @@
-package com.p2p.domain;
+package com.p2p.bdd;
 
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;

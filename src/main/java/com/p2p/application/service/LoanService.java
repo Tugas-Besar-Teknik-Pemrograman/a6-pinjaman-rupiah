@@ -11,10 +11,12 @@ import java.util.UUID;
 public class LoanService {
     private final BorrowerRepository borrowerRepository;
     private final LoanRepository loanRepository;
+    private final NotificationService notificationService;
 
-    public LoanService(BorrowerRepository borrowerRepository, LoanRepository loanRepository) {
+    public LoanService(BorrowerRepository borrowerRepository, LoanRepository loanRepository, NotificationService notificationService) {
         this.borrowerRepository = borrowerRepository;
         this.loanRepository = loanRepository;
+        this.notificationService = notificationService;
     }
 
     public Loan ajukanPinjaman(String borrowerId, Money nominalPinjaman) {
@@ -39,5 +41,19 @@ public class LoanService {
         loanRepository.save(loan);
         return loan;
     }
+
+    public void prosesPencairan(String loanId) {
+    Loan loan = loanRepository.findById(loanId)
+            .orElseThrow(() -> new IllegalArgumentException("Loan tidak ditemukan"));
+
+    throw new UnsupportedOperationException("belum diimplementasi");
+}
+
+    public String kirimNotifikasiPencairan(String loanId) {
+    Loan loan = loanRepository.findById(loanId)
+            .orElseThrow(() -> new IllegalArgumentException("Loan tidak ditemukan"));
+
+    throw new UnsupportedOperationException("belum diimplementasi");
+}
 }
 

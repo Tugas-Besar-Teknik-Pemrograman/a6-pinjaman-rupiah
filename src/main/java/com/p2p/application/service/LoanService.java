@@ -24,6 +24,20 @@ public class LoanService {
         this.notificationService = notificationService;
     }
 
+<<<<<<< dev/faqih
+    public Loan ajukanPinjaman(String borrowerId, Money nominalPinjaman, int tenor) {
+        Borrower borrower = borrowerRepository.findById(borrowerId);
+        if (borrower == null) {
+            throw new IllegalArgumentException("Borrower tidak ditemukan");
+        }
+
+        Loan loanBaru = borrower.ajukanPinjaman(borrowerId, nominalPinjaman, tenor);
+
+        borrowerRepository.save(borrower);
+        loanRepository.save(loanBaru);
+
+        return loanBaru;
+=======
     public Loan ajukanPinjaman(String borrowerId, Money amount) throws Exception {
         Borrower borrower = borrowerRepository.findById(borrowerId)
                 .orElseThrow(() -> new Exception("Borrower tidak ditemukan"));
@@ -43,6 +57,7 @@ public class LoanService {
         Loan loan = new Loan("LN-NEW", borrowerId, amount, 12);
         loanRepository.save(loan);
         return loan;
+>>>>>>> main
     }
 
     public void bayarCicilan(String loanId, Money amount) throws Exception {

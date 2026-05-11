@@ -19,8 +19,13 @@ public class PenarikanSaldoLenderSteps {
 
     // When
     @When("Lender mengajukan penarikan dana < 100k")
-    public void lender_mengajukan_penarikan_dana_100k() {
-        
+    public void lender_mengajukan_penarikan_dana_kurang_dari_100k() {
+        // Biarkan kosong dulu
+    }
+
+    @When("Lender mengajukan penarikan dana > 100k")
+    public void lender_mengajukan_penarikan_dana_lebih_dari_100k() {
+        // Biarkan kosong dulu
     }
 
     // Then

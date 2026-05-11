@@ -35,7 +35,10 @@ public class Loan {
     public Money getTotalTerkumpul() {
     return totalTerkumpul;
     }
-    
+
+    public Money getTargetNominal() {
+    return targetNominal;
+}
     public String getId() { return id; }
     public String getStatus() { return status; }
 

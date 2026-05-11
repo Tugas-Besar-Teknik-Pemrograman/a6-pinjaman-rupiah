@@ -52,7 +52,15 @@ public class Loan {
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
     }
 
-    public void ubahStatus(String status) { this.status = status; }
-    public Money getCurrentMonthBill() { return currentMonthBill; }
-    public String getId() { return id; }
+    public void ubahStatus(String status) { 
+        this.status = status; 
+    }
+
+    public Money getCurrentMonthBill() { 
+        return currentMonthBill; 
+    }
+
+    public String getId() { 
+        return id; 
+    }
 }

@@ -18,7 +18,7 @@ public class Borrower {
         this.creditScore = 0;
     }
 
-    public Loan ajukanPinjaman(String loanid,Money nominal){
+    public Loan ajukanPinjaman(String loanid,Money nominal, int tenor){
 
         //validasi KYC
         if(this.kycStatus == false){
@@ -47,7 +47,7 @@ public class Borrower {
         //kurangin limit
         this.limitPinjaman = this.limitPinjaman.subtract(nominal);
 
-        Loan loan = new Loan(loanid, this.id, nominal);
+        Loan loan = new Loan(loanid, this.id, nominal, tenor);
         loan.ubahStatus("FUNDING");
         return loan;
     }

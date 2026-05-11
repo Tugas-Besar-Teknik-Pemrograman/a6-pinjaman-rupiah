@@ -6,15 +6,18 @@ public class Loan {
     private String borrowerId;
     private Money targetNominal;
     private Money totalTerkumpul;
+    private int Tenor;
+
 
     private String status;
 
-    public Loan(String id, String borrowerId, Money targetNominal) {
+    public Loan(String id, String borrowerId, Money targetNominal, int tenor) {
         this.id = id;
         this.borrowerId = borrowerId;
         this.targetNominal = targetNominal;
         this.totalTerkumpul = new Money(new java.math.BigDecimal("0"), "IDR");
         this.status = "FUNDING";
+        this.Tenor = tenor;
     }
 
     public void ubahStatus(String statusBaru) {

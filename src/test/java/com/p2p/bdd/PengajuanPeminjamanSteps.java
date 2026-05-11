@@ -86,7 +86,8 @@ public class PengajuanPeminjamanSteps {
     public void borrower_mengajukan_peminjaman_sebesar(Double nominal) {
         try {
             Money nominalPinjaman = new Money(new BigDecimal(nominal), "IDR");
-            hasilLoan = loanService.ajukanPinjaman(borrower.getId(), nominalPinjaman);
+            int tenor = 12;
+            hasilLoan = loanService.ajukanPinjaman(borrower.getId(), nominalPinjaman, tenor);
         } catch (Exception e) {
             exceptionDitolak = e;
         }

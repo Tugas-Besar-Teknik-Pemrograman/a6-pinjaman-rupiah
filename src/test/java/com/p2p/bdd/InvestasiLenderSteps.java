@@ -43,7 +43,7 @@ public class InvestasiLenderSteps {
     public void loan_dengan_status_funding() {
         // 1. buat loan dengan target 10 juta
         Money target = new Money(new BigDecimal("10000000"), "IDR");
-        loan = new Loan("LN-001", "BR-001", target);
+        loan = new Loan("LN-001", "BR-001", target, 12);
         loan.ubahStatus("FUNDING");
 
         // 2. Kaish instruksi ke Mockito: "Kalau FundingService mencari data 'LN-001', berikan si loan ini!"
@@ -54,7 +54,7 @@ public class InvestasiLenderSteps {
     public void loan_dengan_status_not_funding() {
         // 1. Buat Loan seperti biasa
         Money target = new Money(new BigDecimal("10000000"), "IDR");
-        loan = new Loan("LN-001", "BR-001", target); // Kita pakai LN-001 agar matching dengan fungsi @When
+        loan = new Loan("LN-001", "BR-001", target, 12); // Kita pakai LN-001 agar matching dengan fungsi @When
         
         // 2. TAPI, statusnya kita set selain FUNDING (misal: PROPOSED)
         loan.ubahStatus("PROPOSED"); 

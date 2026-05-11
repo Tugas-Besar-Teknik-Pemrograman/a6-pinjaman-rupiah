@@ -75,7 +75,7 @@ public class PembayaranCicilanSteps {
 
     @When("borrower membayar lunas tagihan pertama")
     @When("borrower melakukan pembayaran sesuai tagihan bulan ini")
-    public void payFull() {
+    public void payFull() throws Exception {
         loanService.bayarCicilan(loan.getId(), loan.getCurrentMonthBill());
     }
 

@@ -13,7 +13,7 @@ public class SyariahInterestStrategy implements InterestCalculationStrategy {
 
     @Override
     public Money calculateInstallment(Money initialPrincipal, Money remainingPrincipal, int tenor) {
-        
-        return null;
+        BigDecimal principalPmt = initialPrincipal.getAmount().divide(new BigDecimal(tenor), RoundingMode.HALF_UP);
+        return new Money(principalPmt.add(flatMargin), "IDR");
     }
 }

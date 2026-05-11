@@ -13,7 +13,8 @@ public class FloatingInterestStrategy implements InterestCalculationStrategy {
 
     @Override
     public Money calculateInstallment(Money initialPrincipal, Money remainingPrincipal, int tenor) {
-        
-        return null;
+        BigDecimal principalPmt = initialPrincipal.getAmount().divide(new BigDecimal(tenor), RoundingMode.HALF_UP);
+        BigDecimal interestPmt = remainingPrincipal.getAmount().multiply(monthlyRate);
+        return new Money(principalPmt.add(interestPmt), "IDR");
     }
 }

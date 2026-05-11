@@ -18,8 +18,10 @@ public class LoanService {
     }
 
     public Loan ajukanPinjaman(String borrowerId, Money nominalPinjaman) {
-        Borrower borrower = borrowerRepository.findById(borrowerId)
-                .orElseThrow(() -> new IllegalArgumentException("Borrower tidak ditemukan"));
+        Borrower borrower = borrowerRepository.findById(borrowerId);
+        if (borrower == null) {
+            throw new IllegalArgumentException("Borrower tidak ditemukan");
+        }
 
         if (!borrower.isKycStatus()) {
             throw new IllegalStateException("Peminjaman ditolak, KYC belum terverifikasi");

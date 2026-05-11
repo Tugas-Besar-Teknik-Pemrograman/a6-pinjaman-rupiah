@@ -6,10 +6,7 @@ import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanRepository;
 import com.p2p.domain.valueobject.Money;
 
-import java.util.UUID;
-
 public class LoanService {
-    private final BorrowerRepository borrowerRepository;
     private final LoanRepository loanRepository;
     private final NotificationService notificationService;
 

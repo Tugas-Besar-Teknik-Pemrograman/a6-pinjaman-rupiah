@@ -18,9 +18,9 @@ public class LoanService {
         this.borrowerRepository = borrowerRepository;
     }
 
-    public LoanService(BorrowerRepository borrowerRepository, LoanRepository loanRepository, NotificationService notificationService) {
-        this.borrowerRepository = borrowerRepository;
+    public LoanService(LoanRepository loanRepository, BorrowerRepository borrowerRepository, NotificationService notificationService) {
         this.loanRepository = loanRepository;
+        this.borrowerRepository = borrowerRepository;
         this.notificationService = notificationService;
     }
 
@@ -79,19 +79,19 @@ public class LoanService {
     }
 
     public String kirimNotifikasiPencairan(String loanId) {
-    Loan loan = loanRepository.findById(loanId);
-    if (loan == null) {
-        throw new IllegalArgumentException("Loan tidak ditemukan");
+        Loan loan = loanRepository.findById(loanId);
+        if (loan == null) {
+            throw new IllegalArgumentException("Loan tidak ditemukan");
+        }
+
+        String borrowerId = loan.getBorrowerId();
+
+        if (loan.getStatus().equals("DISBURSED")) {
+            notificationService.kirimNotifikasi(borrowerId, "Dana berhasil dicairkan");
+            return "berhasil";
+        }
+
+        notificationService.kirimNotifikasi(borrowerId, "Pencairan gagal: pendanaan belum terpenuhi");
+        return "gagal";
     }
-
-    String borrowerId = loan.getBorrowerId();
-
-    if (loan.getStatus().equals("DISBURSED")) {
-        notificationService.kirimNotifikasi(borrowerId, "Dana berhasil dicairkan");
-        return "berhasil";
-    }
-
-    notificationService.kirimNotifikasi(borrowerId, "Pencairan gagal: pendanaan belum terpenuhi");
-    return "gagal";
-}
 }

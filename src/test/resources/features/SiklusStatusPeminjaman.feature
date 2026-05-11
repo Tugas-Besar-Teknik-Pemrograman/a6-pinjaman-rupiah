@@ -34,7 +34,7 @@ Feature: Siklus Status Peminjaman
         Then status pengajuan berubah menjadi "REJECTED"
         And Diberikan text penolakan yang berisi alasan kenapa ditolak
         
-        Example: Alasan(Akun Tidak Terverifikasi,Akun Credit Score nya Rendah, Pinjaman melebihi limit)
+        Examples: Alasan(Akun Tidak Terverifikasi,Akun Credit Score nya Rendah, Pinjaman melebihi limit)
 
     Scenario: [SSP-07] Borrower mengajukan pinjaman namun tidak ada yang mendanai lalu status menjadi "CANCELLED"
         Given borrower mengajukan pinjaman

@@ -1,11 +1,38 @@
 package com.p2p.bdd;
 
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import com.p2p.application.service.FundingService;
+import com.p2p.domain.lender.LenderRepository;
+import com.p2p.domain.loan.Loan;
+import com.p2p.domain.loan.LoanRepository;
+import com.p2p.domain.valueobject.Money;
+
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 public class InvestasiLenderSteps {
     
+    @Mock
+    LoanRepository loanRepository;
+
+    @Mock
+    LenderRepository lenderRepository;
+
+    @InjectMocks
+    FundingService fundingService;
+
+    Loan loan;
+    Money investmentAmount;
+    Exception caughtException;
+    
+    public InvestasiLenderSteps() {
+        MockitoAnnotations.openMocks(this);
+    }
+
     // Givern
     @Given("Loan dengan status FUNDING")
     public void loan_dengan_status_funding() {

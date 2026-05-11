@@ -10,19 +10,12 @@ public class Loan {
     private String borrowerId;
     private Money targetNominal;
     private Money totalTerkumpul;
-<<<<<<< dev/faqih
-    private int Tenor;
-
-
-    private String status;
-=======
     private Money remainingPrincipal;
     private int tenor;
     private String status;
 
     private InterestCalculationStrategy interestStrategy;
     private Money currentMonthBill;
->>>>>>> main
 
     public Loan(String id, String borrowerId, Money targetNominal, int tenor) {
         this.id = id;
@@ -32,15 +25,11 @@ public class Loan {
         this.remainingPrincipal = targetNominal;
         this.totalTerkumpul = new Money(BigDecimal.ZERO, "IDR");
         this.status = "FUNDING";
-<<<<<<< dev/faqih
-        this.Tenor = tenor;
-=======
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
     }
 
     public Loan(String id, String borrowerId, Money targetNominal) {
         this(id, borrowerId, targetNominal, 12);
->>>>>>> main
     }
 
     public void ubahStatus(String statusBaru) {

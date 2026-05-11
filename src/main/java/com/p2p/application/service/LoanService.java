@@ -37,23 +37,38 @@ public class LoanService {
 
         Loan loan = new Loan(UUID.randomUUID().toString(), borrowerId, nominalPinjaman);
         loan.ubahStatus("FUNDING");
-
         loanRepository.save(loan);
         return loan;
     }
 
     public void prosesPencairan(String loanId) {
-    Loan loan = loanRepository.findById(loanId)
-            .orElseThrow(() -> new IllegalArgumentException("Loan tidak ditemukan"));
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new IllegalArgumentException("Loan tidak ditemukan"));
 
-    throw new UnsupportedOperationException("belum diimplementasi");
-}
+        if (loan.getStatus().equals("FUNDING_READY")) {
+            loan.ubahStatus("DISBURSED");
+            loanRepository.save(loan);
+            return;
+        }
+
+        if (loan.getStatus().equals("FUNDING")) {
+            Money terkumpul = loan.getTotalTerkumpul();
+            Money target = loan.getTargetNominal();
+            if (terkumpul.getAmount().compareTo(target.getAmount()) < 0) {
+                throw new IllegalStateException("Pencairan ditolak, pendanaan belum terpenuhi");
+            }
+            loan.ubahStatus("FUNDING_READY");
+            loanRepository.save(loan);
+            return;
+        }
+
+        throw new IllegalStateException("Status loan tidak valid untuk pencairan");
+    }
 
     public String kirimNotifikasiPencairan(String loanId) {
-    Loan loan = loanRepository.findById(loanId)
-            .orElseThrow(() -> new IllegalArgumentException("Loan tidak ditemukan"));
+        Loan loan = loanRepository.findById(loanId)
+                .orElseThrow(() -> new IllegalArgumentException("Loan tidak ditemukan"));
 
-    throw new UnsupportedOperationException("belum diimplementasi");
+        throw new UnsupportedOperationException("belum diimplementasi");
+    }
 }
-}
-

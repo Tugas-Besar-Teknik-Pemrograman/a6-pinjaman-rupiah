@@ -77,8 +77,16 @@ public class InvestasiLenderSteps {
     }
 
     @When("Lender input dana investasi <= {int}")
-    public void lender_input_dana_investasi(Integer int1) {
+    public void lender_input_dana_investasi(Integer angkaLimit) {
+        // angkaLimit akan bernilai 0 (karena di file .feature tertulis <= 0)
+        investmentAmount = new Money(new BigDecimal(angkaLimit), "IDR");
         
+        try {
+            // Coba lakukan investasi dengan uang 0 Rupiah!
+            fundingService.invest("LDR-001", "LN-001", investmentAmount);
+        } catch (Exception e) {
+            caughtException = e;
+        }
     }
 
     @When("Lender input dana yang ingin diberikan > target")
@@ -103,7 +111,11 @@ public class InvestasiLenderSteps {
     
     @Then("Sistem harus menolak pengajuan dengan pesan error")
     public void sistem_harus_menolak_pengajuan_dengan_pesan_error() {
+        // Kita berharap ada error yang ditangkap karena uangnya 0
+        Assertions.assertNotNull(caughtException, "Seharusnya investasi ditolak karena nominal 0 atau negatif!");
         
+        // Kita harapkan pesan errornya seperti ini
+        Assertions.assertEquals("Nominal investasi harus lebih dari 0", caughtException.getMessage());
     }
     
     @Then("Sistem akan menolak investasi dengan pesan error")

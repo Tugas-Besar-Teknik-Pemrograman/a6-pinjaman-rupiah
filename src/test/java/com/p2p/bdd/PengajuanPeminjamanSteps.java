@@ -1,6 +1,5 @@
 package com.p2p.bdd;
 
-import com.p2p.application.LoanService;
 import com.p2p.domain.borrower.Borrower;
 import com.p2p.domain.borrower.BorrowerRepository;
 import com.p2p.domain.loan.Loan;

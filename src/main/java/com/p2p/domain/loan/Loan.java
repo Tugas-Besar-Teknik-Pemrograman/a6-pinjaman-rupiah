@@ -24,6 +24,13 @@ public class Loan {
 
     }
 
+    public void tambahPendanaan(String lenderId, Money investasiDiberikan) {
+        // Jumlahkan uang yang sudah ada dengan investasi yang baru masuk
+        java.math.BigDecimal totalBaru = this.totalTerkumpul.getAmount().add(investasiDiberikan.getAmount());
+        
+        // Simpan uang barunya ke dalam variabel totalTerkumpul
+        this.totalTerkumpul = new Money(totalBaru, this.totalTerkumpul.getCurrency());
+      
     public void generateMonthlyBill() {
 
     }
@@ -40,6 +47,10 @@ public class Loan {
         return id;
     }
 
+    public Money getTotalTerkumpul() {
+        return totalTerkumpul;
+    }
+      
     public Money getCurrentMonthBill() { return currentMonthBill; }
     
 }

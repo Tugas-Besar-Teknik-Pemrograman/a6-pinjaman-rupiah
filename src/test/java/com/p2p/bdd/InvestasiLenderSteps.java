@@ -127,11 +127,9 @@ public class InvestasiLenderSteps {
     
     @Then("Sistem akan menolak investasi dengan pesan error")
     public void sistem_akan_menolak_investasi_dengan_pesan_error() {
-        // Berharap ditangkap oleh satpam (menghasilkan error)
         Assertions.assertNotNull(caughtException, "Seharusnya investasi ditolak karena melebihi target!");
-        
-        // Kita harapkan pesan errornya seperti ini
         Assertions.assertEquals("Nominal investasi melebihi target pendanaan", caughtException.getMessage());
     }
+
 
 }

@@ -24,40 +24,18 @@ public class LoanService {
         this.notificationService = notificationService;
     }
 
-<<<<<<< dev/faqih
-    public Loan ajukanPinjaman(String borrowerId, Money nominalPinjaman, int tenor) {
+    public Loan ajukanPinjaman(String borrowerId, Money amount, int tenor) throws Exception {
         Borrower borrower = borrowerRepository.findById(borrowerId);
         if (borrower == null) {
-            throw new IllegalArgumentException("Borrower tidak ditemukan");
+            throw new Exception("Borrower tidak ditemukan");
         }
 
-        Loan loanBaru = borrower.ajukanPinjaman(borrowerId, nominalPinjaman, tenor);
+        Loan loan = borrower.ajukanPinjaman("LN-NEW", amount, tenor);
 
         borrowerRepository.save(borrower);
-        loanRepository.save(loanBaru);
-
-        return loanBaru;
-=======
-    public Loan ajukanPinjaman(String borrowerId, Money amount) throws Exception {
-        Borrower borrower = borrowerRepository.findById(borrowerId)
-                .orElseThrow(() -> new Exception("Borrower tidak ditemukan"));
-
-        if (!borrower.isKycStatus()) {
-            throw new Exception("Borrower belum terverifikasi KYC");
-        }
-
-        if (amount.getAmount().compareTo(borrower.getLimitPinjaman().getAmount()) > 0) {
-            throw new Exception("Nominal pinjaman melebihi limit peminjaman");
-        }
-
-        if (borrower.getCreditScore() > 0 && borrower.getCreditScore() < 600) {
-            throw new Exception("Credit score di bawah ambang batas");
-        }
-
-        Loan loan = new Loan("LN-NEW", borrowerId, amount, 12);
         loanRepository.save(loan);
+
         return loan;
->>>>>>> main
     }
 
     public void bayarCicilan(String loanId, Money amount) throws Exception {

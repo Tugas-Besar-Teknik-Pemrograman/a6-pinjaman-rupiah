@@ -56,7 +56,7 @@ public class PencairanNotifikasiSteps {
     @Given("Borrower dengan ID {string} terdaftar di sistem")
     public void borrower_dengan_id_terdaftar_di_sistem(String borrowerId) {
         currentBorrower = new Borrower(borrowerId, new Money(new BigDecimal("50000000"), "IDR"));
-        when(borrowerRepository.findById(borrowerId)).thenReturn(Optional.of(currentBorrower));
+        when(borrowerRepository.findById(borrowerId)).thenReturn(currentBorrower);
 
         if (currentLoan != null) {
             String statusLama = currentLoan.getStatus();

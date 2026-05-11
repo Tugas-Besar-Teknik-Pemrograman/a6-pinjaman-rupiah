@@ -28,7 +28,7 @@ class BorrowerTest {
         Money nominal = new Money(new BigDecimal("2000000"), "IDR");
 
         // Act
-        Loan loanBaru = borrower.ajukanPinjaman("001",nominal);
+        Loan loanBaru = borrower.ajukanPinjaman("001",nominal, 12);
 
         // Assert
         assertNotNull(loanBaru, "Loan harus berhasil dibuat");

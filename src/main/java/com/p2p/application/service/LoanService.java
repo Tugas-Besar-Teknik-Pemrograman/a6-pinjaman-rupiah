@@ -17,13 +17,13 @@ public class LoanService {
         this.loanRepository = loanRepository;
     }
 
-    public Loan ajukanPinjaman(String borrowerId, Money nominalPinjaman) {
+    public Loan ajukanPinjaman(String borrowerId, Money nominalPinjaman, int tenor) {
         Borrower borrower = borrowerRepository.findById(borrowerId);
         if (borrower == null) {
             throw new IllegalArgumentException("Borrower tidak ditemukan");
         }
 
-        Loan loanBaru = borrower.ajukanPinjaman(borrowerId, nominalPinjaman);
+        Loan loanBaru = borrower.ajukanPinjaman(borrowerId, nominalPinjaman, tenor);
 
         borrowerRepository.save(borrower);
         loanRepository.save(loanBaru);

@@ -36,17 +36,17 @@ Feature: Siklus Status Peminjaman
         
         Example: Alasan(Akun Tidak Terverifikasi,Akun Credit Score nya Rendah, Pinjaman melebihi limit)
 
-    Scenario: [SSP-08] Borrower mengajukan pinjaman namun tidak ada yang mendanai lalu status menjadi "CANCELLED"
+    Scenario: [SSP-07] Borrower mengajukan pinjaman namun tidak ada yang mendanai lalu status menjadi "CANCELLED"
         Given borrower mengajukan pinjaman
         When tidak ada lender yang mendanai dalam waktu tertentu
         Then status pengajuan berubah menjadi "CANCELLED"
 
-    Scenario: [SSP-09] Borrower telat melakukan pembayaran cicilan dan status menjadi "OVERDUE"
+    Scenario: [SSP-08] Borrower telat melakukan pembayaran cicilan dan status menjadi "OVERDUE"
         Given borrower memiliki pinjaman aktif
         When borrower melewati tanggal jatuh tempo pembayaran cicilan
         Then status peminjaman berubah menjadi "OVERDUE"
 
-    Scenario: [SSP-10] Borrower melakukan pembayaran cicilan setelah jatuh tempo dan status menjadi "REPAYMENT"
+    Scenario: [SSP-09] Borrower melakukan pembayaran cicilan setelah jatuh tempo dan status menjadi "REPAYMENT"
         Given borrower memiliki pinjaman dengan status "OVERDUE"
         When borrower melakukan pembayaran cicilan setelah jatuh tempo dengan dendanya
         Then status peminjaman berubah kembali menjadi "REPAYMENT"

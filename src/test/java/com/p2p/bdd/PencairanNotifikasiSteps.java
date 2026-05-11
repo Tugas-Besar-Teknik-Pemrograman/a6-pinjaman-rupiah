@@ -16,6 +16,7 @@ import org.mockito.MockitoAnnotations;
 import java.math.BigDecimal;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import java.util.Optional;
 
 public class PencairanNotifikasiSteps {
 
@@ -38,30 +39,30 @@ public class PencairanNotifikasiSteps {
 public void loan_dengan_id_memiliki_status(String loanId, String status) {
     currentLoan = new Loan(loanId, "BR-001", new Money(new BigDecimal("10000000"), "IDR"));
     currentLoan.ubahStatus(status);
-    when(loanRepository.findById(loanId)).thenReturn(currentLoan);
+   when(loanRepository.findById(loanId)).thenReturn(Optional.of(currentLoan));
 }
 
 @Given("total dana terkumpul sudah mencapai target {int}")
 public void total_dana_terkumpul_sudah_mencapai_target(Integer target) {
     currentLoan.setTotalTerkumpul(new Money(new BigDecimal(target), "IDR"));
-    when(loanRepository.findById(currentLoan.getId())).thenReturn(currentLoan);
+    when(loanRepository.findById(currentLoan.getId())).thenReturn(Optional.of(currentLoan));
 }
 
 @Given("total dana terkumpul baru mencapai {int} dari target {int}")
 public void total_dana_terkumpul_baru_mencapai_dari_target(Integer terkumpul, Integer target) {
     currentLoan.setTotalTerkumpul(new Money(new BigDecimal(terkumpul), "IDR"));
-    when(loanRepository.findById(currentLoan.getId())).thenReturn(currentLoan);
+    when(loanRepository.findById(currentLoan.getId())).thenReturn(Optional.of(currentLoan));
 }
 
 @Given("Borrower dengan ID {string} terdaftar di sistem")
 public void borrower_dengan_id_terdaftar_di_sistem(String borrowerId) {
     currentBorrower = new Borrower(borrowerId, new Money(new BigDecimal("50000000"), "IDR"));
-    when(borrowerRepository.findById(borrowerId)).thenReturn(currentBorrower);
+    when(borrowerRepository.findById(borrowerId)).thenReturn(Optional.of(currentBorrower));
 }
 
 @Given("pencairan untuk Loan {string} ditolak karena dana belum terpenuhi")
 public void pencairan_untuk_loan_ditolak_karena_dana_belum_terpenuhi(String loanId) {
-    when(loanRepository.findById(loanId)).thenReturn(currentLoan);
+    when(loanRepository.findById(loanId)).thenReturn(Optional.of(currentLoan));
 }
 
 
@@ -87,19 +88,19 @@ public void sistem_mengirimkan_notifikasi_pencairan_untuk_loan(String loanId) {
 //Then
 @Then("status Loan {string} harus berubah menjadi {string}")
 public void status_loan_harus_berubah_menjadi(String loanId, String expectedStatus) {
-    Loan loan = loanRepository.findById(loanId);
+    Loan loan = loanRepository.findById(loanId).get();
     assertEquals(expectedStatus, loan.getStatus());
 }
 
 @Then("sistem harus menolak pencairan dengan pesan error")
 public void sistem_harus_menolak_pencairan_dengan_pesan_error() {
     assertNotNull(thrownException);
-    assertInstanceOf(IllegalStateException.class, thrownException);
+    assertInstanceOf(IllegalStateException.class, thrownException); 
 }
 
 @Then("status Loan {string} tetap {string}")
 public void status_loan_tetap(String loanId, String expectedStatus) {
-    Loan loan = loanRepository.findById(loanId);
+    Loan loan = loanRepository.findById(loanId).get();
     assertEquals(expectedStatus, loan.getStatus());
 }
 

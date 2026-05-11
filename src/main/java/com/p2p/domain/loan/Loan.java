@@ -1,35 +1,45 @@
 package com.p2p.domain.loan;
+
 import com.p2p.domain.valueobject.Money;
+import com.p2p.domain.loan.strategy.InterestCalculationStrategy;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class Loan {
     private String id;
     private String borrowerId;
     private Money targetNominal;
-    private Money totalTerkumpul;
-
+    private Money remainingPrincipal;
+    private int tenor;
     private String status;
+    
+    private InterestCalculationStrategy interestStrategy;
+    private Money currentMonthBill;
 
-//    private List<Repayment> daftarCicilan = new ArrayList<>();
+    public Loan(String id, String borrowerId, Money targetNominal, int tenor) {
 
-    public Loan(String id, String borrowerId, Money targetNominal) {
-        this.id = id;
-        this.borrowerId = borrowerId;
-        this.targetNominal = targetNominal;
-        this.totalTerkumpul = new Money(new java.math.BigDecimal("0"), "IDR");
-        this.status = "FUNDING";
     }
 
-    public void ubahStatus(String statusBaru) {
-        this.status = statusBaru;
+    public void setInterestStrategy(InterestCalculationStrategy strategy) {
+
     }
 
-    public void tambahPendanaan(String lenderId, Money investasiDiberikan) {
+    public void generateMonthlyBill() {
+
     }
 
-    public void bayarCicilan(String repaymentId, Money jumlahBayar) {
+    public void payInstallment(Money paymentAmount) {
+
+        }
+
+    public void ubahStatus(String status) {
+
     }
 
-    public String getId() { return id; }
-    public String getStatus() { return status; }
+    public String getId() {
+        return id;
+    }
 
+    public Money getCurrentMonthBill() { return currentMonthBill; }
+    
 }

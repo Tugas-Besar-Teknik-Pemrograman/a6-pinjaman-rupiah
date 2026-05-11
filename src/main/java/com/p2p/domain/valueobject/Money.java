@@ -8,10 +8,15 @@ public class Money {
 
     public Money(BigDecimal amount, String currency) {
         this.amount = amount;
-        this.currency = currency; // Default "IDR"
+        this.currency = currency; 
     }
 
-    public BigDecimal getAmount() { return amount; }
-    public String getCurrency() { return currency; }
+    public BigDecimal getAmount() { 
+        return amount; 
+    }
+
+    public String getCurrency() { 
+        return currency; 
+    }
 
 }

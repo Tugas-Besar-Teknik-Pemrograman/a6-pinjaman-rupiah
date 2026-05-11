@@ -8,11 +8,41 @@ import com.p2p.domain.valueobject.Money;
 
 public class LoanService {
     
-    public LoanService(LoanRepository loanRepository) {
+    private LoanRepository loanRepository;
+    private BorrowerRepository borrowerRepository;
 
+    public LoanService() {} // Default constructor if needed by other tests
+    
+    public LoanService(LoanRepository loanRepository, BorrowerRepository borrowerRepository) {
+        this.loanRepository = loanRepository;
+        this.borrowerRepository = borrowerRepository;
     }
 
-    public void bayarCicilan(String loanId, Money amount) {
-    
+    public Loan ajukanPinjaman(String borrowerId, Money amount) throws Exception {
+        Borrower borrower = borrowerRepository.findById(borrowerId)
+                .orElseThrow(() -> new Exception("Borrower tidak ditemukan"));
+
+        if (!borrower.isKycStatus()) {
+            throw new Exception("Borrower belum terverifikasi KYC");
+        }
+
+        if (amount.getAmount().compareTo(borrower.getLimitPinjaman().getAmount()) > 0) {
+            throw new Exception("Nominal pinjaman melebihi limit peminjaman");
+        }
+
+        if (borrower.getCreditScore() > 0 && borrower.getCreditScore() < 600) {
+            throw new Exception("Credit score di bawah ambang batas");
+        }
+
+        Loan loan = new Loan("LN-NEW", borrowerId, amount, 12);
+        loanRepository.save(loan);
+        return loan;
+    }
+
+    public void bayarCicilan(String loanId, Money amount) throws Exception {
+        Loan loan = loanRepository.findById(loanId);
+        if (loan == null) throw new Exception("Loan tidak ditemukan");
+        loan.payInstallment(amount);
+        loanRepository.save(loan);
     }
 }

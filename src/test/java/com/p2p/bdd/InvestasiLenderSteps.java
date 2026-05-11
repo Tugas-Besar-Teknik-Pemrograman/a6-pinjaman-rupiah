@@ -91,7 +91,14 @@ public class InvestasiLenderSteps {
 
     @When("Lender input dana yang ingin diberikan > target")
     public void lender_input_dana_yang_ingin_diberikan_target() {
-
+        // Kita paksa masukkan uang 15 Juta (melebihi target 10 Juta)
+        investmentAmount = new Money(new BigDecimal("15000000"), "IDR");
+        
+        try {
+            fundingService.invest("LDR-001", "LN-001", investmentAmount);
+        } catch (Exception e) {
+            caughtException = e;
+        }
     }
     
     // Then
@@ -120,6 +127,11 @@ public class InvestasiLenderSteps {
     
     @Then("Sistem akan menolak investasi dengan pesan error")
     public void sistem_akan_menolak_investasi_dengan_pesan_error() {
+        // Berharap ditangkap oleh satpam (menghasilkan error)
+        Assertions.assertNotNull(caughtException, "Seharusnya investasi ditolak karena melebihi target!");
+        
+        // Kita harapkan pesan errornya seperti ini
+        Assertions.assertEquals("Nominal investasi melebihi target pendanaan", caughtException.getMessage());
     }
 
 }

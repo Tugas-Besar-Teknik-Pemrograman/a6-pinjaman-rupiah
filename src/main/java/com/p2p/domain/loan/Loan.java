@@ -1,7 +1,5 @@
 package com.p2p.domain.loan;
 import com.p2p.domain.valueobject.Money;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Loan {
     private String id;
@@ -11,14 +9,14 @@ public class Loan {
 
     private String status;
 
-    private List<Repayment> daftarCicilan = new ArrayList<>();
+//    private List<Repayment> daftarCicilan = new ArrayList<>();
 
     public Loan(String id, String borrowerId, Money targetNominal) {
         this.id = id;
         this.borrowerId = borrowerId;
         this.targetNominal = targetNominal;
         this.totalTerkumpul = new Money(new java.math.BigDecimal("0"), "IDR");
-        this.status = "PROPOSED";
+        this.status = "FUNDING";
     }
 
     public void ubahStatus(String statusBaru) {

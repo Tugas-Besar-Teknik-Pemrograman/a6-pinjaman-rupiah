@@ -23,23 +23,12 @@ public class LoanService {
             throw new IllegalArgumentException("Borrower tidak ditemukan");
         }
 
-        if (!borrower.isKycStatus()) {
-            throw new IllegalStateException("Peminjaman ditolak, KYC belum terverifikasi");
-        }
+        Loan loanBaru = borrower.ajukanPinjaman(nominalPinjaman);
 
-        if (borrower.getCreditScore() < 600) {
-            throw new IllegalStateException("Peminjaman ditolak, Credit score di bawah ambang batas");
-        }
+        borrowerRepository.save(borrower);
+        loanRepository.save(loanBaru);
 
-        if (nominalPinjaman.getAmount().compareTo(borrower.getLimitPinjaman().getAmount()) > 0) {
-            throw new IllegalStateException("Peminjaman ditolak, Melebihi limit peminjaman");
-        }
-
-        Loan loan = new Loan(UUID.randomUUID().toString(), borrowerId, nominalPinjaman);
-        loan.ubahStatus("FUNDING");
-
-        loanRepository.save(loan);
-        return loan;
+        return loanBaru;
     }
 }
 

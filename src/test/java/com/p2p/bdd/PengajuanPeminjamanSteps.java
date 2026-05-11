@@ -47,6 +47,13 @@ public class PengajuanPeminjamanSteps {
         exceptionDitolak = null;
     }
 
+    @Given("Borrower dengan ID {string} terverifikasi \\(KYC = true)")
+    public void borrower_dengan_id_terverifikasi_kyc_true(String id) {
+        borrower.setId(id);
+        borrower.setKycStatus(true);
+        when(borrowerRepository.findById(id)).thenReturn(borrower);
+    }
+
     @Given("Borrower dengan ID {string} terverifikasi \\(KYC = false)")
     public void borrower_dengan_id_terverifikasi_kyc_false(String id) {
         borrower.setId(id);
@@ -62,7 +69,7 @@ public class PengajuanPeminjamanSteps {
     }
     @Given("limit peminjaman {double}")
     public void limit_peminjaman(Double limit) {
-        borrower.BandingkanLimit(new Money(new BigDecimal(limit), "IDR"));
+        borrower.setLimitPinjaman(new Money(new BigDecimal(limit), "IDR"));
     }
 
     @Given("Credit score Borrower {int}")
@@ -99,7 +106,7 @@ public class PengajuanPeminjamanSteps {
     }
 
     @Then("Sistem akan menolak peminjaman dengan pesan {string}")
-    public void sistem_akan_menolak_peminjaman_dengan_pesan(String string) {
+    public void sistem_akan_menolak_peminjaman_dengan_pesan(String pesanErrorExpected) {
         assertNotNull(exceptionDitolak, "Sistem harusnya menolak dan melempar Exception");
         assertEquals(pesanErrorExpected, exceptionDitolak.getMessage());
     }

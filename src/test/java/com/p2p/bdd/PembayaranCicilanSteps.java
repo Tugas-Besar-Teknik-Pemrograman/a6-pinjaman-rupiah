@@ -18,26 +18,26 @@ import java.math.BigDecimal;
 public class PembayaranCicilanSteps {
 
     @Mock
-    private LoanRepository loanRepository; 
+    private LoanRepository loanRepository; // [cite: 28]
 
     @InjectMocks
-    private LoanService loanService; 
+    private LoanService loanService; // [cite: 28]
 
     private Loan loan;
     private Exception exception;
 
     public PembayaranCicilanSteps() {
-        MockitoAnnotations.openMocks(this); 
+        MockitoAnnotations.openMocks(this); // Inisialisasi Mocking [cite: 25]
     }
 
-    //GIVEN
+    // --- GIVEN ---
     @Given("loan dengan ID {string} memiliki tagihan yang masih aktif sebesar {long} dan tenor {int} bulan")
     public void setupLoan(String id, long amount, int tenor) {
         Money target = new Money(new BigDecimal(amount), "IDR");
         this.loan = new Loan(id, "BR-001", target, tenor);
-        this.loan.ubahStatus("DISBURSED"); 
+        this.loan.ubahStatus("DISBURSED"); // Simulasi status cair [cite: 72]
         
-        // Mockito Stubbing
+        // Mockito Stubbing [cite: 30]
         when(loanRepository.findById(id)).thenReturn(loan);
     }
 
@@ -65,7 +65,7 @@ public class PembayaranCicilanSteps {
         this.loan.setInterestStrategy(new FloatingInterestStrategy(decimalRate));
     }
 
-    //WHEN
+    // --- WHEN ---
     @When("sistem menghitung tagihan bulan ini")
     @When("sistem menghitung tagihan bulan pertama")
     @When("sistem menghitung tagihan bulan kedua")
@@ -89,7 +89,7 @@ public class PembayaranCicilanSteps {
         }
     }
 
-    //THEN
+    // --- THEN ---
     @Then("nominal tagihan mencapai {long}")
     @Then("tagihan bulan kedua harus {long}")
     public void checkBill(long expected) {

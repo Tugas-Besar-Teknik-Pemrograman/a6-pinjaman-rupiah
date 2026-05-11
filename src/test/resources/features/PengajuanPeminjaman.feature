@@ -3,7 +3,7 @@ Feature: Pengajuan peminjaman borrower
   Saya ingin mengajukan pinjaman
   Agar saya bisa mendapatkan pinjaman dana
 
-  //PP = PengajuanPeminjaman
+  //PP = PegitngajuanPeminjaman
   Scenario: [PP-01] Pengajuan peminjaman berhasil dengan borrower terverfikasi
     Given Borrower dengan ID "01" terverifikasi (KYC = true)
     When Borrower mengajukan pinjaman sebesar 200.000

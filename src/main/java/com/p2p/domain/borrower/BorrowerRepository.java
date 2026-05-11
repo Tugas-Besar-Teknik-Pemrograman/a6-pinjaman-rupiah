@@ -4,4 +4,5 @@ import java.util.Optional;
 
 public interface BorrowerRepository {
     Optional<Borrower> findById(String id);
+    void save(Borrower borrower);
 }

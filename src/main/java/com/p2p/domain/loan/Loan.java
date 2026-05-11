@@ -30,6 +30,13 @@ public class Loan {
         this.interestStrategy = strategy;
     }
 
+    public void tambahPendanaan(String lenderId, Money investasiDiberikan) {
+        // Jumlahkan uang yang sudah ada dengan investasi yang baru masuk
+        java.math.BigDecimal totalBaru = this.totalTerkumpul.getAmount().add(investasiDiberikan.getAmount());
+        
+        // Simpan uang barunya ke dalam variabel totalTerkumpul
+        this.totalTerkumpul = new Money(totalBaru, this.totalTerkumpul.getCurrency());
+      
     public void generateMonthlyBill() {
         if (this.interestStrategy == null) throw new IllegalStateException("Strategy not set");
         this.currentMonthBill = this.interestStrategy.calculateInstallment(targetNominal, remainingPrincipal, tenor);

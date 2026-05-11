@@ -38,6 +38,10 @@ public class Loan {
         return targetNominal;
     }
 
+    public boolean isLayakNotifikasiPencairan() {
+    return this.status.equals("DISBURSED");
+}
+
     public String getId() { return id; }
     public String getBorrowerId() { return borrowerId; }
     public String getStatus() { return status; }

@@ -37,3 +37,14 @@ Feature: Pengajuan peminjaman borrower
     And Credit score Borrower 500
     When Borrower mengajukan peminjaman sebesar 200.000
     Then Sistem akan menolak peminjaman
+
+  Scenario: [PP-07] Pengajuan peminjaman ditolak karena nominal tidak valid (nol atau negatif)
+    Given Borrower dengan ID "01" terverifikasi
+    When Borrower mengajukan peminjaman sebesar -1
+    Then Sistem akan menolak peminjaman dengan pesan "Nominal pinjaman harus lebih dari 0"
+
+  Scenario: [PP-08] Pengajuan peminjaman ditolak karena Borrower masih memiliki pinjaman aktif
+    Given Borrower dengan ID "01" terverifikasi
+    And Borrower "01" memiliki pinjaman aktif dengan status "DISBURSED"
+    When Borrower mengajukan peminjaman sebesar 200.000
+    Then Sistem akan menolak peminjaman dengan pesan "Harap lunasi pinjaman sebelumnya terlebih dahulu"

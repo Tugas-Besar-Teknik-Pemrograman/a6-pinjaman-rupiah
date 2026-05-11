@@ -11,8 +11,13 @@ public class Money {
         this.currency = currency;
     }
 
-    public BigDecimal getAmount() { return amount; }
-    public String getCurrency() { return currency; }
+    public BigDecimal getAmount() { 
+        return amount; 
+    }
+
+    public String getCurrency() { 
+        return currency; 
+    }
 
     public boolean isLessThan(Money nominal) {
         validasiCurrency(nominal);

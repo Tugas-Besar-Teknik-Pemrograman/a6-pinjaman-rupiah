@@ -1,7 +1,5 @@
 package com.p2p.domain.borrower;
 
-import java.util.Optional;
-
 public interface BorrowerRepository {
-    Optional<Borrower> findById(String id);
+    Borrower findById(String id);
 }

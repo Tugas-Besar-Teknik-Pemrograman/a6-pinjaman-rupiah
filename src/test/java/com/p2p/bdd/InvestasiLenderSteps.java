@@ -52,7 +52,15 @@ public class InvestasiLenderSteps {
 
     @Given("Loan dengan status not FUNDING")
     public void loan_dengan_status_not_funding() {
+        // 1. Buat Loan seperti biasa
+        Money target = new Money(new BigDecimal("10000000"), "IDR");
+        loan = new Loan("LN-001", "BR-001", target); // Kita pakai LN-001 agar matching dengan fungsi @When
         
+        // 2. TAPI, statusnya kita set selain FUNDING (misal: PROPOSED)
+        loan.ubahStatus("PROPOSED"); 
+        
+        // 3. Kasih tahu Mockito
+        when(loanRepository.findById("LN-001")).thenReturn(loan);
     }
     
     // When
@@ -81,16 +89,16 @@ public class InvestasiLenderSteps {
     // Then
     @Then("Loan akan akan terisi sesuai nominal dana yang di input")
     public void loan_akan_akan_terisi_sesuai_nominal_dana_yang_di_input() {
-         // 1. Pastikan tidak ada pesan error sama sekali (karena ini skenario sukses)
         Assertions.assertNull(caughtException, "Seharusnya investasi berhasil dan tidak ada error");
         
-        // 2. Pastikan uang yang terkumpul di Loan bertambah jadi 5 Juta
         Assertions.assertEquals(new BigDecimal("5000000"), loan.getTotalTerkumpul().getAmount());
     }
     
     @Then("Sistem akan menolak dengan pesan error karena status not FUNDING")
     public void sistem_akan_menolak_dengan_pesan_error_karena_status_not_funding() {
-        
+        Assertions.assertNotNull(caughtException, "Seharusnya investasi ditolak dan melempar error!");
+
+        Assertions.assertEquals("Investasi ditolak, status Loan bukan FUNDING", caughtException.getMessage());
     }
     
     @Then("Sistem harus menolak pengajuan dengan pesan error")

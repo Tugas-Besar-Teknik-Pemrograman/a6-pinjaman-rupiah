@@ -28,7 +28,14 @@ public class Loan {
 
     public void bayarCicilan(String repaymentId, Money jumlahBayar) {
     }
+    public void setTotalTerkumpul(Money totalTerkumpul) {
+    this.totalTerkumpul = totalTerkumpul;
+    }
 
+    public Money getTotalTerkumpul() {
+    return totalTerkumpul;
+    }
+    
     public String getId() { return id; }
     public String getStatus() { return status; }
 

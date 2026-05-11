@@ -1,7 +1,7 @@
 package com.p2p.domain.loan;
 
-import com.p2p.domain.valueobject.Money;
 import com.p2p.domain.loan.strategy.InterestCalculationStrategy;
+import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -9,11 +9,11 @@ public class Loan {
     private String id;
     private String borrowerId;
     private Money targetNominal;
-    private Money remainingPrincipal;
     private Money totalTerkumpul;
+    private Money remainingPrincipal;
     private int tenor;
     private String status;
-    
+
     private InterestCalculationStrategy interestStrategy;
     private Money currentMonthBill;
 
@@ -23,8 +23,13 @@ public class Loan {
         this.targetNominal = targetNominal;
         this.tenor = tenor;
         this.remainingPrincipal = targetNominal;
-        this.totalTerkumpul = new Money(new java.math.BigDecimal("0"), "IDR");
+        this.totalTerkumpul = new Money(BigDecimal.ZERO, "IDR");
         this.status = "FUNDING";
+        this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
+    }
+
+    public Loan(String id, String borrowerId, Money targetNominal) {
+        this(id, borrowerId, targetNominal, 12);
     }
 
     public void ubahStatus(String statusBaru) {
@@ -32,14 +37,14 @@ public class Loan {
     }
 
     public void tambahPendanaan(String lenderId, Money investasiDiberikan) throws Exception {
-        java.math.BigDecimal totalBaru = this.totalTerkumpul.getAmount().add(investasiDiberikan.getAmount());
-        
+        BigDecimal totalBaru = this.totalTerkumpul.getAmount().add(investasiDiberikan.getAmount());
+
         if (totalBaru.compareTo(this.targetNominal.getAmount()) > 0) {
             throw new Exception("Nominal investasi melebihi target pendanaan");
-        }      
-          
+        }
+
         this.totalTerkumpul = new Money(totalBaru, this.totalTerkumpul.getCurrency());
-    }    
+    }
 
     public void bayarCicilan(String repaymentId, Money jumlahBayar) {
     }
@@ -47,7 +52,7 @@ public class Loan {
     public void setInterestStrategy(InterestCalculationStrategy strategy) {
         this.interestStrategy = strategy;
     }
-      
+
     public void generateMonthlyBill() {
         if (this.remainingPrincipal == null) {
             this.remainingPrincipal = this.targetNominal;
@@ -64,22 +69,41 @@ public class Loan {
         if (paymentAmount.getAmount().compareTo(this.currentMonthBill.getAmount()) < 0) {
             throw new Exception("Nominal pembayaran kurang dari nominal tagihan");
         }
-        
-        java.math.BigDecimal principalPortion = this.targetNominal.getAmount().divide(new java.math.BigDecimal(this.tenor), java.math.RoundingMode.HALF_UP);
+
+        BigDecimal principalPortion = this.targetNominal.getAmount().divide(new BigDecimal(this.tenor), RoundingMode.HALF_UP);
         this.remainingPrincipal = new Money(this.remainingPrincipal.getAmount().subtract(principalPortion), this.remainingPrincipal.getCurrency());
-        this.currentMonthBill = new Money(java.math.BigDecimal.ZERO, this.currentMonthBill.getCurrency());
+        this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
+    }
+
+    public void setTotalTerkumpul(Money totalTerkumpul) {
+        this.totalTerkumpul = totalTerkumpul;
+    }
+
+    public Money getTotalTerkumpul() {
+        return totalTerkumpul;
+    }
+
+    public Money getTargetNominal() {
+        return targetNominal;
+    }
+
+    public boolean isLayakNotifikasiPencairan() {
+        return this.status.equals("DISBURSED");
     }
 
     public String getId() {
         return id;
     }
 
-    public String getStatus() { return status; }
-
-    public Money getTotalTerkumpul() {
-        return totalTerkumpul;
+    public String getBorrowerId() {
+        return borrowerId;
     }
-      
-    public Money getCurrentMonthBill() { return currentMonthBill; }
-    
+
+    public String getStatus() {
+        return status;
+    }
+
+    public Money getCurrentMonthBill() {
+        return currentMonthBill;
+    }
 }

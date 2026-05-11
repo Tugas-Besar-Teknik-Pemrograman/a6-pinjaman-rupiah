@@ -6,10 +6,7 @@ public class Loan {
     private String borrowerId;
     private Money targetNominal;
     private Money totalTerkumpul;
-
     private String status;
-
-//    private List<Repayment> daftarCicilan = new ArrayList<>();
 
     public Loan(String id, String borrowerId, Money targetNominal) {
         this.id = id;
@@ -28,18 +25,20 @@ public class Loan {
 
     public void bayarCicilan(String repaymentId, Money jumlahBayar) {
     }
+
     public void setTotalTerkumpul(Money totalTerkumpul) {
-    this.totalTerkumpul = totalTerkumpul;
+        this.totalTerkumpul = totalTerkumpul;
     }
 
     public Money getTotalTerkumpul() {
-    return totalTerkumpul;
+        return totalTerkumpul;
     }
 
     public Money getTargetNominal() {
-    return targetNominal;
-}
-    public String getId() { return id; }
-    public String getStatus() { return status; }
+        return targetNominal;
+    }
 
+    public String getId() { return id; }
+    public String getBorrowerId() { return borrowerId; }
+    public String getStatus() { return status; }
 }

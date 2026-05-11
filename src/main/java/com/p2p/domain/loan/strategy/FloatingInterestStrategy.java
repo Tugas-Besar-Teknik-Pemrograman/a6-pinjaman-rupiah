@@ -13,7 +13,16 @@ public class FloatingInterestStrategy implements InterestCalculationStrategy {
 
     @Override
     public Money calculateInstallment(Money initialPrincipal, Money remainingPrincipal, int tenor) {
+        BigDecimal pInitial = initialPrincipal.getAmount();
+        BigDecimal pRemaining = remainingPrincipal.getAmount();
+        BigDecimal t = new BigDecimal(tenor);
         
-        return null;
+        //Pokok Awal dibagi tenor untuk mendapatkan pokok per bulan
+        BigDecimal principalInstallment = pInitial.divide(t, 2, RoundingMode.HALF_UP);
+        
+        //Sisa pokok dikali rate untuk mendapatkan bunga bulan ini
+        BigDecimal interestThisMonth = pRemaining.multiply(monthlyRate);
+        
+        return new Money(principalInstallment.add(interestThisMonth), initialPrincipal.getCurrency());
     }
 }

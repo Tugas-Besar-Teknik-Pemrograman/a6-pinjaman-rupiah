@@ -1,6 +1,6 @@
 package com.p2p.bdd;
 
-import com.p2p.application.LoanService;
+import com.p2p.application.service.LoanService;
 import com.p2p.domain.borrower.Borrower;
 import com.p2p.domain.borrower.BorrowerRepository;
 import com.p2p.domain.loan.Loan;
@@ -94,8 +94,7 @@ public class PengajuanPeminjamanSteps {
 
     @Then("Sistem membuat Loan dengan status FUNDING")
     public void sistem_membuat_loan_status_funding() {
-        assertNull(exceptionDitolak, "Peminjaman seharusnya tidak ditolak, error: "
-                + (exceptionDitolak != null ? exceptionDitolak.getMessage() : ""));
+        assertNull(exceptionDitolak, "Peminjaman seharusnya tidak ditolak, error: " + (exceptionDitolak != null ? exceptionDitolak.getMessage() : ""));
         assertNotNull(hasilLoan);
         assertEquals("FUNDING", hasilLoan.getStatus());
         verify(loanRepository, times(1)).save(any(Loan.class));

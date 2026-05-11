@@ -66,9 +66,17 @@ public class LoanService {
     }
 
     public String kirimNotifikasiPencairan(String loanId) {
-        Loan loan = loanRepository.findById(loanId)
-                .orElseThrow(() -> new IllegalArgumentException("Loan tidak ditemukan"));
+    Loan loan = loanRepository.findById(loanId)
+            .orElseThrow(() -> new IllegalArgumentException("Loan tidak ditemukan"));
 
-        throw new UnsupportedOperationException("belum diimplementasi");
+    String borrowerId = loan.getBorrowerId();
+
+    if (loan.getStatus().equals("DISBURSED")) {
+        notificationService.kirimNotifikasi(borrowerId, "Dana berhasil dicairkan");
+        return "berhasil";
     }
+
+    notificationService.kirimNotifikasi(borrowerId, "Pencairan gagal: pendanaan belum terpenuhi");
+    return "gagal";
+}
 }

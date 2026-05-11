@@ -12,7 +12,7 @@ public class Lender {
     }
 
     public void kurangiSaldoUntukInvestasi(Money nominalInvestasi) {
-        // Logikanya menyusul
+        
     }
     public String getId() { return id; }
 

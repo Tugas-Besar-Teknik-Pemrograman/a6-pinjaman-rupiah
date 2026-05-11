@@ -83,4 +83,35 @@ public void sistem_mengirimkan_notifikasi_pencairan_untuk_loan(String loanId) {
         thrownException = e;
     }
 }
+
+//Then
+@Then("status Loan {string} harus berubah menjadi {string}")
+public void status_loan_harus_berubah_menjadi(String loanId, String expectedStatus) {
+    Loan loan = loanRepository.findById(loanId);
+    assertEquals(expectedStatus, loan.getStatus());
+}
+
+@Then("sistem harus menolak pencairan dengan pesan error")
+public void sistem_harus_menolak_pencairan_dengan_pesan_error() {
+    assertNotNull(thrownException);
+    assertInstanceOf(IllegalStateException.class, thrownException);
+}
+
+@Then("status Loan {string} tetap {string}")
+public void status_loan_tetap(String loanId, String expectedStatus) {
+    Loan loan = loanRepository.findById(loanId);
+    assertEquals(expectedStatus, loan.getStatus());
+}
+
+@Then("Borrower dengan ID {string} harus menerima notifikasi berhasil")
+public void borrower_harus_menerima_notifikasi_berhasil(String borrowerId) {
+    verify(notificationService, times(1))
+        .kirimNotifikasi(eq(borrowerId), contains("berhasil"));
+}
+
+@Then("Borrower dengan ID {string} harus menerima notifikasi gagal dengan alasan {string}")
+public void borrower_harus_menerima_notifikasi_gagal(String borrowerId, String alasan) {
+    verify(notificationService, times(1))
+        .kirimNotifikasi(eq(borrowerId), contains(alasan));
+}
 }

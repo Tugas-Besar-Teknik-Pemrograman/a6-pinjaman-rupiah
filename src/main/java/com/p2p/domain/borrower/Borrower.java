@@ -6,13 +6,13 @@ public class Borrower {
     private String id;
     private Money limitPinjaman;
     private boolean KYC;
-    private int creditscore;
+    private int creditScore;
 
     public Borrower(String id, Money limitAwal) {
         this.id = id;
         this.limitPinjaman = limitAwal;
         this.KYC = false;
-        this.creditscore = 0;
+        this.creditScore = 0;
     }
 
     public void kurangiLimit(Money nominalPinjaman) {

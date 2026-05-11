@@ -22,5 +22,12 @@ class NotifikasiTest {
         Loan loan = new Loan("L-001", "BR-001", new Money(new BigDecimal("10000000"), "IDR"));
         loan.ubahStatus("FUNDING");
         assertFalse(loan.isLayakNotifikasiPencairan());
-}
+    }
+
+    @Test
+    void loan_berstatus_FUNDING_READY_tidak_layak_notifikasi_berhasil() {
+        Loan loan = new Loan("L-001", "BR-001", new Money(new BigDecimal("10000000"), "IDR"));
+        loan.ubahStatus("FUNDING_READY");
+        assertFalse(loan.isLayakNotifikasiPencairan());
+    }
 }

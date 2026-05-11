@@ -16,4 +16,11 @@ class NotifikasiTest {
         loan.ubahStatus("DISBURSED");
         assertTrue(loan.isLayakNotifikasiPencairan());
     }
+
+    @Test
+    void loan_berstatus_FUNDING_tidak_layak_notifikasi_berhasil() {
+        Loan loan = new Loan("L-001", "BR-001", new Money(new BigDecimal("10000000"), "IDR"));
+        loan.ubahStatus("FUNDING");
+        assertFalse(loan.isLayakNotifikasiPencairan());
+}
 }

@@ -9,7 +9,7 @@ public class NotificationObserver {
         System.out.println("Notifikasi ke Borrower" + borrowerId + ": Dana pinjaman" + loanId + " telah berhasil dicairkan!");
     }
 
-    publiic void onPencairanGagal(String borrowerId, String loanId, String reason) {
+    public void onPencairanGagal(String borrowerId, String loanId, String reason) {
         System.out.println("Notifikasi ke Borrower " + borrowerId + ": Pencairan dana untuk pinjaman " + loanId + " gagal. Alasan: " + reason);
     }
 }

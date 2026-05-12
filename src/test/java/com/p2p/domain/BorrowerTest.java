@@ -77,4 +77,17 @@ class BorrowerTest {
         assertEquals("Peminjaman ditolak karena Borrower belum terverifikasi (KYC)", exception.getMessage());
 
     }
+
+    @Test
+    void pengajuan_peminjaman_ditolak_jika_credit_score_rendah(){
+        //ambang batas credit score = 600
+        borrower.setCreditScore(300);
+        Money nominal = new Money(new BigDecimal("2000000"), "IDR");
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, ()->{
+            borrower.ajukanPinjaman("004",nominal,12);
+        });
+
+        assertEquals("Peminjaman ditolak karena Credit score di bawah ambang batas", exception.getMessage());
+    }
 }

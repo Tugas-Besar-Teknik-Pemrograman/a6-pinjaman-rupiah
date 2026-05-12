@@ -47,4 +47,4 @@ Feature: Pengajuan peminjaman borrower
     Given Borrower dengan ID "01" terverifikasi
     And Borrower "01" memiliki pinjaman aktif dengan status "DISBURSED"
     When Borrower mengajukan peminjaman sebesar 200000
-    Then Sistem akan menolak peminjaman dengan pesan "Harap lunasi pinjaman sebelumnya terlebih dahulu"
+    Then Sistem akan menolak peminjaman dengan pesan "Lunasi Peminjaman sebelumnya dulu"

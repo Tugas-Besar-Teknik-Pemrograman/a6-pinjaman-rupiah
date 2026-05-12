@@ -127,4 +127,9 @@ public class Loan {
     public boolean isPinjamanOverdue() {
         return true;
     }
+
+    public boolean isOverduePaid() {
+        return true;
+    }
+    
 }

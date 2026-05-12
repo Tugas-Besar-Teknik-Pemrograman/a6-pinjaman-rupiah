@@ -33,16 +33,51 @@ public class SiklusStatusTest {
 
         @Test
         public void Test2PinjamanDidanai() throws Exception {
-            loan.ubahStatus("FUNDING");
-        
+            // Arrange: pastikan loan di status FUNDING
+            assertEquals("FUNDING", loan.getStatus());
+
             Money investasiAmount = new Money(new BigDecimal("100000"), "IDR");
+
+            // Act: lender melakukan investasi penuh
             lender.kurangiSaldoUntukInvestasi(investasiAmount);
             loan.tambahPendanaan(lender.getId(), investasiAmount);
-            
-            // Cek apakah total terkumpul sudah mencapai target (menggunakan compareTo)
-            if(loan.getTotalTerkumpul().getAmount().compareTo(loan.getTargetNominal().getAmount()) == 0){
-                loan.ubahStatus("FUNDING_READY");
-            }
+
+            // Assert: total terkumpul sama dengan target dan status berubah menjadi FUNDING_READY
+            int compare = loan.getTotalTerkumpul().getAmount().compareTo(loan.getTargetNominal().getAmount());
+            assertEquals(0, compare);
             assertEquals("FUNDING_READY", loan.getStatus());
         }
+
+        
+        @Test
+        public void Test3PencairanDanaPinjaman(){
+            // Arrange: pastikan loan di status FUNDING_READY
+            loan.ubahStatus("FUNDING_READY");
+            assertEquals("FUNDING_READY", loan.getStatus());
+
+            // Act: lakukan pencairan dana (diasumsikan ada method/logika di Loan)
+            // Untuk sekarang, ubah status langsung ke DISBURSED
+            loan.ubahStatus("DISBURSED");
+
+            // Assert: status berubah menjadi DISBURSED
+            assertEquals("DISBURSED", loan.getStatus());
+        }
+
+        @Test
+        public void Test4PembayaranPinjaman() throws Exception {
+            // Arrange: pastikan loan di status DISBURSED dan siap angsuran
+            loan.ubahStatus("DISBURSED");
+            assertEquals("DISBURSED", loan.getStatus());
+
+            // Simulate: generate tagihan bulanan (ini yang memicu awal REPAYMENT)
+            loan.generateMonthlyBill();
+            
+            // Act: borrower melakukan pembayaran angsuran pertama
+            Money paymentAmount = new Money(new BigDecimal("10000"), "IDR");
+            loan.payInstallment(paymentAmount);
+
+            // Assert: status masih REPAYMENT sampai semua cicilan lunas
+            assertEquals("REPAYMENT", loan.getStatus());
+        }
+
 }

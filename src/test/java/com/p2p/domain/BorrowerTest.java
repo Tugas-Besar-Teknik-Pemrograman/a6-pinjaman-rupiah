@@ -64,4 +64,17 @@ class BorrowerTest {
 
         assertEquals("Nominal pinjaman harus lebih dari 0", exception.getMessage());
     }
+
+    @Test
+    void pengajuan_peminjaman_ditolak_jika_kyc_belum_terverifikasi(){
+        borrower.setKycStatus(false);
+        Money nominalpinjaman = new Money(new BigDecimal("2000000"),"IDR");
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, ()-> {
+            borrower.ajukanPinjaman("003",nominalpinjaman, 12);
+        });
+
+        assertEquals("Peminjaman ditolak karena Borrower belum terverifikasi (KYC)", exception.getMessage());
+
+    }
 }

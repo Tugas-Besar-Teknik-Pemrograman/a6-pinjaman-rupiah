@@ -81,7 +81,7 @@ public class Loan {
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
         
         if (this.status.equals("DISBURSED")) {
-        this.status = "REPAYMENT";
+        LoanStateFactory.repayment().ubahStatus(this);
         }
     }
 

@@ -4,6 +4,7 @@ import com.p2p.domain.borrower.Borrower;
 import com.p2p.domain.borrower.BorrowerRepository;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanRepository;
+import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 
 public class LoanService {
@@ -52,7 +53,7 @@ public class LoanService {
         }
 
         if (loan.getStatus().equals("FUNDING_READY")) {
-            loan.ubahStatus("DISBURSED");
+            LoanStateFactory.disbursed().ubahStatus(loan);
             loanRepository.save(loan);
             return;
         }
@@ -63,7 +64,7 @@ public class LoanService {
             if (terkumpul.getAmount().compareTo(target.getAmount()) < 0) {
                 throw new IllegalStateException("Pencairan ditolak, pendanaan belum terpenuhi");
             }
-            loan.ubahStatus("FUNDING_READY");
+            LoanStateFactory.fundingReady().ubahStatus(loan);
             loanRepository.save(loan);
             return;
         }

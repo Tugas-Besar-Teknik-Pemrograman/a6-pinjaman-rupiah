@@ -54,4 +54,14 @@ class BorrowerTest {
         assertEquals("Lunasi Peminjaman sebelumnya dulu", exception.getMessage());
     }
 
+    @Test
+    void pengajuan_peminjaman_ditolak_jika_mengajukan_nominal_negatif_atau_nol(){
+        Money nominalpinjaman1 = new Money(new BigDecimal("-10"), "IDR");
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,()-> {
+            borrower.ajukanPinjaman("001", nominalpinjaman1, 12);
+        });
+
+        assertEquals("Nominal pinjaman harus lebih dari 0", exception.getMessage());
+    }
 }

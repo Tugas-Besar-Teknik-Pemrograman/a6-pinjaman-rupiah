@@ -18,3 +18,4 @@ public class FloatingInterestStrategy implements InterestCalculationStrategy {
         return new Money(principalPmt.add(interestPmt), "IDR");
     }
 }
+    

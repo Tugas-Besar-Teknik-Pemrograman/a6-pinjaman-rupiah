@@ -23,7 +23,7 @@ class BorrowerTest {
     }
 
     @Test
-    void ajukanPinjaman_Sukses_LimitBerkurangDanLoanTerbentuk() {
+    void pengajuan_pinjaman_disetujui_Loan_terbentuk() {
         // Arrange
         Money nominal = new Money(new BigDecimal("2000000"), "IDR");
 
@@ -33,9 +33,25 @@ class BorrowerTest {
         // Assert
         assertNotNull(loanBaru, "Loan harus berhasil dibuat");
         assertEquals("001", loanBaru.getId());
-        
+
         BigDecimal sisaLimitExpected = new BigDecimal("8000000");
         assertEquals(sisaLimitExpected, borrower.getLimitPinjaman().getAmount());
+
+        assertTrue(borrower.hasActiveLoan(), "Borrower harus ditandai memiliki pinjaman aktif");
+    }
+
+    @Test
+    void pengajuan_pinjaman_ditolak_jika_mengajukan_lebih_dari_satu(){
+        Money nominalpinjaman1 = new Money(new BigDecimal("200000"), "IDR");
+        borrower.ajukanPinjaman("001",nominalpinjaman1, 12);
+
+        Money nominalpinjaman2 = new Money(new BigDecimal("100000"),"IDR");
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class,()-> {
+            borrower.ajukanPinjaman("002", nominalpinjaman2, 6);
+        });
+
+        assertEquals("Lunasi Peminjaman sebelumnya dulu", exception.getMessage());
     }
 
 }

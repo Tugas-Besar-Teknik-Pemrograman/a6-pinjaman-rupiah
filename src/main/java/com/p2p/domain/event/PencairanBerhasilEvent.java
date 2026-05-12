@@ -1,8 +1,8 @@
 package com.p2p.domain.event;
 
 public class PencairanBerhasilEvent {
-    private String loanId;
-    private String borrowerId;
+    private final String loanId;
+    private final String borrowerId;
 
     public PencairanBerhasilEvent(String loanId, String borrowerId) {
         this.loanId = loanId;

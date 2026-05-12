@@ -102,4 +102,28 @@ public class SiklusStatusTest {
             assertEquals("REJECTED", loan.getStatus());
 
         }
+
+        @Test
+        public void Test7PeminjamanDibatalkan() {
+            
+            loan.isPinjamanExpired();
+            if(loan.isPinjamanExpired() == true){
+                loan.ubahStatus("CANCELED");
+            }
+
+            assertEquals("CANCELED", loan.getStatus());
+        }
+
+        @Test
+        public void Test8PinjamanOverdue() {
+            loan.ubahStatus("DISBURSED");
+            assertEquals("DISBURSED", loan.getStatus());
+
+            loan.isPinjamanOverdue();
+            if(loan.isPinjamanOverdue() == true){
+                loan.ubahStatus("OVERDUE");
+            }
+
+            assertEquals("OVERDUE", loan.getStatus());
+        }
 }

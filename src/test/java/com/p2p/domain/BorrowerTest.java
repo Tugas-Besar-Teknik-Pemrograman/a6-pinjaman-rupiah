@@ -90,4 +90,16 @@ class BorrowerTest {
 
         assertEquals("Peminjaman ditolak karena Credit score di bawah ambang batas", exception.getMessage());
     }
+
+    @Test
+    void pengajuan_peminjaman_ditolak_jika_melebihi_limit_peminjaman() {
+        //limit di set 10000000
+        Money nominalLebih = new Money(new BigDecimal("15000000"), "IDR");
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+            borrower.ajukanPinjaman("005", nominalLebih, 12);
+        });
+
+        assertEquals("Sisa limit pinjaman tidak mencukupi", exception.getMessage());
+    }
 }

@@ -3,10 +3,6 @@ import java.math.BigDecimal;
 
 import com.p2p.domain.valueobject.Money;
 
-/**
- * Domain entity untuk Lender dalam sistem P2P Lending.
- * Mengelola saldo, status KYC, dan operasi finansial lender.
- */
 public class Lender {
     private static final BigDecimal MINIMAL_WITHDRAWAL = new BigDecimal("100000");
     
@@ -20,11 +16,6 @@ public class Lender {
         this.kycStatus = false;
     }
 
-    /**
-     * Mengurangi saldo lender untuk investasi pinjaman.
-     * @param nominalInvestasi nominal yang akan diinvestasikan
-     * @throws IllegalArgumentException jika saldo tidak mencukupi
-     */
     public void kurangiSaldoUntukInvestasi(Money nominalInvestasi) {
         this.validateInvestmentBalance(nominalInvestasi);
         this.updateBalance(nominalInvestasi.getAmount().negate());
@@ -36,11 +27,6 @@ public class Lender {
         }
     }
 
-    /**
-     * Menambah saldo lender (deposit/top-up).
-     * @param nominalTambah nominal yang akan ditambahkan
-     * @throws IllegalArgumentException jika nominal tidak valid
-     */
     public void tambahSaldo(Money nominalTambah) {
         this.validatePositiveAmount(nominalTambah);
         this.updateBalance(nominalTambah.getAmount());
@@ -52,13 +38,6 @@ public class Lender {
         }
     }
 
-    /**
-     * Menarik saldo lender (withdrawal).
-     * Melakukan validasi KYC, minimal withdrawal, dan saldo cukup.
-     * @param nominalTarik nominal yang akan ditarik
-     * @throws IllegalStateException jika KYC belum terverifikasi
-     * @throws IllegalArgumentException jika nominal tidak memenuhi syarat
-     */
     public void tarikSaldo(Money nominalTarik) {
         this.validateKycStatus();
         this.validateMinimalWithdrawal(nominalTarik);
@@ -84,47 +63,23 @@ public class Lender {
         }
     }
 
-    /**
-     * Update saldo dengan amount (positif untuk increment, negatif untuk decrement).
-     * @param amount perubahan nominal saldo
-     */
     private void updateBalance(BigDecimal amount) {
         BigDecimal newBalance = this.saldoBalance.getAmount().add(amount);
         this.saldoBalance = new Money(newBalance, this.saldoBalance.getCurrency());
     }
 
-    /**
-     * Set status KYC lender.
-     * @param status true jika sudah terverifikasi, false sebaliknya
-     */
-    /**
-     * Set status KYC lender.
-     * @param status true jika sudah terverifikasi, false sebaliknya
-     */
     public void setKycStatus(boolean status) {
         this.kycStatus = status;
     }
 
-    /**
-     * Cek apakah lender sudah terverifikasi KYC.
-     * @return true jika sudah terverifikasi, false sebaliknya
-     */
     public boolean isKycVerified() {
         return this.kycStatus;
     }
 
-    /**
-     * Dapatkan saldo terkini lender.
-     * @return Money object berisi saldo dan currency
-     */
     public Money getSaldoBalance() {
         return this.saldoBalance;
     }
 
-    /**
-     * Dapatkan ID lender.
-     * @return ID lender
-     */
     public String getId() {
         return id;
     }

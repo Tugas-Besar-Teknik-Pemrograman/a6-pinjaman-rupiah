@@ -118,7 +118,6 @@ public class Loan {
     public Money getCurrentMonthBill() {
         return currentMonthBill;
     }
-}
 
     public boolean isLunas() {
         return true;
@@ -127,7 +126,7 @@ public class Loan {
     public boolean isPinjamanExpired() {
         return true;
     }
- 
+
     public boolean isPinjamanOverdue() {
         return true;
     }
@@ -135,5 +134,4 @@ public class Loan {
     public boolean isOverduePaid() {
         return true;
     }
-    
 }

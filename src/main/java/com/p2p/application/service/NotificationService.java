@@ -2,7 +2,7 @@ package com.p2p.application.service;
 import com.p2p.application.observer.NotificationObserver;
 import com.p2p.domain.event.PencairanBerhasilEvent;
 import com.p2p.domain.loan.Loan;
-import com.p2p.domain.repository.LoanRepository;
+import com.p2p.domain.loan.LoanRepository;
 
 public class NotificationService {
     private final LoanRepository loanRepository;

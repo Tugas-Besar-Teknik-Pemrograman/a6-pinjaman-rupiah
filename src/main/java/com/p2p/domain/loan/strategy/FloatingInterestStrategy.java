@@ -21,3 +21,4 @@ public class FloatingInterestStrategy extends BaseInterestStrategy {
         return new Money(principalPmt.add(interestPmt), initialPrincipal.getCurrency());
     }
 }
+    

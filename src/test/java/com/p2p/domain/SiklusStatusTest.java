@@ -85,10 +85,9 @@ public class SiklusStatusTest {
             loan.ubahStatus("REPAYMENT");
             assertEquals("REPAYMENT", loan.getStatus());
 
-            if(loan.isLunas() == true){ {
+            if(loan.isLunas() == true){
                 loan.ubahStatus("CLOSED");
                 assertEquals("CLOSED", loan.getStatus());
-                }
             }
         }
 

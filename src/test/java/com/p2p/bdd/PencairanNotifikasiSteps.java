@@ -39,25 +39,25 @@ public class PencairanNotifikasiSteps {
     public void loan_dengan_id_memiliki_status(String loanId, String status) {
         currentLoan = new Loan(loanId, "BR-001", new Money(new BigDecimal("10000000"), "IDR"));
         currentLoan.ubahStatus(status);
-    when(loanRepository.findById(loanId)).thenReturn(Optional.of(currentLoan));
+    when(loanRepository.findById(loanId)).thenReturn(currentLoan);
     }
 
     @Given("total dana terkumpul sudah mencapai target {int}")
     public void total_dana_terkumpul_sudah_mencapai_target(Integer target) {
         currentLoan.setTotalTerkumpul(new Money(new BigDecimal(target), "IDR"));
-        when(loanRepository.findById(currentLoan.getId())).thenReturn(Optional.of(currentLoan));
+        when(loanRepository.findById(currentLoan.getId())).thenReturn(currentLoan);
     }
 
     @Given("total dana terkumpul baru mencapai {int} dari target {int}")
     public void total_dana_terkumpul_baru_mencapai_dari_target(Integer terkumpul, Integer target) {
         currentLoan.setTotalTerkumpul(new Money(new BigDecimal(terkumpul), "IDR"));
-        when(loanRepository.findById(currentLoan.getId())).thenReturn(Optional.of(currentLoan));
+        when(loanRepository.findById(currentLoan.getId())).thenReturn(currentLoan);
     }
 
     @Given("Borrower dengan ID {string} terdaftar di sistem")
     public void borrower_dengan_id_terdaftar_di_sistem(String borrowerId) {
         currentBorrower = new Borrower(borrowerId, new Money(new BigDecimal("50000000"), "IDR"));
-        when(borrowerRepository.findById(borrowerId)).thenReturn(Optional.of(currentBorrower));
+        when(borrowerRepository.findById(borrowerId)).thenReturn(currentBorrower);
 
         if (currentLoan != null) {
             String statusLama = currentLoan.getStatus();
@@ -66,13 +66,13 @@ public class PencairanNotifikasiSteps {
 
             currentLoan = new Loan(loanId, borrowerId, targetLama);
             currentLoan.ubahStatus(statusLama);
-            when(loanRepository.findById(loanId)).thenReturn(Optional.of(currentLoan));
+            when(loanRepository.findById(loanId)).thenReturn(currentLoan);
         }
     }
 
     @Given("pencairan untuk Loan {string} ditolak karena dana belum terpenuhi")
     public void pencairan_untuk_loan_ditolak_karena_dana_belum_terpenuhi(String loanId) {
-        when(loanRepository.findById(loanId)).thenReturn(Optional.of(currentLoan));
+        when(loanRepository.findById(loanId)).thenReturn(currentLoan);
     }
 
     
@@ -98,7 +98,7 @@ public class PencairanNotifikasiSteps {
     //Then
     @Then("status Loan {string} harus berubah menjadi {string}")
     public void status_loan_harus_berubah_menjadi(String loanId, String expectedStatus) {
-        Loan loan = loanRepository.findById(loanId).get();
+        Loan loan = loanRepository.findById(loanId);
         assertEquals(expectedStatus, loan.getStatus());
     }
 
@@ -110,7 +110,7 @@ public class PencairanNotifikasiSteps {
 
     @Then("status Loan {string} tetap {string}")
     public void status_loan_tetap(String loanId, String expectedStatus) {
-        Loan loan = loanRepository.findById(loanId).get();
+        Loan loan = loanRepository.findById(loanId);
         assertEquals(expectedStatus, loan.getStatus());
     }
 

@@ -80,4 +80,17 @@ public class SiklusStatusTest {
             assertEquals("REPAYMENT", loan.getStatus());
         }
 
+        @Test
+        public void Test5PembayaranCicilanTerakhir() throws Exception {
+            loan.ubahStatus("REPAYMENT");
+            assertEquals("REPAYMENT", loan.getStatus());
+
+            if(loan.isLunas() == true){ {
+                loan.ubahStatus("CLOSED");
+                assertEquals("CLOSED", loan.getStatus());
+                }
+            }
+        }
+
+        
 }

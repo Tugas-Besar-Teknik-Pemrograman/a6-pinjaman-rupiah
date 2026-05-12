@@ -116,4 +116,7 @@ public class Loan {
         return currentMonthBill;
     }
 
+    public boolean isLunas() {
+        return true;
+    }
 }

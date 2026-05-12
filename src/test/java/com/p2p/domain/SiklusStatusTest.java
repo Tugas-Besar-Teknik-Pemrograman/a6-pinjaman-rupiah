@@ -92,5 +92,14 @@ public class SiklusStatusTest {
             }
         }
 
-        
+        @Test
+        public void Test6PeminjamanDitolak() {
+
+            borrower.setKycStatus(false);
+            assertEquals(false, borrower.isKycStatus());
+
+            loan.ubahStatus("REJECTED");
+            assertEquals("REJECTED", loan.getStatus());
+
+        }
 }

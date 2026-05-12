@@ -2,6 +2,7 @@ package com.p2p.domain;
 
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.valueobject.Money;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

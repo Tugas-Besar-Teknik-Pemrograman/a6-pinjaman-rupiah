@@ -126,4 +126,16 @@ public class SiklusStatusTest {
 
             assertEquals("OVERDUE", loan.getStatus());
         }
+
+        @Test
+        public void Test9PinjamanMenjadiRepaymentLagi() {
+            loan.ubahStatus("OVERDUE");
+            assertEquals("OVERDUE", loan.getStatus());
+
+            loan.isOverduePaid();
+            if(loan.isOverduePaid() == true){
+                loan.ubahStatus("REPAYMENT");
+            }
+            assertEquals("REPAYMENT", loan.getStatus());
+        }
 }

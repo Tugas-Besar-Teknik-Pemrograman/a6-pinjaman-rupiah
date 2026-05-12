@@ -23,7 +23,7 @@ class BorrowerTest {
     }
 
     @Test
-    void pengajuan_pinjaman_disetujui_Loan_terbentuk() {
+    void pengajuan_pinjaman_disetujui_dan_Loan_terbentuk() {
         // Arrange
         Money nominal = new Money(new BigDecimal("2000000"), "IDR");
 
@@ -41,7 +41,7 @@ class BorrowerTest {
     }
 
     @Test
-    void pengajuan_pinjaman_ditolak_jika_mengajukan_lebih_dari_satu(){
+    void pengajuan_pinjaman_ditolak_jika_mengajukan_lebih_dari_satu_pinjaman(){
         Money nominalpinjaman1 = new Money(new BigDecimal("200000"), "IDR");
         borrower.ajukanPinjaman("001",nominalpinjaman1, 12);
 
@@ -101,5 +101,19 @@ class BorrowerTest {
         });
 
         assertEquals("Sisa limit pinjaman tidak mencukupi", exception.getMessage());
+    }
+
+    @Test
+    void pengajuan_peminjaman_disetujui_jika_kyc_sudah_terverifikasi(){
+        borrower.setKycStatus(true);
+        Money nominalpinjaman = new Money(new BigDecimal("2000000"),"IDR");
+
+        Loan loanBaru = borrower.ajukanPinjaman("003", nominalpinjaman, 12);
+
+        assertNotNull(loanBaru, "Pinjaman harus disetujui dan objek Loan harus terbentuk");
+        assertEquals("003", loanBaru.getId(), "ID Loan harus sama dengan yang diajukan");
+        assertEquals("FUNDING", loanBaru.getStatus(), "Status awal pinjaman harus FUNDING");
+
+        assertTrue(borrower.hasActiveLoan(), "Borrower harus ditandai memiliki pinjaman aktif");
     }
 }

@@ -16,6 +16,7 @@ public class Borrower {
         this.limitPinjaman = limit;
         this.kycStatus = false;
         this.creditScore = 0;
+        this.hasActiveLoan = false;
     }
 
     public Loan ajukanPinjaman(String loanid,Money nominal, int tenor){
@@ -34,18 +35,19 @@ public class Borrower {
         if (nominal.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Nominal pinjaman harus lebih dari 0");
         }
+
         //validasi nominal <= limit
         if (this.limitPinjaman.isLessThan(nominal)) {
             // Jika sisa limit lebih kecil dari yang mau dipinjam, tolak!
             throw new IllegalStateException("Sisa limit pinjaman tidak mencukupi");
         }
+
         //validasi pinjaman aktif
         if (this.hasActiveLoan) {
-            throw new IllegalStateException("Harap lunasi pinjaman sebelumnya terlebih dahulu");
+            throw new IllegalStateException("Lunasi Peminjaman sebelumnya dulu");
         }
 
-        //kurangin limit
-        this.limitPinjaman = this.limitPinjaman.subtract(nominal);
+        this.hasActiveLoan = true;
 
         Loan loan = new Loan(loanid, this.id, nominal, tenor);
         loan.ubahStatus("FUNDING");
@@ -90,5 +92,9 @@ public class Borrower {
 
     public void setLimitPinjaman(Money limit) {
         this.limitPinjaman = limit;
+    }
+
+    public boolean hasActiveLoan() {
+        return hasActiveLoan;
     }
 }

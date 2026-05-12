@@ -30,7 +30,7 @@ public class Loan {
 
     public Loan(String id, String borrowerId, Money targetNominal) {
         this(id, borrowerId, targetNominal, 12);
-    }
+    } 
 
     public void ubahStatus(String statusBaru) {
         this.status = statusBaru;

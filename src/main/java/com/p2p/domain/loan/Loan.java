@@ -119,4 +119,12 @@ public class Loan {
     public boolean isLunas() {
         return true;
     }
+
+    public boolean isPinjamanExpired() {
+        return true;
+    }
+
+    public boolean isPinjamanOverdue() {
+        return true;
+    }
 }

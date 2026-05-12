@@ -30,7 +30,7 @@ public class Loan {
     
     public Loan(String id, String borrowerId, Money targetNominal) {
         this(id, borrowerId, targetNominal, 12);
-    }
+    } 
 
     public void ubahStatus(String statusBaru) {
         this.status = statusBaru;
@@ -44,6 +44,11 @@ public class Loan {
         }
 
         this.totalTerkumpul = new Money(totalBaru, this.totalTerkumpul.getCurrency());
+
+        // Jika pendanaan sudah mencapai target, ubah status menjadi FUNDING_READY
+        if (totalBaru.compareTo(this.targetNominal.getAmount()) == 0) {
+            this.status = "FUNDING_READY";
+        }
     }
 
     public void bayarCicilan(String repaymentId, Money jumlahBayar) {
@@ -73,6 +78,10 @@ public class Loan {
         BigDecimal principalPortion = this.targetNominal.getAmount().divide(new BigDecimal(this.tenor), RoundingMode.HALF_UP);
         this.remainingPrincipal = new Money(this.remainingPrincipal.getAmount().subtract(principalPortion), this.remainingPrincipal.getCurrency());
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
+        
+        if (this.status.equals("DISBURSED")) {
+        this.status = "REPAYMENT";
+        }
     }
 
     public void setTotalTerkumpul(Money totalTerkumpul) {
@@ -106,4 +115,21 @@ public class Loan {
     public Money getCurrentMonthBill() {
         return currentMonthBill;
     }
+
+    public boolean isLunas() {
+        return true;
+    }
+
+    public boolean isPinjamanExpired() {
+        return true;
+    }
+
+    public boolean isPinjamanOverdue() {
+        return true;
+    }
+
+    public boolean isOverduePaid() {
+        return true;
+    }
+    
 }

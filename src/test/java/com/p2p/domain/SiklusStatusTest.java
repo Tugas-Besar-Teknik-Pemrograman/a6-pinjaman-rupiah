@@ -34,6 +34,7 @@ public class SiklusStatusTest {
         @Test
         public void Test2PinjamanDidanai() throws Exception {
             // Arrange: pastikan loan di status FUNDING
+            loan.ubahStatus("FUNDING");
             assertEquals("FUNDING", loan.getStatus());
 
             Money investasiAmount = new Money(new BigDecimal("100000"), "IDR");

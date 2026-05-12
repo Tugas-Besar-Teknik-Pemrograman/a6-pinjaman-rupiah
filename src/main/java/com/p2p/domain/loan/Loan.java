@@ -27,7 +27,7 @@ public class Loan {
         this.status = "FUNDING";
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
     }
-
+    
     public Loan(String id, String borrowerId, Money targetNominal) {
         this(id, borrowerId, targetNominal, 12);
     }

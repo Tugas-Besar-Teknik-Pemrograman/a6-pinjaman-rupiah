@@ -79,4 +79,17 @@ public class LenderTest {
         assertEquals("Nominal penarikan minimal harus 100000", exception.getMessage());
     }
 
+    @Test
+    void tarikSaldo_Ditolak_SaldoTidakCukup() {
+        // Arrange
+        Money nominalTarik = new Money(new BigDecimal("6000000"), "IDR"); // Minta 6 juta, tapi saldo cuma 5 juta
+
+        // Act & Assert
+        Exception exception = assertThrows(Exception.class, () -> {
+            lender.tarikSaldo(nominalTarik);
+        });
+
+        assertEquals("Saldo tidak mencukupi untuk melakukan penarikan", exception.getMessage());
+    }
+
 }

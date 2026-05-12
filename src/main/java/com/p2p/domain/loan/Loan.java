@@ -1,6 +1,7 @@
 package com.p2p.domain.loan;
 
 import com.p2p.domain.loan.strategy.InterestCalculationStrategy;
+import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -24,7 +25,7 @@ public class Loan {
         this.tenor = tenor;
         this.remainingPrincipal = targetNominal;
         this.totalTerkumpul = new Money(BigDecimal.ZERO, "IDR");
-        this.status = "FUNDING";
+        this.status = "PENDING";
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
     }
     
@@ -47,7 +48,7 @@ public class Loan {
 
         // Jika pendanaan sudah mencapai target, ubah status menjadi FUNDING_READY
         if (totalBaru.compareTo(this.targetNominal.getAmount()) == 0) {
-            this.status = "FUNDING_READY";
+            LoanStateFactory.fundingReady().ubahStatus(this);
         }
     }
 
@@ -80,7 +81,7 @@ public class Loan {
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
         
         if (this.status.equals("DISBURSED")) {
-        this.status = "REPAYMENT";
+        LoanStateFactory.repayment().ubahStatus(this);
         }
     }
 
@@ -123,7 +124,7 @@ public class Loan {
     public boolean isPinjamanExpired() {
         return true;
     }
-
+ 
     public boolean isPinjamanOverdue() {
         return true;
     }

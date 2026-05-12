@@ -2,6 +2,7 @@ package com.p2p.domain.borrower;
 
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.valueobject.Money;
+import com.p2p.domain.state.LoanStateFactory;
 import java.math.BigDecimal;
 
 public class Borrower {
@@ -25,7 +26,7 @@ public class Borrower {
         validasiPinjaman(nominal);
         this.hasActiveLoan = true;
         Loan loan = new Loan(loanid, this.id, nominal, tenor);
-        loan.ubahStatus("FUNDING");
+        LoanStateFactory.pendingToFunding().ubahStatus(loan);
         return loan;
     }
 

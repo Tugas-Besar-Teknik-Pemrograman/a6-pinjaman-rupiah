@@ -35,34 +35,48 @@ public class Lender {
     }
 
     public void tambahSaldo(Money nominalTambah) throws Exception {
-        // 1. Validasi nominal harus positif
+        this.validatePositiveAmount(nominalTambah);
+        this.addBalance(nominalTambah);
+    }
+
+    private void validatePositiveAmount(Money nominalTambah) throws Exception {
         if (nominalTambah.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new Exception("Nominal tambahan harus lebih dari 0");
         }
+    }
 
-        // 2. Tambah saldo
+    private void addBalance(Money nominalTambah) {
         BigDecimal newBalance = this.saldoBalance.getAmount().add(nominalTambah.getAmount());
         this.saldoBalance = new Money(newBalance, this.saldoBalance.getCurrency());
     }
 
     public void tarikSaldo(Money nominalTarik) throws Exception {
-        // 1. Validasi KYC status
+        this.validateKycStatus();
+        this.validateMinimalWithdrawal(nominalTarik);
+        this.validateSufficientBalance(nominalTarik);
+        this.decreaseBalance(nominalTarik);
+    }
+
+    private void validateKycStatus() throws Exception {
         if (!this.kycStatus) {
             throw new Exception("Lender tidak terverifikasi (KYC = false)");
         }
+    }
 
-        // 2. Validasi minimal penarikan 100k
+    private void validateMinimalWithdrawal(Money nominalTarik) throws Exception {
         BigDecimal minimalWithdrawal = new BigDecimal("100000");
         if (nominalTarik.getAmount().compareTo(minimalWithdrawal) < 0) {
             throw new Exception("Nominal penarikan minimal harus 100000");
         }
+    }
 
-        // 3. Validasi saldo cukup
+    private void validateSufficientBalance(Money nominalTarik) throws Exception {
         if (this.saldoBalance.getAmount().compareTo(nominalTarik.getAmount()) < 0) {
             throw new Exception("Saldo tidak mencukupi untuk melakukan penarikan");
         }
+    }
 
-        // 4. Kurangi saldo
+    private void decreaseBalance(Money nominalTarik) {
         BigDecimal newBalance = this.saldoBalance.getAmount().subtract(nominalTarik.getAmount());
         this.saldoBalance = new Money(newBalance, this.saldoBalance.getCurrency());
     }

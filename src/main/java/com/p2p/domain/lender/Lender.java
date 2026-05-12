@@ -79,5 +79,4 @@ public class Lender {
     }
 
     public String getId() { return id; }
-
 }

@@ -1,0 +1,50 @@
+[[1;34mINFO[m] Scanning for projects...
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m---------------------< [0;36mcom.p2p:a6-pinjaman-rupiah[0;1m >---------------------[m
+[[1;34mINFO[m] [1mBuilding a6-pinjaman-rupiah 1.0-SNAPSHOT[m
+[[1;34mINFO[m] [1m--------------------------------[ jar ]---------------------------------[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:2.6:resources[m [1m(default-resources)[m @ [36ma6-pinjaman-rupiah[0;1m ---[m
+[[1;34mINFO[m] Using 'UTF-8' encoding to copy filtered resources.
+[[1;34mINFO[m] skip non existing resourceDirectory /home/darvaaph/Documents/Polban/Semester 2/Teknik Pemrograman/Teknik Pemrograman (PR)/Tugas Besar/a6-pinjaman-rupiah/src/main/resources
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.1:compile[m [1m(default-compile)[m @ [36ma6-pinjaman-rupiah[0;1m ---[m
+[[1;34mINFO[m] Nothing to compile - all classes are up to date
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-resources-plugin:2.6:testResources[m [1m(default-testResources)[m @ [36ma6-pinjaman-rupiah[0;1m ---[m
+[[1;34mINFO[m] Using 'UTF-8' encoding to copy filtered resources.
+[[1;34mINFO[m] Copying 8 resources
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-compiler-plugin:3.1:testCompile[m [1m(default-testCompile)[m @ [36ma6-pinjaman-rupiah[0;1m ---[m
+[[1;34mINFO[m] Changes detected - recompiling the module!
+[[1;34mINFO[m] Compiling 9 source files to /home/darvaaph/Documents/Polban/Semester 2/Teknik Pemrograman/Teknik Pemrograman (PR)/Tugas Besar/a6-pinjaman-rupiah/target/test-classes
+[[1;34mINFO[m] -------------------------------------------------------------
+[[1;31mERROR[m] COMPILATION ERROR : 
+[[1;34mINFO[m] -------------------------------------------------------------
+[[1;31mERROR[m] /home/darvaaph/Documents/Polban/Semester 2/Teknik Pemrograman/Teknik Pemrograman (PR)/Tugas Besar/a6-pinjaman-rupiah/src/test/java/com/p2p/bdd/PencairanNotifikasiSteps.java:[59,54] no suitable method found for thenReturn(java.util.Optional<com.p2p.domain.borrower.Borrower>)
+    method org.mockito.stubbing.OngoingStubbing.thenReturn(com.p2p.domain.borrower.Borrower) is not applicable
+      (argument mismatch; no instance(s) of type variable(s) T exist so that java.util.Optional<T> conforms to com.p2p.domain.borrower.Borrower)
+    method org.mockito.stubbing.OngoingStubbing.thenReturn(com.p2p.domain.borrower.Borrower,com.p2p.domain.borrower.Borrower...) is not applicable
+      (argument mismatch; no instance(s) of type variable(s) T exist so that java.util.Optional<T> conforms to com.p2p.domain.borrower.Borrower)
+[[1;34mINFO[m] 1 error
+[[1;34mINFO[m] -------------------------------------------------------------
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] [1;31mBUILD FAILURE[m
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] Total time:  1.049 s
+[[1;34mINFO[m] Finished at: 2026-05-12T06:36:58+07:00
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;31mERROR[m] Failed to execute goal [32morg.apache.maven.plugins:maven-compiler-plugin:3.1:testCompile[m [1m(default-testCompile)[m on project [36ma6-pinjaman-rupiah[m: [1;31mCompilation failure[m
+[[1;31mERROR[m] [1;31m/home/darvaaph/Documents/Polban/Semester 2/Teknik Pemrograman/Teknik Pemrograman (PR)/Tugas Besar/a6-pinjaman-rupiah/src/test/java/com/p2p/bdd/PencairanNotifikasiSteps.java:[59,54] no suitable method found for thenReturn(java.util.Optional<com.p2p.domain.borrower.Borrower>)[m
+[[1;31mERROR[m] [1;31m    method org.mockito.stubbing.OngoingStubbing.thenReturn(com.p2p.domain.borrower.Borrower) is not applicable[m
+[[1;31mERROR[m] [1;31m      (argument mismatch; no instance(s) of type variable(s) T exist so that java.util.Optional<T> conforms to com.p2p.domain.borrower.Borrower)[m
+[[1;31mERROR[m] [1;31m    method org.mockito.stubbing.OngoingStubbing.thenReturn(com.p2p.domain.borrower.Borrower,com.p2p.domain.borrower.Borrower...) is not applicable[m
+[[1;31mERROR[m] [1;31m      (argument mismatch; no instance(s) of type variable(s) T exist so that java.util.Optional<T> conforms to com.p2p.domain.borrower.Borrower)[m
+[[1;31mERROR[m] [1;31m[m
+[[1;31mERROR[m] -> [1m[Help 1][m
+[[1;31mERROR[m] 
+[[1;31mERROR[m] To see the full stack trace of the errors, re-run Maven with the [1m-e[m switch.
+[[1;31mERROR[m] Re-run Maven using the [1m-X[m switch to enable full debug logging.
+[[1;31mERROR[m] 
+[[1;31mERROR[m] For more information about the errors and possible solutions, please read the following articles:
+[[1;31mERROR[m] [1m[Help 1][m http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

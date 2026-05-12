@@ -15,23 +15,24 @@ public class Lender {
     }
 
     public void kurangiSaldoUntukInvestasi(Money nominalInvestasi) {
-        
-    // 1. Ambil nilai BigDecimal dari objek Money
-    BigDecimal amountToInvest = nominalInvestasi.getAmount();
-    BigDecimal currentBalance = this.saldoBalance.getAmount();
-
-    // 2. Validasi apakah saldo cukup (currentBalance < amountToInvest)
-    // compareTo mengembalikan -1 jika lebih kecil, 0 jika sama, 1 jika lebih besar
-    if (currentBalance.compareTo(amountToInvest) < 0) {
-        throw new IllegalArgumentException("Saldo tidak mencukupi untuk melakukan investasi.");
+        this.validateInvestmentBalance(nominalInvestasi);
+        this.subtractBalance(nominalInvestasi);
     }
 
-    // 3. Update saldo dengan membuat objek Money baru (Immutability)
-    // Mengurangi saldo saat ini dengan nominal investasi
-    BigDecimal newBalanceAmount = currentBalance.subtract(amountToInvest);
-    
-    this.saldoBalance = new Money(newBalanceAmount, this.saldoBalance.getCurrency());
-}
+    private void validateInvestmentBalance(Money nominalInvestasi) {
+        BigDecimal currentBalance = this.saldoBalance.getAmount();
+        BigDecimal investmentAmount = nominalInvestasi.getAmount();
+
+        if (currentBalance.compareTo(investmentAmount) < 0) {
+            throw new IllegalArgumentException("Saldo tidak mencukupi untuk melakukan investasi.");
+        }
+    }
+
+    private void subtractBalance(Money nominalInvestasi) {
+        BigDecimal newBalance = this.saldoBalance.getAmount()
+            .subtract(nominalInvestasi.getAmount());
+        this.saldoBalance = new Money(newBalance, this.saldoBalance.getCurrency());
+    }
 
     public void tambahSaldo(Money nominalTambah) throws Exception {
         // 1. Validasi nominal harus positif

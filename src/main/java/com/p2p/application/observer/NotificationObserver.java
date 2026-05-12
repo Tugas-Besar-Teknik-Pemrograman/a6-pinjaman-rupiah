@@ -6,7 +6,7 @@ public class NotificationObserver {
     public void onPencairanBerhasil(PencairanBerhasilEvent event) {
         String borrowerId = event.getBorrowerId();
         String loanId = event.getLoanId();
-        System.out.println("Notifikasi ke Borrower" + borrowerId + ": Dana pinjaman" + loanId + " telah berhasil dicairkan!");
+        System.out.println("Notifikasi ke Borrower " + borrowerId + ": Dana pinjaman " + loanId + " telah berhasil dicairkan!");
     }
 
     public void onPencairanGagal(String borrowerId, String loanId, String reason) {

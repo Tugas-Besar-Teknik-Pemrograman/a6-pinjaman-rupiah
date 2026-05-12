@@ -92,4 +92,32 @@ public class LenderTest {
         assertEquals("Saldo tidak mencukupi untuk melakukan penarikan", exception.getMessage());
     }
 
+    @Test
+    void setKycStatus_SetToTrue_LenderVerified() {
+        // Arrange
+        Lender newLender = new Lender("LDR-002", new Money(new BigDecimal("1000000"), "IDR"));
+
+        // Assert awal: KYC belum verified
+        assertFalse(newLender.isKycVerified());
+
+        // Act
+        newLender.setKycStatus(true);
+
+        // Assert: KYC sudah verified
+        assertTrue(newLender.isKycVerified());
+    }
+
+    @Test
+    void getSaldoBalance_ReturnCorrectAmount() {
+        // Arrange
+        BigDecimal expectedAmount = new BigDecimal("5000000");
+
+        // Act
+        Money saldo = lender.getSaldoBalance();
+
+        // Assert
+        assertEquals(expectedAmount, saldo.getAmount());
+        assertEquals("IDR", saldo.getCurrency());
+    }
+
 }

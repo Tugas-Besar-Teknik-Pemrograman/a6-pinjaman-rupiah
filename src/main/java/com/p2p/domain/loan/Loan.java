@@ -1,6 +1,7 @@
 package com.p2p.domain.loan;
 
 import com.p2p.domain.loan.strategy.InterestCalculationStrategy;
+import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
 
@@ -23,7 +24,7 @@ public class Loan {
         this.tenor = tenor;
         this.remainingPrincipal = targetNominal;
         this.totalTerkumpul = new Money(BigDecimal.ZERO, "IDR");
-        this.status = "FUNDING";
+        this.status = "PENDING";
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
     }
 
@@ -43,6 +44,11 @@ public class Loan {
         }
 
         this.totalTerkumpul = new Money(totalBaru, this.totalTerkumpul.getCurrency());
+
+        // Jika pendanaan sudah mencapai target, ubah status menjadi FUNDING_READY
+        if (totalBaru.compareTo(this.targetNominal.getAmount()) == 0) {
+            LoanStateFactory.fundingReady().ubahStatus(this);
+        }
     }
 
     public void bayarCicilan(String repaymentId, Money jumlahBayar) {
@@ -75,6 +81,10 @@ public class Loan {
                 this.remainingPrincipal.getAmount().subtract(principalPortion.getAmount()),
                 this.remainingPrincipal.getCurrency());
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
+        
+        if (this.status.equals("DISBURSED")) {
+        LoanStateFactory.repayment().ubahStatus(this);
+        }
     }
 
     public void setTotalTerkumpul(Money totalTerkumpul) {
@@ -108,4 +118,22 @@ public class Loan {
     public Money getCurrentMonthBill() {
         return currentMonthBill;
     }
+}
+
+    public boolean isLunas() {
+        return true;
+    }
+
+    public boolean isPinjamanExpired() {
+        return true;
+    }
+ 
+    public boolean isPinjamanOverdue() {
+        return true;
+    }
+
+    public boolean isOverduePaid() {
+        return true;
+    }
+    
 }

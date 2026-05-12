@@ -33,6 +33,14 @@ public class PenarikanSaldoLenderSteps {
         lender.setKycStatus(false);
     }
 
+    @Given("Saldo tersedia hanya {int}k")
+    public void saldo_tersedia_hanya(Integer amount) {
+        // Kalau sudah ada lender dari @Given sebelumnya, nanti tinggal override saldo
+        Money initialBalance = new Money(new BigDecimal(amount * 1000), "IDR");
+        lender = new Lender("01", initialBalance);
+        lender.setKycStatus(true);
+    }
+
     // When
     @When("Lender mengajukan penarikan dana < 100k")
     public void lender_mengajukan_penarikan_dana_kurang_dari_100k() {
@@ -48,6 +56,18 @@ public class PenarikanSaldoLenderSteps {
     @When("Lender mengajukan penarikan dana > 100k")
     public void lender_mengajukan_penarikan_dana_lebih_dari_100k() {
         withdrawalAmount = new Money(new BigDecimal("500000"), "IDR");
+
+        try {
+            lender.tarikSaldo(withdrawalAmount);
+        } catch (Exception e) {
+            caughtException = e;
+        }
+    }
+
+    @When("Lender mengajukan penarikan dana {int} juta")
+    public void lender_mengajukan_penarikan_dana_juta(Integer amount) {
+        // amount adalah dalam satuan juta (misal: 1 juta = 1000000)
+        withdrawalAmount = new Money(new BigDecimal(amount * 1000000), "IDR");
 
         try {
             lender.tarikSaldo(withdrawalAmount);
@@ -73,5 +93,11 @@ public class PenarikanSaldoLenderSteps {
     public void sistem_akan_mengurangi_saldo_tersedia_dengan_jumlah_penarikan_yang_di_input() {
         assertNull(caughtException, "Seharusnya penarikan berhasil tanpa error");
         assertEquals(new BigDecimal("4500000"), lender.getSaldoBalance().getAmount());
+    }
+
+    @Then("Sistem akan menolak karena saldo tidak cukup")
+    public void sistem_akan_menolak_saldo_tidak_cukup() {
+        assertNotNull(caughtException, "Seharusnya ditolak karena saldo tidak cukup");
+        assertEquals("Saldo tidak mencukupi untuk melakukan penarikan", caughtException.getMessage());
     }
 }

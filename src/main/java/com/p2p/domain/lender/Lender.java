@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import com.p2p.domain.valueobject.Money;
 
 public class Lender {
+    private static final BigDecimal MINIMAL_WITHDRAWAL = new BigDecimal("100000");
+    
     private String id;
     private Money saldoBalance;
     private boolean kycStatus;
@@ -15,54 +17,54 @@ public class Lender {
     }
 
     public void kurangiSaldoUntukInvestasi(Money nominalInvestasi) {
-        
-    // 1. Ambil nilai BigDecimal dari objek Money
-    BigDecimal amountToInvest = nominalInvestasi.getAmount();
-    BigDecimal currentBalance = this.saldoBalance.getAmount();
-
-    // 2. Validasi apakah saldo cukup (currentBalance < amountToInvest)
-    // compareTo mengembalikan -1 jika lebih kecil, 0 jika sama, 1 jika lebih besar
-    if (currentBalance.compareTo(amountToInvest) < 0) {
-        throw new IllegalArgumentException("Saldo tidak mencukupi untuk melakukan investasi.");
+        this.validateInvestmentBalance(nominalInvestasi);
+        this.updateBalance(nominalInvestasi.getAmount().negate());
     }
 
-    // 3. Update saldo dengan membuat objek Money baru (Immutability)
-    // Mengurangi saldo saat ini dengan nominal investasi
-    BigDecimal newBalanceAmount = currentBalance.subtract(amountToInvest);
-    
-    this.saldoBalance = new Money(newBalanceAmount, this.saldoBalance.getCurrency());
-}
+    private void validateInvestmentBalance(Money nominalInvestasi) {
+        if (this.saldoBalance.getAmount().compareTo(nominalInvestasi.getAmount()) < 0) {
+            throw new IllegalArgumentException("Saldo tidak mencukupi untuk melakukan investasi.");
+        }
+    }
 
-    public void tambahSaldo(Money nominalTambah) throws Exception {
-        // 1. Validasi nominal harus positif
+    public void tambahSaldo(Money nominalTambah) {
+        this.validatePositiveAmount(nominalTambah);
+        this.updateBalance(nominalTambah.getAmount());
+    }
+
+    private void validatePositiveAmount(Money nominalTambah) {
         if (nominalTambah.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new Exception("Nominal tambahan harus lebih dari 0");
+            throw new IllegalArgumentException("Nominal tambahan harus lebih dari 0");
         }
-
-        // 2. Tambah saldo
-        BigDecimal newBalance = this.saldoBalance.getAmount().add(nominalTambah.getAmount());
-        this.saldoBalance = new Money(newBalance, this.saldoBalance.getCurrency());
     }
 
-    public void tarikSaldo(Money nominalTarik) throws Exception {
-        // 1. Validasi KYC status
+    public void tarikSaldo(Money nominalTarik) {
+        this.validateKycStatus();
+        this.validateMinimalWithdrawal(nominalTarik);
+        this.validateSufficientBalance(nominalTarik);
+        this.updateBalance(nominalTarik.getAmount().negate());
+    }
+
+    private void validateKycStatus() {
         if (!this.kycStatus) {
-            throw new Exception("Lender tidak terverifikasi (KYC = false)");
+            throw new IllegalStateException("Lender tidak terverifikasi (KYC = false)");
         }
+    }
 
-        // 2. Validasi minimal penarikan 100k
-        BigDecimal minimalWithdrawal = new BigDecimal("100000");
-        if (nominalTarik.getAmount().compareTo(minimalWithdrawal) < 0) {
-            throw new Exception("Nominal penarikan minimal harus 100000");
+    private void validateMinimalWithdrawal(Money nominalTarik) {
+        if (nominalTarik.getAmount().compareTo(MINIMAL_WITHDRAWAL) < 0) {
+            throw new IllegalArgumentException("Nominal penarikan minimal harus " + MINIMAL_WITHDRAWAL);
         }
+    }
 
-        // 3. Validasi saldo cukup
+    private void validateSufficientBalance(Money nominalTarik) {
         if (this.saldoBalance.getAmount().compareTo(nominalTarik.getAmount()) < 0) {
-            throw new Exception("Saldo tidak mencukupi untuk melakukan penarikan");
+            throw new IllegalArgumentException("Saldo tidak mencukupi untuk melakukan penarikan");
         }
+    }
 
-        // 4. Kurangi saldo
-        BigDecimal newBalance = this.saldoBalance.getAmount().subtract(nominalTarik.getAmount());
+    private void updateBalance(BigDecimal amount) {
+        BigDecimal newBalance = this.saldoBalance.getAmount().add(amount);
         this.saldoBalance = new Money(newBalance, this.saldoBalance.getCurrency());
     }
 
@@ -78,5 +80,7 @@ public class Lender {
         return this.saldoBalance;
     }
 
-    public String getId() { return id; }
+    public String getId() {
+        return id;
+    }
 }

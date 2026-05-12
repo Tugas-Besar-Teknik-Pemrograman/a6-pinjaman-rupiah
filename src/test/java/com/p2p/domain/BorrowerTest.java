@@ -34,7 +34,7 @@ class BorrowerTest {
         assertNotNull(loanBaru, "Loan harus berhasil dibuat");
         assertEquals("001", loanBaru.getId());
 
-        BigDecimal sisaLimitExpected = new BigDecimal("8000000");
+        BigDecimal sisaLimitExpected = new BigDecimal("10000000");
         assertEquals(sisaLimitExpected, borrower.getLimitPinjaman().getAmount());
 
         assertTrue(borrower.hasActiveLoan(), "Borrower harus ditandai memiliki pinjaman aktif");

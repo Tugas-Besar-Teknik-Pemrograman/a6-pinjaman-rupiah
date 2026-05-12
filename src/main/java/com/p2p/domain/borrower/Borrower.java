@@ -44,7 +44,7 @@ public class Borrower {
 
         //validasi pinjaman aktif
         if (this.hasActiveLoan) {
-            throw new IllegalStateException("Harap lunasi pinjaman sebelumnya terlebih dahulu");
+            throw new IllegalStateException("Lunasi Peminjaman sebelumnya dulu");
         }
 
         this.hasActiveLoan = true;

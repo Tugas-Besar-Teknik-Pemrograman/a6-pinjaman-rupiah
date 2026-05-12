@@ -33,6 +33,17 @@ public class Lender {
     this.saldoBalance = new Money(newBalanceAmount, this.saldoBalance.getCurrency());
 }
 
+    public void tambahSaldo(Money nominalTambah) throws Exception {
+        // 1. Validasi nominal harus positif
+        if (nominalTambah.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new Exception("Nominal tambahan harus lebih dari 0");
+        }
+
+        // 2. Tambah saldo
+        BigDecimal newBalance = this.saldoBalance.getAmount().add(nominalTambah.getAmount());
+        this.saldoBalance = new Money(newBalance, this.saldoBalance.getCurrency());
+    }
+
     public void tarikSaldo(Money nominalTarik) throws Exception {
         // 1. Validasi KYC status
         if (!this.kycStatus) {

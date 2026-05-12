@@ -66,4 +66,17 @@ public class LenderTest {
         assertEquals("Lender tidak terverifikasi (KYC = false)", exception.getMessage());
     }
 
+    @Test
+    void tarikSaldo_Ditolak_NominalKurangDari100K() {
+        // Arrange
+        Money nominalTarik = new Money(new BigDecimal("50000"), "IDR"); // Hanya 50k, kurang dari 100k
+
+        // Act & Assert
+        Exception exception = assertThrows(Exception.class, () -> {
+            lender.tarikSaldo(nominalTarik);
+        });
+
+        assertEquals("Nominal penarikan minimal harus 100000", exception.getMessage());
+    }
+
 }

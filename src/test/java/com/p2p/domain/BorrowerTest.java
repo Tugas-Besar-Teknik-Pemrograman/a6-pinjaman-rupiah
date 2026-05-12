@@ -116,4 +116,20 @@ class BorrowerTest {
 
         assertTrue(borrower.hasActiveLoan(), "Borrower harus ditandai memiliki pinjaman aktif");
     }
+
+    @Test
+    void pengajuan_peminjaman_berhasil_jika_credit_score_tinggi() {
+        borrower.setKycStatus(true);
+        borrower.setCreditScore(900);
+        Money nominalPinjaman = new Money(new BigDecimal("200000"), "IDR"); // Pinjam 200 ribu
+
+        Loan loanBaru = borrower.ajukanPinjaman("LN-005", nominalPinjaman, 12);
+
+        assertNotNull(loanBaru, "Pinjaman harus disetujui");
+        assertEquals("FUNDING", loanBaru.getStatus(), "Status pinjaman baru harus FUNDING");
+        assertTrue(borrower.hasActiveLoan(), "Borrower harus ditandai memiliki pinjaman aktif");
+
+        BigDecimal sisaLimitExpected = new BigDecimal("10000000");
+        assertEquals(sisaLimitExpected, borrower.getLimitPinjaman().getAmount(), "Limit plafon tidak boleh berubah");
+    }
 }

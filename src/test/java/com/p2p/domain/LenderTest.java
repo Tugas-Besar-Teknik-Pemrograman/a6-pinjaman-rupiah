@@ -52,6 +52,18 @@ public class LenderTest {
         assertEquals(saldoBaruExpected, lender.getSaldoBalance().getAmount());
     }
 
-    
+    @Test
+    void tarikSaldo_Ditolak_KYCFalse() {
+        // Arrange
+        lender.setKycStatus(false); // Set KYC to false untuk test rejection
+        Money nominalTarik = new Money(new BigDecimal("500000"), "IDR");
+
+        // Act & Assert
+        Exception exception = assertThrows(Exception.class, () -> {
+            lender.tarikSaldo(nominalTarik);
+        });
+
+        assertEquals("Lender tidak terverifikasi (KYC = false)", exception.getMessage());
+    }
 
 }

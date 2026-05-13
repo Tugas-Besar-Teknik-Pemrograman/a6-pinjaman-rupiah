@@ -36,11 +36,11 @@ public class Loan {
         this.status = statusBaru;
     }
 
-    public void tambahPendanaan(String lenderId, Money investasiDiberikan) throws Exception {
+    public void tambahPendanaan(String lenderId, Money investasiDiberikan) {
         BigDecimal totalBaru = this.totalTerkumpul.getAmount().add(investasiDiberikan.getAmount());
 
         if (totalBaru.compareTo(this.targetNominal.getAmount()) > 0) {
-            throw new Exception("Nominal investasi melebihi target pendanaan");
+            throw new IllegalArgumentException("Nominal investasi melebihi target pendanaan");
         }
 
         this.totalTerkumpul = new Money(totalBaru, this.totalTerkumpul.getCurrency());

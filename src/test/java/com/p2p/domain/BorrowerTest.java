@@ -110,11 +110,12 @@ class BorrowerTest {
     void pengajuan_peminjaman_disetujui_jika_kyc_sudah_terverifikasi(){
         borrower.setKycStatus(true);
         Money nominalpinjaman = new Money(new BigDecimal("2000000"),"IDR");
+        LoanId loanIdBaru = new LoanId("003");
 
         Loan loanBaru = borrower.ajukanPinjaman(new LoanId("003"), nominalpinjaman, 12);
 
         assertNotNull(loanBaru, "Pinjaman harus disetujui dan objek Loan harus terbentuk");
-        assertEquals("003", loanBaru.getId(), "ID Loan harus sama dengan yang diajukan");
+        assertEquals(loanIdBaru, loanBaru.getId(), "ID Loan harus sama dengan yang diajukan");
         assertEquals("FUNDING", loanBaru.getStatus(), "Status awal pinjaman harus FUNDING");
 
         assertTrue(borrower.hasActiveLoan(), "Borrower harus ditandai memiliki pinjaman aktif");

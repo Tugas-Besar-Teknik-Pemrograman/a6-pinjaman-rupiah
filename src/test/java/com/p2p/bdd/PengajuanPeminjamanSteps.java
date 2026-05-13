@@ -43,6 +43,7 @@ public class PengajuanPeminjamanSteps {
         Money limitAwal = new Money(new BigDecimal("10000000"), "IDR");
 
         borrower = new Borrower(dummyId, limitAwal);
+        borrower.setCreditScore(700);
         hasilLoan = null;
         exceptionDitolak = null;
     }
@@ -50,9 +51,10 @@ public class PengajuanPeminjamanSteps {
     @Given("Borrower dengan ID {string} terverifikasi \\(KYC = true)")
     public void borrower_dengan_id_terverifikasi_kyc_true(String id) {
         BorrowerId bId = new BorrowerId(id);
-
         borrower.setId(bId);
         borrower.setKycStatus(true);
+        borrower.setCreditScore(700);
+
         when(borrowerRepository.findById(bId)).thenReturn(borrower);
     }
 
@@ -71,6 +73,7 @@ public class PengajuanPeminjamanSteps {
 
         borrower.setId(bId);
         borrower.setKycStatus(true);
+        borrower.setCreditScore(700);
         when(borrowerRepository.findById(bId)).thenReturn(borrower);
     }
     @Given("limit peminjaman {double}")

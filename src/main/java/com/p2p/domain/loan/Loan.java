@@ -1,9 +1,9 @@
 package com.p2p.domain.loan;
 
 import com.p2p.domain.loan.strategy.InterestCalculationStrategy;
+import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 public class Loan {
     private String id;
@@ -24,13 +24,13 @@ public class Loan {
         this.tenor = tenor;
         this.remainingPrincipal = targetNominal;
         this.totalTerkumpul = new Money(BigDecimal.ZERO, "IDR");
-        this.status = "FUNDING";
+        this.status = "PENDING";
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
     }
-    
+
     public Loan(String id, String borrowerId, Money targetNominal) {
         this(id, borrowerId, targetNominal, 12);
-    } 
+    }
 
     public void ubahStatus(String statusBaru) {
         this.status = statusBaru;
@@ -47,7 +47,7 @@ public class Loan {
 
         // Jika pendanaan sudah mencapai target, ubah status menjadi FUNDING_READY
         if (totalBaru.compareTo(this.targetNominal.getAmount()) == 0) {
-            this.status = "FUNDING_READY";
+            LoanStateFactory.fundingReady().ubahStatus(this);
         }
     }
 
@@ -58,15 +58,16 @@ public class Loan {
         this.interestStrategy = strategy;
     }
 
+    // REFACTOR: hapus guard null yang tidak perlu, remainingPrincipal sudah diset di constructor
     public void generateMonthlyBill() {
-        if (this.remainingPrincipal == null) {
-            this.remainingPrincipal = this.targetNominal;
-        }
         if (this.interestStrategy != null) {
-            this.currentMonthBill = this.interestStrategy.calculateInstallment(this.targetNominal, this.remainingPrincipal, this.tenor);
+            this.currentMonthBill = this.interestStrategy.calculateInstallment(
+                    this.targetNominal, this.remainingPrincipal, this.tenor);
         }
     }
 
+    // REFACTOR: kalkulasi principalPortion didelegasikan ke strategy,
+    // Loan tidak perlu tahu cara hitung pokok cicilan sendiri
     public void payInstallment(Money paymentAmount) throws Exception {
         if (this.currentMonthBill == null) {
             throw new Exception("Tidak ada tagihan aktif");
@@ -75,12 +76,14 @@ public class Loan {
             throw new Exception("Nominal pembayaran kurang dari nominal tagihan");
         }
 
-        BigDecimal principalPortion = this.targetNominal.getAmount().divide(new BigDecimal(this.tenor), RoundingMode.HALF_UP);
-        this.remainingPrincipal = new Money(this.remainingPrincipal.getAmount().subtract(principalPortion), this.remainingPrincipal.getCurrency());
+        Money principalPortion = this.interestStrategy.calculatePrincipalPortion(this.targetNominal, this.tenor);
+        this.remainingPrincipal = new Money(
+                this.remainingPrincipal.getAmount().subtract(principalPortion.getAmount()),
+                this.remainingPrincipal.getCurrency());
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
         
         if (this.status.equals("DISBURSED")) {
-        this.status = "REPAYMENT";
+        LoanStateFactory.repayment().ubahStatus(this);
         }
     }
 
@@ -131,5 +134,4 @@ public class Loan {
     public boolean isOverduePaid() {
         return true;
     }
-    
 }

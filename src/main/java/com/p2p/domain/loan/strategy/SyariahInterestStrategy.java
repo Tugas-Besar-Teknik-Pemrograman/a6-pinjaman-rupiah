@@ -2,18 +2,22 @@ package com.p2p.domain.loan.strategy;
 
 import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
-public class SyariahInterestStrategy implements InterestCalculationStrategy {
+public class SyariahInterestStrategy extends BaseInterestStrategy {
+
     private final BigDecimal flatMargin;
 
     public SyariahInterestStrategy(BigDecimal flatMargin) {
         this.flatMargin = flatMargin;
     }
 
+    /**
+     * Tidak ada bunga berbasis persentase, tetapi hanya margin flat tetap yang ditambahkan ke pokok cicilan 
+     * setiap bulan.
+     */
     @Override
     public Money calculateInstallment(Money initialPrincipal, Money remainingPrincipal, int tenor) {
-        BigDecimal principalPmt = initialPrincipal.getAmount().divide(new BigDecimal(tenor), RoundingMode.HALF_UP);
-        return new Money(principalPmt.add(flatMargin), "IDR");
+        BigDecimal principalPmt = calculatePrincipalPortion(initialPrincipal, tenor).getAmount();
+        return new Money(principalPmt.add(flatMargin), initialPrincipal.getCurrency());
     }
 }

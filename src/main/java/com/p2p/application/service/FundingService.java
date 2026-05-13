@@ -11,7 +11,6 @@ public class FundingService {
     private final LoanRepository loanRepository;
     private final LenderRepository lenderRepository;
 
-     // Constructor untuk memasukkan repository (Dependency Injection)
     public FundingService(LoanRepository loanRepository, LenderRepository lenderRepository) {
         this.loanRepository = loanRepository;
         this.lenderRepository = lenderRepository;

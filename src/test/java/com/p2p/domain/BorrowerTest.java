@@ -1,6 +1,7 @@
 package com.p2p.domain;
 
 import com.p2p.domain.borrower.Borrower;
+import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.valueobject.Money;
@@ -17,7 +18,7 @@ class BorrowerTest {
 
     @BeforeEach
     void inisialisasi() {
-        borrower = new Borrower("B-001", new Money(new BigDecimal("10000000"), "IDR"));
+        borrower = new Borrower(new BorrowerId("B-001"), new Money(new BigDecimal("10000000"), "IDR"));
         borrower.setKycStatus(true);
         borrower.setCreditScore(700);
         borrower.setHasActiveLoan(false);
@@ -87,7 +88,7 @@ class BorrowerTest {
         Money nominal = new Money(new BigDecimal("2000000"), "IDR");
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, ()->{
-            borrower.ajukanPinjaman("004",nominal,12);
+            borrower.ajukanPinjaman(new LoanId("004"),nominal,12);
         });
 
         assertEquals("Peminjaman ditolak karena Credit score di bawah ambang batas", exception.getMessage());
@@ -99,7 +100,7 @@ class BorrowerTest {
         Money nominalLebih = new Money(new BigDecimal("15000000"), "IDR");
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
-            borrower.ajukanPinjaman("005", nominalLebih, 12);
+            borrower.ajukanPinjaman(new LoanId("005"), nominalLebih, 12);
         });
 
         assertEquals("Sisa limit pinjaman tidak mencukupi", exception.getMessage());
@@ -110,7 +111,7 @@ class BorrowerTest {
         borrower.setKycStatus(true);
         Money nominalpinjaman = new Money(new BigDecimal("2000000"),"IDR");
 
-        Loan loanBaru = borrower.ajukanPinjaman("003", nominalpinjaman, 12);
+        Loan loanBaru = borrower.ajukanPinjaman(new LoanId("003"), nominalpinjaman, 12);
 
         assertNotNull(loanBaru, "Pinjaman harus disetujui dan objek Loan harus terbentuk");
         assertEquals("003", loanBaru.getId(), "ID Loan harus sama dengan yang diajukan");
@@ -124,8 +125,9 @@ class BorrowerTest {
         borrower.setKycStatus(true);
         borrower.setCreditScore(900);
         Money nominalPinjaman = new Money(new BigDecimal("200000"), "IDR"); // Pinjam 200 ribu
+        LoanId loanIdBaru = new LoanId("LN-005");
 
-        Loan loanBaru = borrower.ajukanPinjaman("LN-005", nominalPinjaman, 12);
+        Loan loanBaru = borrower.ajukanPinjaman(loanIdBaru, nominalPinjaman, 12);
 
         assertNotNull(loanBaru, "Pinjaman harus disetujui");
         assertEquals("FUNDING", loanBaru.getStatus(), "Status pinjaman baru harus FUNDING");

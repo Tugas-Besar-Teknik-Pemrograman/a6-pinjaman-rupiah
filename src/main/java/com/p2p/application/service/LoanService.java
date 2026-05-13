@@ -83,11 +83,11 @@ public class LoanService {
         BorrowerId borrowerId = loan.getBorrowerId();
 
         if (loan.getStatus().equals("DISBURSED")) {
-            notificationService.kirimNotifikasi(borrowerId.getValue(), "Dana berhasil dicairkan");
+            notificationService.kirimNotifikasi(borrowerId, "Dana berhasil dicairkan");
             return "berhasil";
         }
 
-        notificationService.kirimNotifikasi(borrowerId.getValue(), "Pencairan gagal: pendanaan belum terpenuhi");
+        notificationService.kirimNotifikasi(borrowerId, "Pencairan gagal: pendanaan belum terpenuhi");
         return "gagal";
     }
 }

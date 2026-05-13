@@ -1,10 +1,13 @@
 package com.p2p.domain.loan;
 
 import com.p2p.domain.borrower.BorrowerId;
+import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.loan.strategy.InterestCalculationStrategy;
 import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Loan {
     private LoanId loanid;
@@ -17,6 +20,7 @@ public class Loan {
 
     private InterestCalculationStrategy interestStrategy;
     private Money currentMonthBill;
+    private Map<LenderId, Money> daftarPendana;
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal, int tenor) {
         this.loanid = loanid;
@@ -25,6 +29,7 @@ public class Loan {
         this.tenor = tenor;
         this.remainingPrincipal = targetNominal;
         this.totalTerkumpul = new Money(BigDecimal.ZERO, "IDR");
+        this.daftarPendana = new HashMap<>();
         this.status = "PENDING";
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
     }
@@ -37,7 +42,7 @@ public class Loan {
         this.status = statusBaru;
     }
 
-    public void tambahPendanaan(String lenderId, Money investasiDiberikan) {
+    public void tambahPendanaan(LenderId lenderId, Money investasiDiberikan) {
         BigDecimal totalBaru = this.totalTerkumpul.getAmount().add(investasiDiberikan.getAmount());
 
         if (totalBaru.compareTo(this.targetNominal.getAmount()) > 0) {
@@ -46,7 +51,14 @@ public class Loan {
 
         this.totalTerkumpul = new Money(totalBaru, this.totalTerkumpul.getCurrency());
 
-        // Jika pendanaan sudah mencapai target, ubah status menjadi FUNDING_READY
+        if (this.daftarPendana.containsKey(lenderId)) {
+            BigDecimal uangLama = this.daftarPendana.get(lenderId).getAmount();
+            BigDecimal akumulasi = uangLama.add(investasiDiberikan.getAmount());
+            this.daftarPendana.put(lenderId, new Money(akumulasi, investasiDiberikan.getCurrency()));
+        } else {
+            this.daftarPendana.put(lenderId, investasiDiberikan);
+        }
+        
         if (totalBaru.compareTo(this.targetNominal.getAmount()) == 0) {
             LoanStateFactory.fundingReady().ubahStatus(this);
         }

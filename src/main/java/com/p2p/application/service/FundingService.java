@@ -35,7 +35,7 @@ public class FundingService {
         }
         lender.kurangiSaldoUntukInvestasi(amount);
 
-        loan.tambahPendanaan(lenderId.getValue(), amount);
+        loan.tambahPendanaan(lenderId, amount);
 
         loanRepository.save(loan);
         lenderRepository.save(lender);

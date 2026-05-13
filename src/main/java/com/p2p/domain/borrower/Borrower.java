@@ -83,6 +83,9 @@ public class Borrower {
     public void setCreditScore(int score) {
         this.creditScore = score;
     }
+    public int getCreditScore() {
+        return this.creditScore;
+    }
 
     public void setHasActiveLoan(boolean hasActiveLoan) {
         this.hasActiveLoan = hasActiveLoan;

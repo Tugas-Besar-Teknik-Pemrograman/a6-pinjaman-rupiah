@@ -91,7 +91,7 @@ public class Loan {
 
         BigDecimal principalPortion = this.targetNominal.getAmount()
                 .divide(new BigDecimal(this.tenor), RoundingMode.HALF_UP);
-        this.remainingPrincipal = new Money(
+                this.remainingPrincipal = new Money(
                 this.remainingPrincipal.getAmount().subtract(principalPortion),
                 this.remainingPrincipal.getCurrency());
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());

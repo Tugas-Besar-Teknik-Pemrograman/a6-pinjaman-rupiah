@@ -4,6 +4,7 @@ import com.p2p.domain.loan.strategy.InterestCalculationStrategy;
 import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class Loan {
     private String id;
@@ -12,6 +13,7 @@ public class Loan {
     private Money totalTerkumpul;
     private Money remainingPrincipal;
     private int tenor;
+    private int tenorSisa;
     private String status;
 
     private InterestCalculationStrategy interestStrategy;
@@ -22,9 +24,10 @@ public class Loan {
         this.borrowerId = borrowerId;
         this.targetNominal = targetNominal;
         this.tenor = tenor;
+        this.tenorSisa = tenor;
         this.remainingPrincipal = targetNominal;
         this.totalTerkumpul = new Money(BigDecimal.ZERO, "IDR");
-        this.status = "PENDING";
+        this.status = "FUNDING";
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
     }
 
@@ -45,20 +48,20 @@ public class Loan {
 
         this.totalTerkumpul = new Money(totalBaru, this.totalTerkumpul.getCurrency());
 
-        // Jika pendanaan sudah mencapai target, ubah status menjadi FUNDING_READY
+        // Otomatis pindah ke FUNDING_READY jika target terpenuhi
         if (totalBaru.compareTo(this.targetNominal.getAmount()) == 0) {
             LoanStateFactory.fundingReady().ubahStatus(this);
         }
     }
 
-    public void bayarCicilan(String repaymentId, Money jumlahBayar) {
+    public void bayarCicilan(String repaymentId, Money jumlahBayar) throws Exception {
+        payInstallment(jumlahBayar);
     }
 
     public void setInterestStrategy(InterestCalculationStrategy strategy) {
         this.interestStrategy = strategy;
     }
 
-    // REFACTOR: hapus guard null yang tidak perlu, remainingPrincipal sudah diset di constructor
     public void generateMonthlyBill() {
         if (this.interestStrategy != null) {
             this.currentMonthBill = this.interestStrategy.calculateInstallment(
@@ -66,8 +69,6 @@ public class Loan {
         }
     }
 
-    // REFACTOR: kalkulasi principalPortion didelegasikan ke strategy,
-    // Loan tidak perlu tahu cara hitung pokok cicilan sendiri
     public void payInstallment(Money paymentAmount) throws Exception {
         if (this.currentMonthBill == null) {
             throw new Exception("Tidak ada tagihan aktif");
@@ -76,15 +77,39 @@ public class Loan {
             throw new Exception("Nominal pembayaran kurang dari nominal tagihan");
         }
 
-        Money principalPortion = this.interestStrategy.calculatePrincipalPortion(this.targetNominal, this.tenor);
+        BigDecimal principalPortion = this.targetNominal.getAmount()
+                .divide(new BigDecimal(this.tenor), RoundingMode.HALF_UP);
         this.remainingPrincipal = new Money(
-                this.remainingPrincipal.getAmount().subtract(principalPortion.getAmount()),
+                this.remainingPrincipal.getAmount().subtract(principalPortion),
                 this.remainingPrincipal.getCurrency());
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
-        
+
+        this.tenorSisa--;
+
         if (this.status.equals("DISBURSED")) {
-        LoanStateFactory.repayment().ubahStatus(this);
+            LoanStateFactory.repayment().ubahStatus(this);
         }
+
+        if (isLunas()) {
+            LoanStateFactory.closed().ubahStatus(this);
+        }
+    }
+
+    public boolean isLunas() {
+        return this.tenorSisa <= 0
+                || this.remainingPrincipal.getAmount().compareTo(BigDecimal.ZERO) <= 0;
+    }
+
+    public boolean isPinjamanExpired() {
+        return "FUNDING".equals(this.status);
+    }
+
+    public boolean isPinjamanOverdue() {
+        return "DISBURSED".equals(this.status) || "REPAYMENT".equals(this.status);
+    }
+
+    public boolean isOverduePaid() {
+        return "OVERDUE".equals(this.status);
     }
 
     public void setTotalTerkumpul(Money totalTerkumpul) {
@@ -115,23 +140,11 @@ public class Loan {
         return status;
     }
 
+    public int getTenorSisa() {
+        return tenorSisa;
+    }
+
     public Money getCurrentMonthBill() {
         return currentMonthBill;
-    }
-
-    public boolean isLunas() {
-        return true;
-    }
-
-    public boolean isPinjamanExpired() {
-        return true;
-    }
-
-    public boolean isPinjamanOverdue() {
-        return true;
-    }
-
-    public boolean isOverduePaid() {
-        return true;
     }
 }

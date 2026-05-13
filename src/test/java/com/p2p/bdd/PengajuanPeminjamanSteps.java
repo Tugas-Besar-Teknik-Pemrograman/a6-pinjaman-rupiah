@@ -2,6 +2,7 @@ package com.p2p.bdd;
 
 import com.p2p.application.service.LoanService;
 import com.p2p.domain.borrower.Borrower;
+import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.borrower.BorrowerRepository;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanRepository;
@@ -37,35 +38,43 @@ public class PengajuanPeminjamanSteps {
     @Before
     public void initialState() {
         MockitoAnnotations.openMocks(this);
-        borrower = new Borrower("01", new Money(new BigDecimal("10000000"), "IDR"));
+
+        BorrowerId dummyId = new BorrowerId("01");
+        Money limitAwal = new Money(new BigDecimal("10000000"), "IDR");
+
+        borrower = new Borrower(dummyId, limitAwal);
         borrower.setCreditScore(700);
-        borrower.setKycStatus(true);
-
-        when(borrowerRepository.findById("01")).thenReturn(borrower);
-
         hasilLoan = null;
         exceptionDitolak = null;
     }
 
     @Given("Borrower dengan ID {string} terverifikasi \\(KYC = true)")
     public void borrower_dengan_id_terverifikasi_kyc_true(String id) {
-        borrower.setId(id);
+        BorrowerId bId = new BorrowerId(id);
+        borrower.setId(bId);
         borrower.setKycStatus(true);
-        when(borrowerRepository.findById(id)).thenReturn(borrower);
+        borrower.setCreditScore(700);
+
+        when(borrowerRepository.findById(bId)).thenReturn(borrower);
     }
 
     @Given("Borrower dengan ID {string} terverifikasi \\(KYC = false)")
     public void borrower_dengan_id_terverifikasi_kyc_false(String id) {
-        borrower.setId(id);
+        BorrowerId bId = new BorrowerId(id);
+
+        borrower.setId(bId);
         borrower.setKycStatus(false);
-        when(borrowerRepository.findById(id)).thenReturn(borrower);
+        when(borrowerRepository.findById(bId)).thenReturn(borrower);
     }
 
     @Given("Borrower dengan ID {string} terverifikasi")
     public void borrower_dengan_id_terverifikasi(String id) {
-        borrower.setId(id);
+        BorrowerId bId = new BorrowerId(id);
+
+        borrower.setId(bId);
         borrower.setKycStatus(true);
-        when(borrowerRepository.findById(id)).thenReturn(borrower);
+        borrower.setCreditScore(700);
+        when(borrowerRepository.findById(bId)).thenReturn(borrower);
     }
     @Given("limit peminjaman {double}")
     public void limit_peminjaman(Double limit) {
@@ -98,6 +107,9 @@ public class PengajuanPeminjamanSteps {
         assertNull(exceptionDitolak, "Pengajuan harusnya berhasil, ga error");
         assertNotNull(hasilLoan, "Objek Loan harusnya terbentuk");
         assertEquals("FUNDING", hasilLoan.getStatus().toString());
+
+        verify(borrowerRepository, times(1)).save(any(Borrower.class));
+        verify(loanRepository, times(1)).save(any(Loan.class));
     }
 
     @Then("Sistem akan menolak peminjaman")

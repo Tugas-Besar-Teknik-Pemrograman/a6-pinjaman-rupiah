@@ -2,6 +2,8 @@ package com.p2p.application.service;
 import com.p2p.application.observer.NotificationObserver;
 import com.p2p.domain.event.PencairanBerhasilEvent;
 import com.p2p.domain.loan.Loan;
+import com.p2p.domain.borrower.BorrowerId;
+import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.LoanRepository;
 
 public class NotificationService {
@@ -13,7 +15,7 @@ public class NotificationService {
         this.notificationObserver = notificationObserver;
     }
 
-    public  String kirimNotifikasiPencairan(String loanId) {
+    public  String kirimNotifikasiPencairan(LoanId loanId) {
         Loan loan = loanRepository.findById(loanId);
         
         if (loan == null) {
@@ -30,7 +32,7 @@ public class NotificationService {
         return "Notifikasi pencairan berhasil dikirim ke Borrower " + loan.getBorrowerId() + " untuk Loan " + loanId;
     }
 
-    public void kirimNotifikasi(String borrowerId, String message) {
+    public void kirimNotifikasi(BorrowerId borrowerId, String message) {
         System.out.println("Notifikasi ke Borrower " + borrowerId + ": " + message);
     }
 }

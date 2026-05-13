@@ -98,7 +98,7 @@ public class PenarikanSaldoLenderSteps {
         }
     }
 
-    // Then
+    // Then 
     @Then("Sistem akan menolak dengan pesan error")
     public void sistem_akan_menolak_dengan_pesan_error() {
         assertNotNull(caughtException, "Seharusnya penarikan ditolak karena nominal < 100k");

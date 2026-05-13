@@ -1,6 +1,7 @@
 package com.p2p.domain.borrower;
 
 import com.p2p.domain.loan.Loan;
+import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.domain.state.LoanStateFactory;
 import java.math.BigDecimal;
@@ -8,13 +9,13 @@ import java.math.BigDecimal;
 public class Borrower {
     private static final int AMBANG_BATAS = 600;
 
-    private String id;
+    private BorrowerId id;
     private Money limitPinjaman;
     private boolean kycStatus;
     private int creditScore;
     private boolean hasActiveLoan;
 
-    public Borrower(String id, Money limit) {
+    public Borrower(BorrowerId id, Money limit) {
         this.id = id;
         this.limitPinjaman = limit;
         this.kycStatus = false;
@@ -22,7 +23,7 @@ public class Borrower {
         this.hasActiveLoan = false;
     }
 
-    public Loan ajukanPinjaman(String loanid,Money nominal, int tenor){
+    public Loan ajukanPinjaman(LoanId loanid, Money nominal, int tenor){
         validasiPinjaman(nominal);
         this.hasActiveLoan = true;
         Loan loan = new Loan(loanid, this.id, nominal, tenor);
@@ -58,12 +59,12 @@ public class Borrower {
         }
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public BorrowerId getId() {
+        return id;
     }
 
-    public String getId() {
-        return id;
+    public void setId(BorrowerId id) {
+        this.id = id;
     }
 
     public Money getLimitPinjaman() {

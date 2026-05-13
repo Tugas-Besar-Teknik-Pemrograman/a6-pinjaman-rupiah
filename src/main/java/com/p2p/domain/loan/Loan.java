@@ -1,13 +1,14 @@
 package com.p2p.domain.loan;
 
+import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.loan.strategy.InterestCalculationStrategy;
 import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
 
 public class Loan {
-    private String id;
-    private String borrowerId;
+    private LoanId loanid;
+    private BorrowerId borrowerId;
     private Money targetNominal;
     private Money totalTerkumpul;
     private Money remainingPrincipal;
@@ -17,8 +18,8 @@ public class Loan {
     private InterestCalculationStrategy interestStrategy;
     private Money currentMonthBill;
 
-    public Loan(String id, String borrowerId, Money targetNominal, int tenor) {
-        this.id = id;
+    public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal, int tenor) {
+        this.loanid = loanid;
         this.borrowerId = borrowerId;
         this.targetNominal = targetNominal;
         this.tenor = tenor;
@@ -28,8 +29,8 @@ public class Loan {
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
     }
 
-    public Loan(String id, String borrowerId, Money targetNominal) {
-        this(id, borrowerId, targetNominal, 12);
+    public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal) {
+        this(loanid, borrowerId, targetNominal, 12);
     }
 
     public void ubahStatus(String statusBaru) {
@@ -103,11 +104,11 @@ public class Loan {
         return this.status.equals("DISBURSED");
     }
 
-    public String getId() {
-        return id;
+    public LoanId getId() {
+        return loanid;
     }
 
-    public String getBorrowerId() {
+    public BorrowerId getBorrowerId() {
         return borrowerId;
     }
 

@@ -1,7 +1,7 @@
 package com.p2p.application.service;
 
-import com.p2p.domain.User.User;
-import com.p2p.domain.User.UserRepository;
+import com.p2p.domain.user.User;
+import com.p2p.domain.user.UserRepository;
 
 public class UserService {
 

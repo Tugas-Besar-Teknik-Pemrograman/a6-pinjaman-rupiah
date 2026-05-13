@@ -14,9 +14,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import java.math.BigDecimal;
-import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import java.util.Optional;
 
 public class PencairanNotifikasiSteps {
 
@@ -34,11 +34,12 @@ public class PencairanNotifikasiSteps {
         MockitoAnnotations.openMocks(this);
     }
 
+    //Given
     @Given("Loan dengan ID {string} memiliki status {string}")
     public void loan_dengan_id_memiliki_status(String loanId, String status) {
         currentLoan = new Loan(loanId, "BR-001", new Money(new BigDecimal("10000000"), "IDR"));
         currentLoan.ubahStatus(status);
-        when(loanRepository.findById(loanId)).thenReturn(currentLoan);
+    when(loanRepository.findById(loanId)).thenReturn(currentLoan);
     }
 
     @Given("total dana terkumpul sudah mencapai target {int}")
@@ -62,6 +63,7 @@ public class PencairanNotifikasiSteps {
             String statusLama = currentLoan.getStatus();
             Money targetLama = currentLoan.getTargetNominal();
             String loanId = currentLoan.getId();
+
             currentLoan = new Loan(loanId, borrowerId, targetLama);
             currentLoan.ubahStatus(statusLama);
             when(loanRepository.findById(loanId)).thenReturn(currentLoan);
@@ -73,6 +75,8 @@ public class PencairanNotifikasiSteps {
         when(loanRepository.findById(loanId)).thenReturn(currentLoan);
     }
 
+    
+    //When
     @When("sistem memproses pencairan untuk Loan {string}")
     public void sistem_memproses_pencairan_untuk_loan(String loanId) {
         try {
@@ -91,6 +95,7 @@ public class PencairanNotifikasiSteps {
         }
     }
 
+    //Then
     @Then("status Loan {string} harus berubah menjadi {string}")
     public void status_loan_harus_berubah_menjadi(String loanId, String expectedStatus) {
         Loan loan = loanRepository.findById(loanId);
@@ -100,7 +105,7 @@ public class PencairanNotifikasiSteps {
     @Then("sistem harus menolak pencairan dengan pesan error")
     public void sistem_harus_menolak_pencairan_dengan_pesan_error() {
         assertNotNull(thrownException);
-        assertInstanceOf(IllegalStateException.class, thrownException);
+        assertInstanceOf(IllegalStateException.class, thrownException); 
     }
 
     @Then("status Loan {string} tetap {string}")
@@ -120,4 +125,4 @@ public class PencairanNotifikasiSteps {
         verify(notificationService, times(1))
             .kirimNotifikasi(eq(borrowerId), contains(alasan));
     }
-}
+    }

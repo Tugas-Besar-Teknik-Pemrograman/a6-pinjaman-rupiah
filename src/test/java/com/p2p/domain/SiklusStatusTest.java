@@ -1,6 +1,7 @@
 package com.p2p.domain;
 import com.p2p.domain.borrower.Borrower;
 import com.p2p.domain.loan.Loan;
+import com.p2p.domain.loan.strategy.FixedInterestStrategy;
 import com.p2p.domain.lender.Lender;
 import com.p2p.domain.valueobject.Money;
 
@@ -21,6 +22,7 @@ public class SiklusStatusTest {
             borrower = new Borrower("borrower1", new Money(new BigDecimal("0"), "IDR"));
             lender = new Lender("lender1", new Money(new BigDecimal("200000"), "IDR"));
             loan = new Loan("loan1", borrower.getId(), new Money(new BigDecimal("100000"), "IDR"));
+            loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
             borrower.setKycStatus(true);
         }
 
@@ -34,6 +36,7 @@ public class SiklusStatusTest {
         @Test
         public void Test2PinjamanDidanai() throws Exception {
             // Arrange: pastikan loan di status FUNDING
+            loan.ubahStatus("FUNDING");
             assertEquals("FUNDING", loan.getStatus());
 
             Money investasiAmount = new Money(new BigDecimal("100000"), "IDR");
@@ -73,7 +76,7 @@ public class SiklusStatusTest {
             loan.generateMonthlyBill();
             
             // Act: borrower melakukan pembayaran angsuran pertama
-            Money paymentAmount = new Money(new BigDecimal("10000"), "IDR");
+            Money paymentAmount = new Money(new BigDecimal("13334"), "IDR");
             loan.payInstallment(paymentAmount);
 
             // Assert: status masih REPAYMENT sampai semua cicilan lunas
@@ -85,10 +88,9 @@ public class SiklusStatusTest {
             loan.ubahStatus("REPAYMENT");
             assertEquals("REPAYMENT", loan.getStatus());
 
-            if(loan.isLunas() == true){ {
+            if(loan.isLunas() == true){
                 loan.ubahStatus("CLOSED");
                 assertEquals("CLOSED", loan.getStatus());
-                }
             }
         }
 

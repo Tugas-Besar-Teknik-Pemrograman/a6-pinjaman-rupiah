@@ -1,16 +1,17 @@
 package com.p2p.domain.lender;
 import java.math.BigDecimal;
 
+import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.valueobject.Money;
 
 public class Lender {
     private static final BigDecimal MINIMAL_WITHDRAWAL = new BigDecimal("100000");
     
-    private String id;
+    private LenderId id;
     private Money saldoBalance;
     private boolean kycStatus;
 
-    public Lender(String id, Money saldoAwal) {
+    public Lender(LenderId id, Money saldoAwal) {
         this.id = id;
         this.saldoBalance = saldoAwal;
         this.kycStatus = false;
@@ -80,7 +81,10 @@ public class Lender {
         return this.saldoBalance;
     }
 
-    public String getId() {
+    public LenderId getId() {
         return id;
+    }
+    public void setId(LenderId id) {
+        this.id = id;
     }
 }

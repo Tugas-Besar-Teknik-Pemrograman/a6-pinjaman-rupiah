@@ -1,7 +1,12 @@
 package com.p2p.bdd;
 
+import com.p2p.application.service.WithdrawalService;
 import com.p2p.domain.lender.Lender;
+import com.p2p.domain.lender.LenderRepository;
 import com.p2p.domain.valueobject.Money;
+import com.p2p.infrastructure.memory.RepositoryFactory;
+
+import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -14,40 +19,58 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class PenarikanSaldoLenderSteps {
 
-    private Lender lender;
-    private Money withdrawalAmount;
+    private final LenderRepository lenderRepository;
+    private final WithdrawalService withdrawalService;
+
+    private String currentLenderId;
     private Exception caughtException;
 
-    // Given
-    @Given("Loan ID {string} dengan terverifikasi \\(KYC = true)")
-    public void loan_id_dengan_terverifikasi_kyc_true(String lenderId) {
-        Money initialBalance = new Money(new BigDecimal("5000000"), "IDR");
-        lender = new Lender(lenderId, initialBalance);
-        lender.setKycStatus(true);
+    public PenarikanSaldoLenderSteps() {
+        this.lenderRepository = RepositoryFactory.getInstance().getLenderRepository();
+        this.withdrawalService = new WithdrawalService(lenderRepository);
     }
 
-    @Given("Loan ID {string} dengan terverifikasi \\(KYC = false)")
-    public void loan_id_dengan_terverifikasi_kyc_false(String lenderId) {
+    @After
+    public void tearDown() {
+        RepositoryFactory.getInstance().clearData();
+    }
+
+    // Given
+    @Given("Lender ID {string} dengan terverifikasi \\(KYC = true)")
+    public void lender_id_dengan_terverifikasi_kyc_true(String lenderId) {
+        this.currentLenderId = lenderId;
         Money initialBalance = new Money(new BigDecimal("5000000"), "IDR");
-        lender = new Lender(lenderId, initialBalance);
+        Lender lender = new Lender(lenderId, initialBalance);
+        lender.setKycStatus(true);
+        lenderRepository.save(lender);
+    }
+
+    @Given("Lender ID {string} dengan terverifikasi \\(KYC = false)")
+    public void lender_id_dengan_terverifikasi_kyc_false(String lenderId) {
+        this.currentLenderId = lenderId;
+        Money initialBalance = new Money(new BigDecimal("5000000"), "IDR");
+        Lender lender = new Lender(lenderId, initialBalance);
         lender.setKycStatus(false);
+        lenderRepository.save(lender);
     }
 
     @Given("Saldo tersedia hanya {int}k")
     public void saldo_tersedia_hanya(Integer amount) {
-        // Kalau sudah ada lender dari @Given sebelumnya, nanti tinggal override saldo
-        Money initialBalance = new Money(new BigDecimal(amount * 1000), "IDR");
-        lender = new Lender("01", initialBalance);
-        lender.setKycStatus(true);
+        // override saldo dari lender sebelumnya
+        Lender lender = lenderRepository.findById(currentLenderId);
+        Money newBalance = new Money(new BigDecimal(amount * 1000), "IDR");
+        Lender updatedLender = new Lender(currentLenderId, newBalance);
+        updatedLender.setKycStatus(lender.isKycVerified());
+        lenderRepository.save(updatedLender);
     }
 
     // When
     @When("Lender mengajukan penarikan dana < 100k")
     public void lender_mengajukan_penarikan_dana_kurang_dari_100k() {
-        withdrawalAmount = new Money(new BigDecimal("50000"), "IDR");
+        Money withdrawalAmount = new Money(new BigDecimal("50000"), "IDR");
 
         try {
-            lender.tarikSaldo(withdrawalAmount);
+            withdrawalService.withdraw(currentLenderId, withdrawalAmount);
         } catch (Exception e) {
             caughtException = e;
         }
@@ -55,10 +78,10 @@ public class PenarikanSaldoLenderSteps {
 
     @When("Lender mengajukan penarikan dana > 100k")
     public void lender_mengajukan_penarikan_dana_lebih_dari_100k() {
-        withdrawalAmount = new Money(new BigDecimal("500000"), "IDR");
+        Money withdrawalAmount = new Money(new BigDecimal("500000"), "IDR");
 
         try {
-            lender.tarikSaldo(withdrawalAmount);
+            withdrawalService.withdraw(currentLenderId, withdrawalAmount);
         } catch (Exception e) {
             caughtException = e;
         }
@@ -66,11 +89,10 @@ public class PenarikanSaldoLenderSteps {
 
     @When("Lender mengajukan penarikan dana {int} juta")
     public void lender_mengajukan_penarikan_dana_juta(Integer amount) {
-        // amount adalah dalam satuan juta (misal: 1 juta = 1000000)
-        withdrawalAmount = new Money(new BigDecimal(amount * 1000000), "IDR");
+        Money withdrawalAmount = new Money(new BigDecimal(amount * 1000000), "IDR");
 
         try {
-            lender.tarikSaldo(withdrawalAmount);
+            withdrawalService.withdraw(currentLenderId, withdrawalAmount);
         } catch (Exception e) {
             caughtException = e;
         }
@@ -92,6 +114,7 @@ public class PenarikanSaldoLenderSteps {
     @Then("Sistem akan mengurangi saldo tersedia dengan jumlah penarikan yang di input")
     public void sistem_akan_mengurangi_saldo_tersedia_dengan_jumlah_penarikan_yang_di_input() {
         assertNull(caughtException, "Seharusnya penarikan berhasil tanpa error");
+        Lender lender = lenderRepository.findById(currentLenderId);
         assertEquals(new BigDecimal("4500000"), lender.getSaldoBalance().getAmount());
     }
 

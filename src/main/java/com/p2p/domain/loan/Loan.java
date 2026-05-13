@@ -1,13 +1,17 @@
 package com.p2p.domain.loan;
 
+import com.p2p.domain.borrower.BorrowerId;
+import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.loan.strategy.InterestCalculationStrategy;
 import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Loan {
-    private String id;
-    private String borrowerId;
+    private LoanId loanid;
+    private BorrowerId borrowerId;
     private Money targetNominal;
     private Money totalTerkumpul;
     private Money remainingPrincipal;
@@ -16,27 +20,29 @@ public class Loan {
 
     private InterestCalculationStrategy interestStrategy;
     private Money currentMonthBill;
+    private Map<LenderId, Money> daftarPendana;
 
-    public Loan(String id, String borrowerId, Money targetNominal, int tenor) {
-        this.id = id;
+    public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal, int tenor) {
+        this.loanid = loanid;
         this.borrowerId = borrowerId;
         this.targetNominal = targetNominal;
         this.tenor = tenor;
         this.remainingPrincipal = targetNominal;
         this.totalTerkumpul = new Money(BigDecimal.ZERO, "IDR");
+        this.daftarPendana = new HashMap<>();
         this.status = "PENDING";
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
     }
 
-    public Loan(String id, String borrowerId, Money targetNominal) {
-        this(id, borrowerId, targetNominal, 12);
+    public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal) {
+        this(loanid, borrowerId, targetNominal, 12);
     }
 
     public void ubahStatus(String statusBaru) {
         this.status = statusBaru;
     }
 
-    public void tambahPendanaan(String lenderId, Money investasiDiberikan) {
+    public void tambahPendanaan(LenderId lenderId, Money investasiDiberikan) {
         BigDecimal totalBaru = this.totalTerkumpul.getAmount().add(investasiDiberikan.getAmount());
 
         if (totalBaru.compareTo(this.targetNominal.getAmount()) > 0) {
@@ -45,7 +51,14 @@ public class Loan {
 
         this.totalTerkumpul = new Money(totalBaru, this.totalTerkumpul.getCurrency());
 
-        // Jika pendanaan sudah mencapai target, ubah status menjadi FUNDING_READY
+        if (this.daftarPendana.containsKey(lenderId)) {
+            BigDecimal uangLama = this.daftarPendana.get(lenderId).getAmount();
+            BigDecimal akumulasi = uangLama.add(investasiDiberikan.getAmount());
+            this.daftarPendana.put(lenderId, new Money(akumulasi, investasiDiberikan.getCurrency()));
+        } else {
+            this.daftarPendana.put(lenderId, investasiDiberikan);
+        }
+        
         if (totalBaru.compareTo(this.targetNominal.getAmount()) == 0) {
             LoanStateFactory.fundingReady().ubahStatus(this);
         }
@@ -103,11 +116,11 @@ public class Loan {
         return this.status.equals("DISBURSED");
     }
 
-    public String getId() {
-        return id;
+    public LoanId getId() {
+        return loanid;
     }
 
-    public String getBorrowerId() {
+    public BorrowerId getBorrowerId() {
         return borrowerId;
     }
 

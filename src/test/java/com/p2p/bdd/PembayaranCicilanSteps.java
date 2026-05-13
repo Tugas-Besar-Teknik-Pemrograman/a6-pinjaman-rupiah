@@ -9,6 +9,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.p2p.application.service.LoanService;
+import com.p2p.domain.borrower.BorrowerId;
+import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanRepository;
 import com.p2p.domain.valueobject.Money;
@@ -34,10 +36,14 @@ public class PembayaranCicilanSteps {
     @Given("loan dengan ID {string} memiliki tagihan yang masih aktif sebesar {long} dan tenor {int} bulan")
     public void setupLoan(String id, long amount, int tenor) {
         Money target = new Money(new BigDecimal(amount), "IDR");
-        this.loan = new Loan(id, "BR-001", target, tenor);
+
+        LoanId loanId = new LoanId(id);
+        BorrowerId borrowerId = new BorrowerId("BR-001");
+
+        this.loan = new Loan(loanId, borrowerId, target, tenor);
         this.loan.ubahStatus("DISBURSED");
         
-        when(loanRepository.findById(id)).thenReturn(loan);
+        when(loanRepository.findById(loanId)).thenReturn(loan);
     }
 
     @Given("loan dengan ID {string} memiliki tagihan bulan ini")

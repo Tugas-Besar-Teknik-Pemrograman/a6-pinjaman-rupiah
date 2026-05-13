@@ -1,4 +1,4 @@
-package com.p2p.domain.User;
+package com.p2p.domain.user;
 
 public class User {
     private String id;

@@ -1,8 +1,8 @@
 package com.p2p.bdd;
 
 import com.p2p.application.service.UserService;
-import com.p2p.domain.User.User;
-import com.p2p.domain.User.UserRepository;
+import com.p2p.domain.user.User;
+import com.p2p.domain.user.UserRepository;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;

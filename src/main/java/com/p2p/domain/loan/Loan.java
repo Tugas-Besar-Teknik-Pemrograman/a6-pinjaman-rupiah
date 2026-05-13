@@ -6,8 +6,10 @@ import com.p2p.domain.loan.strategy.InterestCalculationStrategy;
 import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
+
 
 public class Loan {
     private LoanId loanid;

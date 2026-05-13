@@ -1,5 +1,6 @@
 package com.p2p.application.service;
 
+import com.p2p.domain.lender.Lender;
 import com.p2p.domain.lender.LenderRepository;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanRepository;
@@ -26,9 +27,17 @@ public class FundingService {
         if (!"FUNDING".equals(loan.getStatus())) {
             throw new Exception("Investasi ditolak, status Loan bukan FUNDING");
         }
+
+        Lender lender = lenderRepository.findById(lenderId);
+        if (lender == null) {
+            throw new Exception("Lender tidak ditemukan");
+        }
+        lender.kurangiSaldoUntukInvestasi(amount);
+
         loan.tambahPendanaan(lenderId, amount);
 
         loanRepository.save(loan);
+        lenderRepository.save(lender);
     }
 
 

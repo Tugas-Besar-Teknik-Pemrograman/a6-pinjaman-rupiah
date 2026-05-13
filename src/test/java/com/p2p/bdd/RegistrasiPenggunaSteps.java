@@ -8,8 +8,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.math.BigDecimal;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -80,7 +78,7 @@ public class RegistrasiPenggunaSteps {
         assertNotNull(exceptionDitolak, "Sistem harusnya menolak dan melempar Exception!");
         assertNull(hasilUser, "Objek User tidak boleh terbentuk jika registrasi gagal!");
         assertEquals(pesanErrorExpected, exceptionDitolak.getMessage(), "Pesan error tidak cocok!");
-        
+
         verify(userRepository, never()).save(any());
     }
 }

@@ -12,6 +12,7 @@ import com.p2p.domain.loan.LoanRepository;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.infrastructure.memory.RepositoryFactory;
 
+import io.cucumber.java.After;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -31,6 +32,11 @@ public class InvestasiLenderSteps {
         this.loanRepository = RepositoryFactory.getInstance().getLoanRepository();
         this.lenderRepository = RepositoryFactory.getInstance().getLenderRepository();
         this.fundingService = new FundingService(loanRepository, lenderRepository);
+    }
+
+    @After
+    public void tearDown() {
+        RepositoryFactory.getInstance().clearData();
     }
 
     // Givern

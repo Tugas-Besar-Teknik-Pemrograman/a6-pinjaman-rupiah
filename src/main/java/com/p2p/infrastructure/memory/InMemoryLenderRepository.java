@@ -20,4 +20,8 @@ public class InMemoryLenderRepository implements LenderRepository {
             lenders.put(lender.getId(), lender);
         }
     }
+
+    public void clear() {
+        lenders.clear();
+    }
 }

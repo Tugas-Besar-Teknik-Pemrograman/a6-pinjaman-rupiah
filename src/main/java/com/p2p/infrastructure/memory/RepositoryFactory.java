@@ -36,4 +36,10 @@ public class RepositoryFactory {
     public BorrowerRepository getBorrowerRepository() {
         return borrowerRepository;
     }
+
+    public void clearData() {
+        ((InMemoryLoanRepository) loanRepository).clear();
+        ((InMemoryLenderRepository) lenderRepository).clear();
+        ((InMemoryBorrowerRepository) borrowerRepository).clear();
+    }
 }

@@ -20,4 +20,8 @@ public class InMemoryBorrowerRepository implements BorrowerRepository {
             borrowers.put(borrower.getId(), borrower);
         }
     }
+
+    public void clear() {
+        borrowers.clear();
+    }
 }

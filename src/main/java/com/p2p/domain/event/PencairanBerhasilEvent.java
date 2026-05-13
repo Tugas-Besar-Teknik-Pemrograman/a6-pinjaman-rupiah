@@ -1,19 +1,23 @@
 package com.p2p.domain.event;
 
-public class PencairanBerhasilEvent {
-    private final String loanId;
-    private final String borrowerId;
+import com.p2p.domain.borrower.BorrowerId;
+import com.p2p.domain.loan.Loan;
+import com.p2p.domain.loan.LoanId;
 
-    public PencairanBerhasilEvent(String loanId, String borrowerId) {
+public class PencairanBerhasilEvent {
+    private final LoanId loanId;
+    private final BorrowerId borrowerId;
+
+    public PencairanBerhasilEvent(LoanId loanId, BorrowerId borrowerId) {
         this.loanId = loanId;
         this.borrowerId = borrowerId;
     }
 
-    public String getLoanId() {
+    public LoanId getLoanId() {
         return loanId;
     }
 
-    public String getBorrowerId() {
+    public BorrowerId getBorrowerId() {
         return borrowerId;
     }
 }

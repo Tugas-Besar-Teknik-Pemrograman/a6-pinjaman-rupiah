@@ -1,6 +1,9 @@
 package com.p2p.domain;
 import com.p2p.domain.borrower.Borrower;
+import com.p2p.domain.borrower.BorrowerId;
+import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.loan.Loan;
+import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.strategy.FixedInterestStrategy;
 import com.p2p.domain.lender.Lender;
 import com.p2p.domain.valueobject.Money;
@@ -19,9 +22,9 @@ public class SiklusStatusTest {
 
         @BeforeEach
         public void setUp() {
-            borrower = new Borrower("borrower1", new Money(new BigDecimal("0"), "IDR"));
-            lender = new Lender("lender1", new Money(new BigDecimal("200000"), "IDR"));
-            loan = new Loan("loan1", borrower.getId(), new Money(new BigDecimal("100000"), "IDR"));
+            borrower = new Borrower(new BorrowerId("borrower1"), new Money(new BigDecimal("0"), "IDR"));
+            lender = new Lender(new LenderId("lender1"), new Money(new BigDecimal("200000"), "IDR"));
+            loan = new Loan(new LoanId("loan1"), borrower.getId(), new Money(new BigDecimal("100000"), "IDR"));
             loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
             borrower.setKycStatus(true);
         }

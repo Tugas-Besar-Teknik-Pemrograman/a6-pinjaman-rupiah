@@ -5,13 +5,13 @@ import com.p2p.domain.User.UserRepository;
 
 public class UserService {
 
-    private UserRepository userRepository;
+    private static UserRepository userRepository;
 
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    public User registerUser(String nama, String email, String password, int usia, int role) {
+    public static User registerUser(String nama, String email, String password, int usia, int role) {
 
         if (usia < 18) {
             throw new IllegalStateException("Usia minimal untuk mendaftar adalah 18 tahun");

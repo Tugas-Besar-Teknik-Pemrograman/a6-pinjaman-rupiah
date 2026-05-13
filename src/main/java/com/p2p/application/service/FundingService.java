@@ -1,5 +1,6 @@
 package com.p2p.application.service;
 
+import com.p2p.domain.lender.Lender;
 import com.p2p.domain.lender.LenderRepository;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanRepository;
@@ -15,19 +16,27 @@ public class FundingService {
         this.lenderRepository = lenderRepository;
     }
 
-    public void invest(String lenderId, String loanId, Money amount) throws Exception {
+    public void invest(String lenderId, String loanId, Money amount) {
         if (amount.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
-            throw new Exception("Nominal investasi harus lebih dari 0");
+            throw new IllegalArgumentException("Nominal investasi harus lebih dari 0");
         }
 
         Loan loan = loanRepository.findById(loanId);
         
         if (!"FUNDING".equals(loan.getStatus())) {
-            throw new Exception("Investasi ditolak, status Loan bukan FUNDING");
+            throw new IllegalStateException("Investasi ditolak, status Loan bukan FUNDING");
         }
+
+        Lender lender = lenderRepository.findById(lenderId);
+        if (lender == null) {
+            throw new IllegalArgumentException("Lender tidak ditemukan");
+        }
+        lender.kurangiSaldoUntukInvestasi(amount);
+
         loan.tambahPendanaan(lenderId, amount);
 
         loanRepository.save(loan);
+        lenderRepository.save(lender);
     }
 
 

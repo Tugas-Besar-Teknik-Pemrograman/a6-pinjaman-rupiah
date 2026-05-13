@@ -39,7 +39,7 @@ Feature: Siklus Status Peminjaman
     Scenario: [SSP-07] Borrower mengajukan pinjaman namun tidak ada yang mendanai lalu status menjadi "CANCELLED"
         Given borrower mengajukan pinjaman
         When tidak ada lender yang mendanai dalam waktu tertentu
-        Then status pengajuan berubah menjadi "CANCELLED"
+        Then status pengajuan berubah menjadi "CANCELED"
 
     Scenario: [SSP-08] Borrower telat melakukan pembayaran cicilan dan status menjadi "OVERDUE"
         Given borrower memiliki pinjaman aktif

@@ -1,7 +1,5 @@
 package com.p2p.domain.user;
 
-import com.p2p.domain.borrower.BorrowerId;
-
 public class User {
     private UserId id;
     private String nama;

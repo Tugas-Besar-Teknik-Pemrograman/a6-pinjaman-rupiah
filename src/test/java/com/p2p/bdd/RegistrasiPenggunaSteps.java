@@ -46,7 +46,7 @@ public class RegistrasiPenggunaSteps {
     @When("Calon pengguna mendaftar dengan nama {string}, email {string}, password {string}, usia {int} tahun, dan role {int}")
     public void calon_pengguna_mendaftar_dengan_nama_email_password_usia_tahun_dan_role(String nama, String email, String password, Integer usia, Integer role) {
         try {
-            hasilUser = UserService.registerUser(nama, email, password, usia, role);
+            hasilUser = userService.registerUser(nama, email, password, usia, role);
         } catch (Exception e) {
             exceptionDitolak = e;
         }
@@ -68,6 +68,7 @@ public class RegistrasiPenggunaSteps {
 
         verify(userRepository, times(1)).save(any(User.class));
     }
+
     @Then("Pengguna {string} terdaftar sebagai {string}")
     public void pengguna_terdaftar_sebagai(String emailExpected, String roleNameExpected) {
         assertEquals(emailExpected, hasilUser.getEmail(), "Email yang terdaftar harus sama");

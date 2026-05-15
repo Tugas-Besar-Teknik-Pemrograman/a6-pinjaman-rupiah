@@ -110,7 +110,7 @@ public class SiklusStatusTest {
 
         @Test
         public void Test7PeminjamanDibatalkan() {
-            
+            loan.ubahStatus("FUNDING");
             loan.isPinjamanExpired();
             if(loan.isPinjamanExpired() == true){
                 loan.ubahStatus("CANCELED");

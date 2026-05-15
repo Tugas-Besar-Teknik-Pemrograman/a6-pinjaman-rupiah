@@ -1,6 +1,7 @@
 package com.p2p.domain;
 
 import com.p2p.domain.lender.Lender;
+import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.valueobject.Money;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,7 @@ public class LenderTest {
 
     @BeforeEach
     void  inisialisasi() {
-        lender = new Lender("LDR-001", new Money(new BigDecimal("5000000"), "IDR"));
+        lender = new Lender(new LenderId("LDR-001"), new Money(new BigDecimal("5000000"), "IDR"));
         lender.setKycStatus(true);
     }
 
@@ -95,7 +96,7 @@ public class LenderTest {
     @Test
     void setKycStatus_SetToTrue_LenderVerified() {
         // Arrange
-        Lender newLender = new Lender("LDR-002", new Money(new BigDecimal("1000000"), "IDR"));
+        Lender newLender = new Lender(new LenderId("LDR-002"), new Money(new BigDecimal("1000000"), "IDR"));
 
         // Assert awal: KYC belum verified
         assertFalse(newLender.isKycVerified());

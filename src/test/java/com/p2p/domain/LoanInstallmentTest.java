@@ -1,6 +1,8 @@
 package com.p2p.domain;
 
+import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.loan.Loan;
+import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.strategy.FixedInterestStrategy;
 import com.p2p.domain.loan.strategy.FloatingInterestStrategy;
 import com.p2p.domain.loan.strategy.SyariahInterestStrategy;
@@ -79,7 +81,7 @@ class LoanInstallmentTest {
     void payInstallment_sukses_billMenjadiNol() throws Exception {
         
         Money target = new Money(new BigDecimal("10000000"), "IDR");
-        Loan loan = new Loan("LN-001", "BR-001", target, 5);
+        Loan loan = new Loan(new LoanId("LN-001"), new BorrowerId("BR-001"), target, 5);
         loan.ubahStatus("DISBURSED");
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
         loan.generateMonthlyBill(); // bill = 2.5jt
@@ -95,7 +97,7 @@ class LoanInstallmentTest {
     void payInstallment_kurang_throwException() {
         
         Money target = new Money(new BigDecimal("10000000"), "IDR");
-        Loan loan = new Loan("LN-002", "BR-001", target, 5);
+        Loan loan = new Loan(new LoanId("LN-002"), new BorrowerId("BR-001"), target, 5);
         loan.ubahStatus("DISBURSED");
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
         loan.generateMonthlyBill(); // bill = 2.5jt
@@ -111,12 +113,11 @@ class LoanInstallmentTest {
     void payInstallment_sukses_sisaPokokBerkurang() throws Exception {
         
         Money target = new Money(new BigDecimal("10000000"), "IDR");
-        Loan loan = new Loan("LN-003", "BR-001", target, 5);
+        Loan loan = new Loan(new LoanId("LN-003"), new BorrowerId("BR-001"), target, 5);
         loan.ubahStatus("DISBURSED");
         loan.setInterestStrategy(new FloatingInterestStrategy(new BigDecimal("0.05")));
         loan.generateMonthlyBill(); // bulan 1: 2.5jt
 
-        
         loan.payInstallment(loan.getCurrentMonthBill());
         loan.generateMonthlyBill(); // bulan 2: harusnya lebih kecil karena floating
 

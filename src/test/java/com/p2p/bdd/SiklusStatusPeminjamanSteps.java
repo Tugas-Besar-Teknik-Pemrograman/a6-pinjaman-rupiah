@@ -1,8 +1,10 @@
 package com.p2p.bdd;
 
 import com.p2p.domain.borrower.Borrower;
+import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.state.LoanStateFactory;
+import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.valueobject.Money;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -15,15 +17,18 @@ public class SiklusStatusPeminjamanSteps {
     private Loan loan;
     private String rejectionReason;
 
+    private final BorrowerId borrowerId = new BorrowerId("borrower1");
+    private final LoanId loanId = new LoanId("loan1");
+
     @Given("borrower memiliki akun yang terverifikasi")
     public void borrower_memiliki_akun_yang_terverifikasi() {
-        Borrower borrower = new Borrower("borrower1", new Money(new BigDecimal("1000000"), "IDR"));
+        Borrower borrower = new Borrower(borrowerId, new Money(new BigDecimal("1000000"), "IDR"));
         borrower.setKycStatus(true);
     }
 
     @When("borrower mengajukan pinjaman dengan jumlah tertentu")
-    public void borrower_mengajukan_pinjaman_dengan_jumlah_tertentu() {
-        loan = new Loan("loan1", "borrower1", new Money(new BigDecimal("500000"), "IDR"));
+    public void borrower_mengajukan_pinjaman_dengan_jumlah_tertentu() {        
+        loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
         LoanStateFactory.pendingToFunding().ubahStatus(loan);
     }
 
@@ -34,7 +39,7 @@ public class SiklusStatusPeminjamanSteps {
 
     @Given("borrower telah mengajukan pinjaman dan statusnya {string}")
     public void borrower_telah_mengajukan_pinjaman_dan_statusnya(String status) {
-        loan = new Loan("loan1", "borrower1", new Money(new BigDecimal("500000"), "IDR"));
+        loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
         loan.ubahStatus(status);
     }
 
@@ -45,7 +50,7 @@ public class SiklusStatusPeminjamanSteps {
 
     @Given("borrower telah menerima dana pinjaman")
     public void borrower_telah_menerima_dana_pinjaman() {
-        loan = new Loan("loan1", "borrower1", new Money(new BigDecimal("500000"), "IDR"));
+        loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
         LoanStateFactory.pendingToFunding().ubahStatus(loan);
         LoanStateFactory.fundingReady().ubahStatus(loan);
     }
@@ -57,7 +62,8 @@ public class SiklusStatusPeminjamanSteps {
 
     @Given("borrower memiliki pinjaman aktif")
     public void borrower_memiliki_pinjaman_aktif() {
-        loan = new Loan("loan1", "borrower1", new Money(new BigDecimal("500000"), "IDR"));
+        
+        loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
         LoanStateFactory.pendingToFunding().ubahStatus(loan);
         LoanStateFactory.fundingReady().ubahStatus(loan);
         LoanStateFactory.disbursed().ubahStatus(loan);
@@ -76,7 +82,7 @@ public class SiklusStatusPeminjamanSteps {
 
     @Given("borrower masih memiliki pinjaman terakhir yang harus di bayar")
     public void borrower_masih_memiliki_pinjaman_terakhir_yang_harus_di_bayar() {
-        loan = new Loan("loan1", "borrower1", new Money(new BigDecimal("500000"), "IDR"));
+        loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
         LoanStateFactory.pendingToFunding().ubahStatus(loan);
         LoanStateFactory.fundingReady().ubahStatus(loan);
         LoanStateFactory.disbursed().ubahStatus(loan);
@@ -95,7 +101,8 @@ public class SiklusStatusPeminjamanSteps {
 
     @Given("borrower mengajukan pinjaman")
     public void borrower_mengajukan_pinjaman() {
-        loan = new Loan("loan1", "borrower1", new Money(new BigDecimal("500000"), "IDR"));
+        loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
+        LoanStateFactory.pendingToFunding().ubahStatus(loan);
     }
 
     @When("sistem melakukan validasi pinjaman")
@@ -131,7 +138,7 @@ public class SiklusStatusPeminjamanSteps {
 
     @Given("borrower memiliki pinjaman dengan status {string}")
     public void borrower_memiliki_pinjaman_dengan_status(String status) {
-        loan = new Loan("loan1", "borrower1", new Money(new BigDecimal("500000"), "IDR"));
+        loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
         loan.ubahStatus(status);
     }
 

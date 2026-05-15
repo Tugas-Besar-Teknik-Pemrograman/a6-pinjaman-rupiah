@@ -2,6 +2,7 @@ package com.p2p.bdd;
 
 import com.p2p.application.service.WithdrawalService;
 import com.p2p.domain.lender.Lender;
+import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.lender.LenderRepository;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.infrastructure.memory.RepositoryFactory;
@@ -22,7 +23,7 @@ public class PenarikanSaldoLenderSteps {
     private final LenderRepository lenderRepository;
     private final WithdrawalService withdrawalService;
 
-    private String currentLenderId;
+    private LenderId currentLenderId;
     private Exception caughtException;
 
     public PenarikanSaldoLenderSteps() {
@@ -38,25 +39,24 @@ public class PenarikanSaldoLenderSteps {
     // Given
     @Given("Lender ID {string} dengan terverifikasi \\(KYC = true)")
     public void lender_id_dengan_terverifikasi_kyc_true(String lenderId) {
-        this.currentLenderId = lenderId;
+        this.currentLenderId = new LenderId(lenderId);
         Money initialBalance = new Money(new BigDecimal("5000000"), "IDR");
-        Lender lender = new Lender(lenderId, initialBalance);
+        Lender lender = new Lender(currentLenderId, initialBalance);
         lender.setKycStatus(true);
         lenderRepository.save(lender);
     }
 
     @Given("Lender ID {string} dengan terverifikasi \\(KYC = false)")
     public void lender_id_dengan_terverifikasi_kyc_false(String lenderId) {
-        this.currentLenderId = lenderId;
+        this.currentLenderId = new LenderId(lenderId);
         Money initialBalance = new Money(new BigDecimal("5000000"), "IDR");
-        Lender lender = new Lender(lenderId, initialBalance);
+        Lender lender = new Lender(currentLenderId, initialBalance);
         lender.setKycStatus(false);
         lenderRepository.save(lender);
     }
 
     @Given("Saldo tersedia hanya {int}k")
     public void saldo_tersedia_hanya(Integer amount) {
-        // override saldo dari lender sebelumnya
         Lender lender = lenderRepository.findById(currentLenderId);
         Money newBalance = new Money(new BigDecimal(amount * 1000), "IDR");
         Lender updatedLender = new Lender(currentLenderId, newBalance);

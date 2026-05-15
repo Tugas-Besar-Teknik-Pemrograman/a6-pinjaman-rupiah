@@ -1,8 +1,10 @@
 package com.p2p.application.service;
 
 import com.p2p.domain.lender.Lender;
+import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.lender.LenderRepository;
 import com.p2p.domain.loan.Loan;
+import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.LoanRepository;
 import com.p2p.domain.valueobject.Money;
 
@@ -16,7 +18,7 @@ public class FundingService {
         this.lenderRepository = lenderRepository;
     }
 
-    public void invest(String lenderId, String loanId, Money amount) {
+    public void invest(LenderId lenderId, LoanId loanId, Money amount) {
         if (amount.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Nominal investasi harus lebih dari 0");
         }

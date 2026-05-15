@@ -6,7 +6,7 @@ public class RepaymentState implements State {
 
 	@Override
 	public void ubahStatus(Loan loan) {
-		if (loan != null && "DISBURSED".equals(loan.getStatus())) {
+		if (loan != null && ("DISBURSED".equals(loan.getStatus())|| "OVERDUE".equals(loan.getStatus()))) {
 			loan.ubahStatus("REPAYMENT");
 		}
 	}

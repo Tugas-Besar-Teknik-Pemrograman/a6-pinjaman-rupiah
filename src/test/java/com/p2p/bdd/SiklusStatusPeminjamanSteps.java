@@ -3,6 +3,7 @@ package com.p2p.bdd;
 import com.p2p.domain.borrower.Borrower;
 import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.loan.Loan;
+import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.valueobject.Money;
 import io.cucumber.java.en.Given;
@@ -26,9 +27,9 @@ public class SiklusStatusPeminjamanSteps {
     }
 
     @When("borrower mengajukan pinjaman dengan jumlah tertentu")
-    public void borrower_mengajukan_pinjaman_dengan_jumlah_tertentu() {
+    public void borrower_mengajukan_pinjaman_dengan_jumlah_tertentu() {        
         loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
-        loan.ubahStatus("FUNDING");
+        LoanStateFactory.pendingToFunding().ubahStatus(loan);
     }
 
     @Then("status peminjaman harus berubah menjadi {string}")
@@ -44,29 +45,34 @@ public class SiklusStatusPeminjamanSteps {
 
     @When("Lender mendanai pinjaman tersebut")
     public void lender_mendanai_pinjaman_tersebut() {
-        loan.ubahStatus("FUNDING_READY");
+        LoanStateFactory.fundingReady().ubahStatus(loan);
     }
 
     @Given("borrower telah menerima dana pinjaman")
     public void borrower_telah_menerima_dana_pinjaman() {
         loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
-        loan.ubahStatus("FUNDING_READY");
+        LoanStateFactory.pendingToFunding().ubahStatus(loan);
+        LoanStateFactory.fundingReady().ubahStatus(loan);
     }
 
     @When("proses pencairan selesai")
     public void proses_pencairan_selesai() {
-        loan.ubahStatus("DISBURSED");
+        LoanStateFactory.disbursed().ubahStatus(loan);
     }
 
     @Given("borrower memiliki pinjaman aktif")
     public void borrower_memiliki_pinjaman_aktif() {
+        
         loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
-        loan.ubahStatus("REPAYMENT");
+        LoanStateFactory.pendingToFunding().ubahStatus(loan);
+        LoanStateFactory.fundingReady().ubahStatus(loan);
+        LoanStateFactory.disbursed().ubahStatus(loan);
+        LoanStateFactory.repayment().ubahStatus(loan);
     }
 
     @When("borrower melakukan pembayaran cicilan")
     public void borrower_melakukan_pembayaran_cicilan() {
-        loan.ubahStatus("REPAYMENT");
+        LoanStateFactory.repayment().ubahStatus(loan);
     }
 
     @Then("status masih {string} sampai semua cicilan lunas")
@@ -77,12 +83,15 @@ public class SiklusStatusPeminjamanSteps {
     @Given("borrower masih memiliki pinjaman terakhir yang harus di bayar")
     public void borrower_masih_memiliki_pinjaman_terakhir_yang_harus_di_bayar() {
         loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
-        loan.ubahStatus("REPAYMENT");
+        LoanStateFactory.pendingToFunding().ubahStatus(loan);
+        LoanStateFactory.fundingReady().ubahStatus(loan);
+        LoanStateFactory.disbursed().ubahStatus(loan);
+        LoanStateFactory.repayment().ubahStatus(loan);
     }
 
     @When("borrower melakukan pembayaran cicilan terakhir")
     public void borrower_melakukan_pembayaran_cicilan_terakhir() {
-        loan.ubahStatus("CLOSED");
+        LoanStateFactory.closed().ubahStatus(loan);
     }
 
     @Then("status berubah menjadi {string} karena sudah lunas")
@@ -93,13 +102,13 @@ public class SiklusStatusPeminjamanSteps {
     @Given("borrower mengajukan pinjaman")
     public void borrower_mengajukan_pinjaman() {
         loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
-        loan.ubahStatus("FUNDING");
+        LoanStateFactory.pendingToFunding().ubahStatus(loan);
     }
 
     @When("sistem melakukan validasi pinjaman")
     public void sistem_melakukan_validasi_pinjaman() {
         rejectionReason = "ditolak oleh validasi";
-        loan.ubahStatus("REJECTED");
+        LoanStateFactory.rejected().ubahStatus(loan);
     }
 
     @Then("status pengajuan berubah menjadi {string}")
@@ -114,12 +123,12 @@ public class SiklusStatusPeminjamanSteps {
 
     @When("tidak ada lender yang mendanai dalam waktu tertentu")
     public void tidak_ada_lender_yang_mendanai_dalam_waktu_tertentu() {
-        loan.ubahStatus("CANCELLED");
+        LoanStateFactory.cancelled().ubahStatus(loan);
     }
 
     @When("borrower melewati tanggal jatuh tempo pembayaran cicilan")
     public void borrower_melewati_tanggal_jatuh_tempo_pembayaran_cicilan() {
-        loan.ubahStatus("OVERDUE");
+        LoanStateFactory.overdue().ubahStatus(loan);
     }
 
     @Then("status peminjaman berubah menjadi {string}")
@@ -135,7 +144,7 @@ public class SiklusStatusPeminjamanSteps {
 
     @When("borrower melakukan pembayaran cicilan setelah jatuh tempo dengan dendanya")
     public void borrower_melakukan_pembayaran_cicilan_setelah_jatuh_tempo_dengan_dendanya() {
-        loan.ubahStatus("REPAYMENT");
+        LoanStateFactory.repayment().ubahStatus(loan);
     }
 
     @Then("status peminjaman berubah kembali menjadi {string}")

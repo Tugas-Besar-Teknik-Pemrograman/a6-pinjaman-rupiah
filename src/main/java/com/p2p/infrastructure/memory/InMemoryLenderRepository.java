@@ -1,16 +1,17 @@
 package com.p2p.infrastructure.memory;
 
 import com.p2p.domain.lender.Lender;
+import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.lender.LenderRepository;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class InMemoryLenderRepository implements LenderRepository {
-    private final Map<String, Lender> lenders = new HashMap<>();
+    private final Map<LenderId, Lender> lenders = new HashMap<>();
 
     @Override
-    public Lender findById(String lenderId) {
+    public Lender findById(LenderId lenderId) {
         return lenders.get(lenderId);
     }
 

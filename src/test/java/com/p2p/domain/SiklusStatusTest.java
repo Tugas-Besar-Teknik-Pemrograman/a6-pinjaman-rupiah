@@ -90,7 +90,7 @@ public class SiklusStatusTest {
         public void Test5PembayaranCicilanTerakhir() throws Exception {
             loan.ubahStatus("REPAYMENT");
             assertEquals("REPAYMENT", loan.getStatus());
-
+            
             if(loan.isLunas() == true){
                 loan.ubahStatus("CLOSED");
                 assertEquals("CLOSED", loan.getStatus());

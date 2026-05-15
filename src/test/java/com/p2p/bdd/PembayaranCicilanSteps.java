@@ -59,7 +59,7 @@ public class PembayaranCicilanSteps {
         this.loan.setInterestStrategy(new FixedInterestStrategy(decimalRate));
     }
 
-    @Given("loan tersebut menggunakan bunga float dengan margin flat sebesar {int}")
+    @Given("loan tersebut menggunakan bunga syariah dengan margin flat sebesar {int}")
     public void setSyariahMargin(int margin) {
         this.loan.setInterestStrategy(new SyariahInterestStrategy(new BigDecimal(margin)));
     }

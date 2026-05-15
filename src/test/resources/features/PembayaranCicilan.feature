@@ -11,7 +11,7 @@ Then nominal tagihan mencapai 2500000
 
 Scenario: [PC-02] Menghitung pembayaran cicilan dengan skema bunga syariah
 Given loan dengan ID "LN-001" memiliki tagihan yang masih aktif sebesar 10000000 dan tenor 5 bulan
-And loan tersebut menggunakan bunga float dengan margin flat sebesar 150000 
+And loan tersebut menggunakan bunga syariah dengan margin flat sebesar 150000 
 When sistem menghitung tagihan bulan ini
 Then nominal tagihan mencapai 2150000
 

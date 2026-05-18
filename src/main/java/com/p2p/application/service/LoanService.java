@@ -1,5 +1,6 @@
 package com.p2p.application.service;
 
+import com.p2p.application.observer.LoanEventPublisher;
 import com.p2p.domain.borrower.Borrower;
 import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.borrower.BorrowerRepository;
@@ -13,6 +14,7 @@ public class LoanService {
     private LoanRepository loanRepository;
     private BorrowerRepository borrowerRepository;
     private NotificationService notificationService;
+    private LoanEventPublisher loanEventPublisher;
 
     public LoanService() {}
     
@@ -25,6 +27,14 @@ public class LoanService {
         this.loanRepository = loanRepository;
         this.borrowerRepository = borrowerRepository;
         this.notificationService = notificationService;
+    }
+
+    public LoanService(LoanRepository loanRepository, BorrowerRepository borrowerRepository,
+                       NotificationService notificationService, LoanEventPublisher loanEventPublisher) {
+        this.loanRepository = loanRepository;
+        this.borrowerRepository = borrowerRepository;
+        this.notificationService = notificationService;
+        this.loanEventPublisher = loanEventPublisher;
     }
 
     public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor) throws Exception {

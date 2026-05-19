@@ -10,7 +10,6 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 
-
 public class Loan {
     private LoanId loanid;
     private BorrowerId borrowerId;
@@ -76,13 +75,24 @@ public class Loan {
         this.interestStrategy = strategy;
     }
 
+    // MODIFIKASI: Penambahan denda OVERDUE
     public void generateMonthlyBill() {
         if (this.interestStrategy != null) {
-            this.currentMonthBill = this.interestStrategy.calculateInstallment(
+            Money tagihanNormal = this.interestStrategy.calculateInstallment(
                     this.targetNominal, this.remainingPrincipal, this.tenor);
+            
+            BigDecimal totalAmount = tagihanNormal.getAmount();
+
+            if ("OVERDUE".equals(this.status)) {
+                BigDecimal dendaOverdue = new BigDecimal("50000"); // Contoh denda flat 50.000
+                totalAmount = totalAmount.add(dendaOverdue);
+            }
+
+            this.currentMonthBill = new Money(totalAmount, "IDR");
         }
     }
 
+    // MODIFIKASI: Pengembalian status dari OVERDUE ke REPAYMENT
     public void payInstallment(Money paymentAmount) throws Exception {
         if (this.currentMonthBill == null) {
             throw new Exception("Tidak ada tagihan aktif");
@@ -93,20 +103,31 @@ public class Loan {
 
         BigDecimal principalPortion = this.targetNominal.getAmount()
                 .divide(new BigDecimal(this.tenor), RoundingMode.HALF_UP);
-                this.remainingPrincipal = new Money(
+        this.remainingPrincipal = new Money(
                 this.remainingPrincipal.getAmount().subtract(principalPortion),
                 this.remainingPrincipal.getCurrency());
+                
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
-
         this.tenorSisa--;
 
         if (this.status.equals("DISBURSED")) {
             LoanStateFactory.repayment().ubahStatus(this);
+        } else if ("OVERDUE".equals(this.status)) {
+            // Jika sebelumnya OVERDUE lalu bayar lunas, kembalikan ke REPAYMENT
+            this.ubahStatus("REPAYMENT"); 
         }
 
         if (isLunas()) {
             LoanStateFactory.closed().ubahStatus(this);
         }
+    }
+
+    // PENAMBAHAN METHOD BARU
+    public Money getSisaTagihanKeseluruhan() {
+        if (this.remainingPrincipal == null) {
+            return this.targetNominal;
+        }
+        return this.remainingPrincipal;
     }
 
     public boolean isLunas() {

@@ -1,6 +1,8 @@
 package com.p2p.presentation.cli;
 
 import com.p2p.presentation.cli.menu.AdminMenu;
+import com.p2p.presentation.cli.menu.BorrowerMenu;
+import com.p2p.presentation.cli.menu.LenderMenu;
 
 import java.util.Scanner;
 
@@ -25,11 +27,9 @@ public class Main {
                 if ("ADMIN".equals(role)) {
                     new AdminMenu(scanner).tampil();
                 } else if ("BORROWER".equals(role)) {
-                    System.out.println("[Menu Borrower belum tersedia - coming soon]");
-                    ctx.logout();
+                    new BorrowerMenu(scanner).tampil();
                 } else if ("LENDER".equals(role)) {
-                    System.out.println("[Menu Lender belum tersedia - coming soon]");
-                    ctx.logout();
+                    new LenderMenu(scanner).tampil();
                 }
             }
         }

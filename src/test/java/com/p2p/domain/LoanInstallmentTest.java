@@ -214,6 +214,6 @@ class LoanInstallmentTest {
         loan.payInstallment(loan.getCurrentMonthBill());
         
         // Jika belum lunas total cicilan, status harusnya kembali normal (bukan OVERDUE lagi)
-        assertEquals("DISBURSED", loan.getStatus()); 
+        assertEquals("REPAYMENT", loan.getStatus()); 
     }
 }

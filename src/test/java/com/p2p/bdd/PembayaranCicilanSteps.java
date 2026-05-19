@@ -83,7 +83,7 @@ public class PembayaranCicilanSteps {
 
     @Given("loan tersebut memiliki cicilan pokok dan bunga bulan ini sebesar {int}")
     public void loan_tersebut_memiliki_cicilan_pokok_dan_bunga_bulan_ini_sebesar(Integer baseAmount) {
-        this.loan.setInterestStrategy(new FixedInterestStrategy(BigDecimal.ZERO)); 
+        this.loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
     }
 
     @When("sistem menghitung tagihan bulan ini")

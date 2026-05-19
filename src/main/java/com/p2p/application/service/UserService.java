@@ -31,4 +31,18 @@ public class UserService {
 
         return userBaru;
     }
-}
+
+    public User login(String email, String password) {
+        User user = userRepository.findByEmail(email);
+
+        if (user == null) {
+            throw new IllegalArgumentException("Email tidak ditemukan");
+        }
+
+        if (!user.getPassword().equals(password)) {
+            throw new IllegalArgumentException("Password salah");
+        }
+
+        return user;
+    }
+}

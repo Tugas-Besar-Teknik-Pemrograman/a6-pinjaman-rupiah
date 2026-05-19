@@ -34,7 +34,6 @@ public class LoginSteps {
 
     @Given("Pengguna dengan email {string} dan password {string} sudah terdaftar sebagai role {int}")
     public void pengguna_sudah_terdaftar(String email, String password, Integer role) {
-        // Buat mock user. ID akan di-generate otomatis oleh constructor User
         User mockUser = new User("User Testing", email, password, 20, role);
         when(userRepository.findByEmail(email)).thenReturn(mockUser);
     }
@@ -47,7 +46,6 @@ public class LoginSteps {
     @When("Pengguna mencoba login dengan email {string} dan password {string}")
     public void pengguna_mencoba_login(String email, String password) {
         try {
-            // Memanggil method login di UserService
             loggedInUser = userService.login(email, password);
         } catch (Exception e) {
             loginException = e;

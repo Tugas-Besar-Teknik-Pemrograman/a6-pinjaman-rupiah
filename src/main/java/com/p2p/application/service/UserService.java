@@ -5,34 +5,30 @@ import com.p2p.domain.user.UserRepository;
 
 public class UserService {
 
-    private static UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    public static User registerUser(String nama, String email, String password, int usia, int role) {
+    public User registerUser(String nama, String email, String password, int usia, int role) {
 
-        if (usia < 18) {
-            throw new IllegalStateException("Usia minimal untuk mendaftar adalah 18 tahun");
-        }
-
+        // 1. Cek email duplikat (application-layer concern: perlu akses repository)
         User existingUser = userRepository.findByEmail(email);
         if (existingUser != null) {
-            throw new IllegalStateException("Email sudah terdaftar");
+            throw new IllegalArgumentException("Email sudah terdaftar");
         }
 
+        // 2. Cek format email sederhana (application-layer concern)
         if (!email.contains("@")) {
             throw new IllegalArgumentException("Format email tidak valid");
         }
-        if (password.length() < 8) {
-            throw new IllegalArgumentException("Password minimal harus 8 karakter");
-        }
 
+        // 3. Buat User — validasi usia, role, dan password dihandle oleh domain constructor
         User userBaru = new User(nama, email, password, usia, role);
 
         userRepository.save(userBaru);
 
         return userBaru;
     }
-}
+}

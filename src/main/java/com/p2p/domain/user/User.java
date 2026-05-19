@@ -9,6 +9,15 @@ public class User {
     private int role;
 
     public User(String nama, String email, String password, int usia, int role) {
+        if (usia < 18) {
+            throw new IllegalArgumentException("Usia minimal untuk mendaftar adalah 18 tahun");
+        }
+        if (role != 1 && role != 2 && role != 3) {
+            throw new IllegalArgumentException("Role pengguna tidak valid");
+        }
+        if (password == null || password.length() < 8) {
+            throw new IllegalArgumentException("Password minimal harus 8 karakter");
+        }
         this.id = new UserId(role);
         this.nama = nama;
         this.email = email;
@@ -26,7 +35,7 @@ public class User {
     public String getPassword() { return password; }
     public int getUsia() { return usia; }
     public int getRole() { return role; }
-
+    
     public void setNama(String nama) { this.nama = nama; }
     public void setEmail(String email) { this.email = email; }
     public void setPassword(String password) { this.password = password; }

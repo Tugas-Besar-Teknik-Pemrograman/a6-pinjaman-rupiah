@@ -8,10 +8,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UserTest {
 
-    // =====================================================================
-    // Skenario: Pembuatan User Valid
-    // =====================================================================
-
     @Test
     @DisplayName("[UT-01] Berhasil membuat instansiasi User Borrower jika data valid")
     void testCreateUserBorrowerValid() {
@@ -66,10 +62,6 @@ class UserTest {
                 "UserId Lender harus diawali dengan 'USR-LND-', tapi dapat: " + idValue);
     }
 
-    // =====================================================================
-    // Skenario: Validasi Usia (Boundary Test)
-    // =====================================================================
-
     @Test
     @DisplayName("[UT-06] Berhasil membuat User pada batas usia minimum (tepat 18 tahun)")
     void testCreateUserBoundaryAgeExact18() {
@@ -101,10 +93,6 @@ class UserTest {
         assertEquals("Usia minimal untuk mendaftar adalah 18 tahun", exception.getMessage());
     }
 
-    // =====================================================================
-    // Skenario: Validasi Role
-    // =====================================================================
-
     @Test
     @DisplayName("[UT-09] Gagal membuat User jika pilihan role tidak valid (contoh: 4)")
     void testCreateUserInvalidRole() {
@@ -124,4 +112,4 @@ class UserTest {
 
         assertEquals("Role pengguna tidak valid", exception.getMessage());
     }
-}
+}

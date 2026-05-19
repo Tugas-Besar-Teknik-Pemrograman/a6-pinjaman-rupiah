@@ -40,7 +40,7 @@ public class InvestasiLenderSteps {
         this.lenderRepository = RepositoryFactory.getInstance().getLenderRepository();
         this.fundingService = new FundingService(loanRepository, lenderRepository);
     }
-
+    
     @After
     public void tearDown() {
         RepositoryFactory.getInstance().clearData();
@@ -154,5 +154,4 @@ public class InvestasiLenderSteps {
         Assertions.assertNotNull(caughtException, "Seharusnya investasi ditolak karena melebihi target!");
         Assertions.assertEquals("Nominal investasi melebihi target pendanaan", caughtException.getMessage());
     }
-
 }

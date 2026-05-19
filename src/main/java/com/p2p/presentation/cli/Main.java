@@ -1,5 +1,7 @@
 package com.p2p.presentation.cli;
 
+import com.p2p.presentation.cli.menu.AdminMenu;
+
 import java.util.Scanner;
 
 public class Main {
@@ -21,8 +23,7 @@ public class Main {
             } else {
                 String role = ctx.getCurrentRole();
                 if ("ADMIN".equals(role)) {
-                    System.out.println("[Menu Admin belum tersedia - coming soon]");
-                    ctx.logout();
+                    new AdminMenu(scanner).tampil();
                 } else if ("BORROWER".equals(role)) {
                     System.out.println("[Menu Borrower belum tersedia - coming soon]");
                     ctx.logout();

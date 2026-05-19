@@ -25,3 +25,8 @@ Feature: Registrasi Pengguna
     Given Sistem belum memiliki pengguna dengan email "Faqihborrower@gmail.com"
     When Calon pengguna mendaftar dengan nama "Faqih", email "Faqihborrower@gmail.com", password "Faqihborrower123", usia 16 tahun, dan role 1
     Then Sistem akan menolak registrasi dengan pesan "Usia minimal untuk mendaftar adalah 18 tahun"
+
+  Scenario: [RP-05] Registrasi ditolak karena pilihan role tidak valid
+    Given Sistem belum memiliki pengguna dengan email "faqihinvalid@gmail.com"
+    When Calon pengguna mendaftar dengan nama "Faqih3", email "faqihinvalid@gmail.com", password "Pass123", usia 20 tahun, dan role 4
+    Then Sistem akan menolak registrasi dengan pesan "Role pengguna tidak valid"

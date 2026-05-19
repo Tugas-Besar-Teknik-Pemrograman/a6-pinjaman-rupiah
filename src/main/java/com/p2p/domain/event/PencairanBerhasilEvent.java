@@ -1,7 +1,6 @@
 package com.p2p.domain.event;
 
 import com.p2p.domain.borrower.BorrowerId;
-import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanId;
 
 public class PencairanBerhasilEvent {

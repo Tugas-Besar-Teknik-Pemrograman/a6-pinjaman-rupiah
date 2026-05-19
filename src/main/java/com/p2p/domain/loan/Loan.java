@@ -92,7 +92,6 @@ public class Loan {
         }
     }
 
-    // MODIFIKASI: Pengembalian status dari OVERDUE ke REPAYMENT
     public void payInstallment(Money paymentAmount) throws Exception {
         if (this.currentMonthBill == null) {
             throw new Exception("Tidak ada tagihan aktif");
@@ -122,7 +121,6 @@ public class Loan {
         }
     }
 
-    // PENAMBAHAN METHOD BARU
     public Money getSisaTagihanKeseluruhan() {
         if (this.remainingPrincipal == null) {
             return this.targetNominal;

@@ -1,5 +1,6 @@
-package com.p2p.application.service;
+package com.p2p.application;
 
+import com.p2p.application.service.UserService;
 import com.p2p.domain.user.User;
 import com.p2p.domain.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;

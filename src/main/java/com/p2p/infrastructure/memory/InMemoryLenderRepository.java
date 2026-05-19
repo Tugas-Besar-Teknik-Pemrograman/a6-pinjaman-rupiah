@@ -4,7 +4,9 @@ import com.p2p.domain.lender.Lender;
 import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.lender.LenderRepository;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class InMemoryLenderRepository implements LenderRepository {
@@ -20,6 +22,11 @@ public class InMemoryLenderRepository implements LenderRepository {
         if (lender != null && lender.getId() != null) {
             lenders.put(lender.getId(), lender);
         }
+    }
+
+    @Override
+    public List<Lender> findAll() {
+        return new ArrayList<>(lenders.values());
     }
 
     public void clear() {

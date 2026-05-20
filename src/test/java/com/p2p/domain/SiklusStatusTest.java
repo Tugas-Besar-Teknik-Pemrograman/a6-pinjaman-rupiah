@@ -7,9 +7,14 @@ import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.strategy.FixedInterestStrategy;
 import com.p2p.domain.lender.Lender;
 import com.p2p.domain.valueobject.Money;
+import com.p2p.domain.state.*;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,13 +93,22 @@ public class SiklusStatusTest {
 
         @Test
         public void Test5PembayaranCicilanTerakhir() throws Exception {
-            loan.ubahStatus("REPAYMENT");
-            assertEquals("REPAYMENT", loan.getStatus());
-            
-            if(loan.isLunas() == true){
-                loan.ubahStatus("CLOSED");
-                assertEquals("CLOSED", loan.getStatus());
-            }
+            // Pakai tenor 1 agar satu kali bayar langsung lunas
+            Loan loanSatuBulan = new Loan(
+                new LoanId("loan-1bulan"),
+                borrower.getId(),
+                new Money(new BigDecimal("100000"), "IDR"),
+                1
+            );
+            loanSatuBulan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+            loanSatuBulan.ubahStatus("DISBURSED");
+            loanSatuBulan.setTanggalJatuhTempo(LocalDate.now().plusDays(30));
+    
+            loanSatuBulan.generateMonthlyBill();
+            Money paymentAmount = new Money(new BigDecimal("105000"), "IDR");
+            loanSatuBulan.payInstallment(paymentAmount);
+ 
+        assertEquals("CLOSED", loanSatuBulan.getStatus());
         }
 
         @Test
@@ -111,36 +125,46 @@ public class SiklusStatusTest {
         @Test
         public void Test7PeminjamanDibatalkan() {
             loan.ubahStatus("FUNDING");
-            loan.isPinjamanExpired();
-            if(loan.isPinjamanExpired() == true){
-                loan.ubahStatus("CANCELED");
-            }
-
+            // Inject tanggal kadaluarsa yang sudah lewat kemarin
+            loan.setTanggalKadaluarsaFunding(LocalDate.now().minusDays(1));
+    
+            assertTrue(loan.isPinjamanExpired(), "Seharusnya expired karena batas waktu sudah lewat");
+    
+            // CancelledState akan validasi isPinjamanExpired() sebelum ubah status
+            assertDoesNotThrow(() -> {
+                new com.p2p.domain.state.CancelledState().ubahStatus(loan);
+            });
             assertEquals("CANCELED", loan.getStatus());
         }
 
         @Test
         public void Test8PinjamanOverdue() {
-            loan.ubahStatus("DISBURSED");
-            assertEquals("DISBURSED", loan.getStatus());
-
-            loan.isPinjamanOverdue();
-            if(loan.isPinjamanOverdue() == true){
-                loan.ubahStatus("OVERDUE");
-            }
-
+            loan.ubahStatus("REPAYMENT");
+            // Inject tanggal jatuh tempo yang sudah lewat kemarin
+            loan.setTanggalJatuhTempo(LocalDate.now().minusDays(1));
+    
+            assertTrue(loan.isPinjamanOverdue(),
+                "Seharusnya overdue karena tanggal jatuh tempo sudah lewat");
+    
+            // OverdueState akan validasi isPinjamanOverdue() sebelum ubah status
+            assertDoesNotThrow(() -> {
+                new com.p2p.domain.state.OverdueState().ubahStatus(loan);
+            });
             assertEquals("OVERDUE", loan.getStatus());
         }
 
         @Test
-        public void Test9PinjamanMenjadiRepaymentLagi() {
-            loan.ubahStatus("OVERDUE");
-            assertEquals("OVERDUE", loan.getStatus());
-
-            loan.isOverduePaid();
-            if(loan.isOverduePaid() == true){
-                loan.ubahStatus("REPAYMENT");
-            }
-            assertEquals("REPAYMENT", loan.getStatus());
-        }
+        public void Test9PinjamanMenjadiRepaymentLagi() throws Exception {
+        loan.ubahStatus("OVERDUE");
+        loan.setTanggalJatuhTempo(LocalDate.now().minusDays(1));
+ 
+        // Generate tagihan dan bayar
+        loan.generateMonthlyBill();
+        Money paymentAmount = new Money(new BigDecimal("13334"), "IDR");
+        loan.payInstallment(paymentAmount);
+ 
+        // Setelah bayar, currentMonthBill = 0 → isOverduePaid() = true
+        // payInstallment sudah trigger repayment() untuk status OVERDUE
+        assertEquals("REPAYMENT", loan.getStatus());
+    }
 }

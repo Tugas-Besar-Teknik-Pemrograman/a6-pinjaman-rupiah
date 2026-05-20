@@ -1,5 +1,7 @@
 package com.p2p.domain.user;
 
+import java.math.BigDecimal;
+
 public class User {
     private UserId id;
     private String nama;
@@ -7,8 +9,9 @@ public class User {
     private String password;
     private int usia;
     private int role;
+    private BigDecimal penghasilan;
 
-    public User(String nama, String email, String password, int usia, int role) {
+    public User(String nama, String email, String password, int usia, int role, BigDecimal penghasilan) {
         if (usia < 18) {
             throw new IllegalArgumentException("Usia minimal untuk mendaftar adalah 18 tahun");
         }
@@ -24,6 +27,7 @@ public class User {
         this.password = password;
         this.usia = usia;
         this.role = role;
+        this.penghasilan = penghasilan;
     }
 
     public UserId getId() { return id; }
@@ -35,7 +39,8 @@ public class User {
     public String getPassword() { return password; }
     public int getUsia() { return usia; }
     public int getRole() { return role; }
-    
+    public BigDecimal getPenghasilan() { return penghasilan; }
+    public void setPenghasilan(BigDecimal penghasilan) { this.penghasilan = penghasilan; }
     public void setNama(String nama) { this.nama = nama; }
     public void setEmail(String email) { this.email = email; }
     public void setPassword(String password) { this.password = password; }

@@ -1,33 +1,65 @@
 package com.p2p.application.service;
 
+import com.p2p.domain.borrower.Borrower;
+import com.p2p.domain.borrower.BorrowerId;
+import com.p2p.domain.borrower.BorrowerRepository;
+import com.p2p.domain.lender.Lender;
+import com.p2p.domain.lender.LenderId;
+import com.p2p.domain.lender.LenderRepository;
 import com.p2p.domain.user.User;
 import com.p2p.domain.user.UserRepository;
+import com.p2p.domain.valueobject.Money;
+
+import java.math.BigDecimal;
 
 public class UserService {
 
     private final UserRepository userRepository;
+    private final BorrowerRepository borrowerRepository;
+    private final LenderRepository lenderRepository;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, BorrowerRepository borrowerRepository, LenderRepository lenderRepository) {
         this.userRepository = userRepository;
+        this.borrowerRepository = borrowerRepository;
+        this.lenderRepository = lenderRepository;
     }
 
-    public User registerUser(String nama, String email, String password, int usia, int role) {
+    public User registerUser(String nama, String email, String password, int usia, int role,BigDecimal penghasilan) {
 
-        // 1. Cek email duplikat (application-layer concern: perlu akses repository)
         User existingUser = userRepository.findByEmail(email);
         if (existingUser != null) {
             throw new IllegalArgumentException("Email sudah terdaftar");
         }
 
-        // 2. Cek format email sederhana (application-layer concern)
         if (!email.contains("@")) {
             throw new IllegalArgumentException("Format email tidak valid");
         }
 
-        // 3. Buat User — validasi usia, role, dan password dihandle oleh domain constructor
-        User userBaru = new User(nama, email, password, usia, role);
-
+        // Buat User
+        User userBaru = new User(nama, email, password, usia, role, penghasilan);
         userRepository.save(userBaru);
+
+        // Ambil ID yang di-generate oleh User untuk dipakai sebagai ID Domain
+        String generatedId = userBaru.getId().getValue();
+
+        //role borrower
+        if (role == 1) {
+            BorrowerId bId = new BorrowerId(generatedId);
+            Money uangPenghasilan = new Money(penghasilan, "IDR");
+
+            // Limit akan otomatis dihitung 30% dari penghasilan oleh constructor
+            Borrower profilBorrower = new Borrower(bId, uangPenghasilan);
+            borrowerRepository.save(profilBorrower);
+
+        }
+        //role lender
+        else if (role == 2) {
+            LenderId lId = new LenderId(generatedId);
+            Money saldoAwal = new Money(BigDecimal.ZERO, "IDR");
+
+            Lender profilLender = new Lender(lId, saldoAwal);
+            lenderRepository.save(profilLender);
+        }
 
         return userBaru;
     }

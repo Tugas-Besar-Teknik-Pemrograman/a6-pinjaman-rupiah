@@ -10,6 +10,7 @@ import com.p2p.domain.valueobject.Money;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,13 +89,22 @@ public class SiklusStatusTest {
 
         @Test
         public void Test5PembayaranCicilanTerakhir() throws Exception {
-            loan.ubahStatus("REPAYMENT");
-            assertEquals("REPAYMENT", loan.getStatus());
-            
-            if(loan.isLunas() == true){
-                loan.ubahStatus("CLOSED");
-                assertEquals("CLOSED", loan.getStatus());
-            }
+            // Pakai tenor 1 agar satu kali bayar langsung lunas
+            Loan loanSatuBulan = new Loan(
+                new LoanId("loan-1bulan"),
+                borrower.getId(),
+                new Money(new BigDecimal("100000"), "IDR"),
+                1
+            );
+            loanSatuBulan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+            loanSatuBulan.ubahStatus("DISBURSED");
+            loanSatuBulan.setTanggalJatuhTempo(LocalDate.now().plusDays(30));
+    
+            loanSatuBulan.generateMonthlyBill();
+            Money paymentAmount = new Money(new BigDecimal("105000"), "IDR");
+            loanSatuBulan.payInstallment(paymentAmount);
+ 
+        assertEquals("CLOSED", loanSatuBulan.getStatus());
         }
 
         @Test

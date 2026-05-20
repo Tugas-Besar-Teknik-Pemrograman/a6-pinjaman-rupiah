@@ -41,7 +41,7 @@ public class AppContext {
         LoanEventPublisher publisher = new LoanEventPublisher();
 
         notificationService  = new NotificationService(repos.getLoanRepository(), notifObserver);
-        userService          = new UserService(repos.getUserRepository());
+        userService          = new UserService(repos.getUserRepository(), repos.getBorrowerRepository(), repos.getLenderRepository());
         loanService          = new LoanService(repos.getLoanRepository(), repos.getBorrowerRepository(),
                                                notificationService, publisher);
         fundingService       = new FundingService(repos.getLoanRepository(), repos.getLenderRepository());
@@ -106,7 +106,6 @@ public class AppContext {
         currentRole = null;
     }
 
-    // --- Pemetaan UserId <-> BorrowerId / LenderId ---
     public void linkBorrower(String userId, String borrowerId) {
         userToBorrowerId.put(userId, borrowerId);
     }

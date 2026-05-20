@@ -8,7 +8,10 @@ import com.p2p.domain.loan.strategy.FixedInterestStrategy;
 import com.p2p.domain.lender.Lender;
 import com.p2p.domain.valueobject.Money;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -121,11 +124,15 @@ public class SiklusStatusTest {
         @Test
         public void Test7PeminjamanDibatalkan() {
             loan.ubahStatus("FUNDING");
-            loan.isPinjamanExpired();
-            if(loan.isPinjamanExpired() == true){
-                loan.ubahStatus("CANCELED");
-            }
-
+            // Inject tanggal kadaluarsa yang sudah lewat kemarin
+            loan.setTanggalKadaluarsaFunding(LocalDate.now().minusDays(1));
+    
+            assertTrue(loan.isPinjamanExpired(), "Seharusnya expired karena batas waktu sudah lewat");
+    
+            // CancelledState akan validasi isPinjamanExpired() sebelum ubah status
+            assertDoesNotThrow(() -> {
+                new com.p2p.domain.state.CancelledState().ubahStatus(loan);
+            });
             assertEquals("CANCELED", loan.getStatus());
         }
 

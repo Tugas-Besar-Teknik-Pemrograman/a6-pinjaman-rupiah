@@ -37,3 +37,15 @@ Then sistem akan menolak pembayaran
 And sistem mengirim notifikasi "Nominal pembayaran kurang dari nominal tagihan"
 Then sisa tagihan bulan ini akan tetap 
 
+Scenario: [PC-06] Pembayaran cicilan terakhir yang melunasi seluruh pinjaman
+Given loan dengan ID "LN-004" memiliki sisa tagihan keseluruhan sebesar 2500000 dan status "REPAYMENT"
+When borrower melakukan pembayaran lunas sebesar 2500000
+Then sisa tagihan keseluruhan akan menjadi 0
+And status pinjaman "LN-004" berubah menjadi "CLOSED"
+
+Scenario: [PC-07] Perhitungan tagihan dengan tambahan denda karena keterlambatan (OVERDUE)
+Given loan dengan ID "LN-005" memiliki status "OVERDUE"
+And loan tersebut memiliki cicilan pokok dan bunga bulan ini sebesar 2500000
+When sistem menghitung tagihan bulan ini
+Then nominal tagihan harus lebih besar dari 2500000 karena ditambah denda keterlambatan
+

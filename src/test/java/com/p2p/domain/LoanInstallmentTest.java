@@ -172,4 +172,48 @@ class LoanInstallmentTest {
 
         assertFalse(loan.isLunas());
     }
+
+    @Test
+    void getSisaTagihanKeseluruhan_sebelumAdaPembayaran_samaDenganTarget() {
+        Money target = new Money(new BigDecimal("10000000"), "IDR");
+        Loan loan = new Loan(new LoanId("LN-007"), new BorrowerId("BR-001"), target, 5);
+        loan.ubahStatus("DISBURSED");
+        
+        // Asumsi: Sisa tagihan keseluruhan awal adalah target pokok (jika belum memperhitungkan bunga total di depan)
+        assertEquals(0, new BigDecimal("10000000").compareTo(
+                loan.getSisaTagihanKeseluruhan().getAmount()));
+    }
+
+    @Test
+    void generateMonthlyBill_statusOverdue_tagihanBertambahDenda() {
+        Money target = new Money(new BigDecimal("10000000"), "IDR");
+        Loan loan = new Loan(new LoanId("LN-008"), new BorrowerId("BR-001"), target, 5);
+        loan.ubahStatus("OVERDUE"); // Status dibuat telat bayar
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        
+        loan.generateMonthlyBill();
+        
+        // Tagihan normal (berdasarkan test case atas) = 2.500.000
+        // Jika ada denda (misal flat 50.000 atau percentage), maka harus > 2.500.000
+        BigDecimal normalBill = new BigDecimal("2500000");
+        BigDecimal currentBillAmount = loan.getCurrentMonthBill().getAmount();
+        
+        assertTrue(currentBillAmount.compareTo(normalBill) > 0, 
+            "Tagihan " + currentBillAmount + " seharusnya > " + normalBill + " karena ada denda overdue");
+    }
+
+    @Test
+    void payInstallment_statusOverdue_lunas_statusKembaliKeDisbursed() throws Exception {
+        Money target = new Money(new BigDecimal("10000000"), "IDR");
+        Loan loan = new Loan(new LoanId("LN-009"), new BorrowerId("BR-001"), target, 5);
+        loan.ubahStatus("OVERDUE"); 
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.generateMonthlyBill();
+        
+        // Bayar lunas tagihan bulan ini (termasuk denda)
+        loan.payInstallment(loan.getCurrentMonthBill());
+        
+        // Jika belum lunas total cicilan, status harusnya kembali normal (bukan OVERDUE lagi)
+        assertEquals("REPAYMENT", loan.getStatus()); 
+    }
 }

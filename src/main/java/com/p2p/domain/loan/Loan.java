@@ -7,9 +7,10 @@ import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
 
 public class Loan {
     private LoanId loanid;
@@ -21,9 +22,16 @@ public class Loan {
     private int tenorSisa;
     private String status;
 
+
     private InterestCalculationStrategy interestStrategy;
     private Money currentMonthBill;
     private Map<LenderId, Money> daftarPendana;
+
+    private LocalDate tanggalDibuat;
+    private LocalDate tanggalKadaluarsaFunding;
+    private LocalDate tanggalJatuhTempo; 
+
+    private static final int BATAS_HARI_FUNDING = 28;
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal, int tenor) {
         this.loanid = loanid;
@@ -36,6 +44,8 @@ public class Loan {
         this.daftarPendana = new HashMap<>();
         this.status = "PENDING";
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
+        this.tanggalDibuat = LocalDate.now();
+        this.tanggalKadaluarsaFunding = LocalDate.now().plusDays(BATAS_HARI_FUNDING);
     }
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal) {
@@ -68,6 +78,12 @@ public class Loan {
         }
     }
 
+    public void DisburseLoan() {
+        // Dipanggil saat DISBURSED — cicilan pertama jatuh tempo 28 hari sejak cair
+        this.tanggalJatuhTempo = LocalDate.now().plusDays(28);
+        LoanStateFactory.disbursed().ubahStatus(this);
+    }
+
     public void bayarCicilan(String repaymentId, Money jumlahBayar) throws Exception {
         payInstallment(jumlahBayar);
     }
@@ -76,10 +92,20 @@ public class Loan {
         this.interestStrategy = strategy;
     }
 
+    // MODIFIKASI: Penambahan denda OVERDUE
     public void generateMonthlyBill() {
         if (this.interestStrategy != null) {
-            this.currentMonthBill = this.interestStrategy.calculateInstallment(
+            Money tagihanNormal = this.interestStrategy.calculateInstallment(
                     this.targetNominal, this.remainingPrincipal, this.tenor);
+            
+            BigDecimal totalAmount = tagihanNormal.getAmount();
+
+            if ("OVERDUE".equals(this.status)) {
+                BigDecimal dendaOverdue = new BigDecimal("50000"); // Contoh denda flat 50.000
+                totalAmount = totalAmount.add(dendaOverdue);
+            }
+
+            this.currentMonthBill = new Money(totalAmount, "IDR");
         }
     }
 
@@ -93,14 +119,21 @@ public class Loan {
 
         BigDecimal principalPortion = this.targetNominal.getAmount()
                 .divide(new BigDecimal(this.tenor), RoundingMode.HALF_UP);
-                this.remainingPrincipal = new Money(
+        this.remainingPrincipal = new Money(
                 this.remainingPrincipal.getAmount().subtract(principalPortion),
                 this.remainingPrincipal.getCurrency());
+                
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
-
         this.tenorSisa--;
 
+        if (this.tanggalJatuhTempo != null) {
+            this.tanggalJatuhTempo = LocalDate.now().plusDays(30);
+        }
+ 
         if (this.status.equals("DISBURSED")) {
+            LoanStateFactory.repayment().ubahStatus(this);
+        } else if (this.status.equals("OVERDUE")) {
+            // Bayar setelah overdue → kembali ke REPAYMENT
             LoanStateFactory.repayment().ubahStatus(this);
         }
 
@@ -109,21 +142,33 @@ public class Loan {
         }
     }
 
+    public Money getSisaTagihanKeseluruhan() {
+        if (this.remainingPrincipal == null) {
+            return this.targetNominal;
+        }
+        return this.remainingPrincipal;
+    }
+
     public boolean isLunas() {
         return this.tenorSisa <= 0
                 || this.remainingPrincipal.getAmount().compareTo(BigDecimal.ZERO) <= 0;
     }
 
     public boolean isPinjamanExpired() {
-        return "FUNDING".equals(this.status);
+        if (!"FUNDING".equals(this.status)) return false;
+        return LocalDate.now().isAfter(this.tanggalKadaluarsaFunding);
     }
 
     public boolean isPinjamanOverdue() {
-        return "DISBURSED".equals(this.status) || "REPAYMENT".equals(this.status);
+        if (!"DISBURSED".equals(this.status) && !"REPAYMENT".equals(this.status)) return false;
+        if (this.tanggalJatuhTempo == null) return false;
+        return LocalDate.now().isAfter(this.tanggalJatuhTempo);
     }
 
     public boolean isOverduePaid() {
-        return "OVERDUE".equals(this.status);
+        if (!"OVERDUE".equals(this.status)) return false;
+        if (this.currentMonthBill == null) return false;
+        return this.currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) == 0;
     }
 
     public void setTotalTerkumpul(Money totalTerkumpul) {
@@ -160,5 +205,26 @@ public class Loan {
 
     public Money getCurrentMonthBill() {
         return currentMonthBill;
+    }
+
+    public LocalDate getTanggalJatuhTempo() {
+        return tanggalJatuhTempo;
+    }
+ 
+    public LocalDate getTanggalKadaluarsaFunding() {
+        return tanggalKadaluarsaFunding;
+    }
+
+    public Map<LenderId, Money> getListPendana() {
+        return Collections.unmodifiableMap(daftarPendana);
+    }
+
+    // Untuk keperluan test (inject tanggal yang sudah lewat)
+    public void setTanggalKadaluarsaFunding(LocalDate tanggal) {
+        this.tanggalKadaluarsaFunding = tanggal;
+    }
+ 
+    public void setTanggalJatuhTempo(LocalDate tanggal) {
+        this.tanggalJatuhTempo = tanggal;
     }
 }

@@ -8,19 +8,25 @@ import java.math.BigDecimal;
 
 public class Borrower {
     private static final int AMBANG_BATAS = 600;
-
+    private static final BigDecimal MINIMAL_PEMINJAMAN = new BigDecimal("100000");
+    private static final BigDecimal PERSENTASE_LIMIT = new BigDecimal("0.30");
     private BorrowerId id;
     private Money limitPinjaman;
     private boolean kycStatus;
     private int creditScore;
     private boolean hasActiveLoan;
 
-    public Borrower(BorrowerId id, Money limit) {
+    public Borrower(BorrowerId id, Money penghasilan) {
         this.id = id;
-        this.limitPinjaman = limit;
+        this.limitPinjaman = hitungLimitMaksimal(penghasilan);
         this.kycStatus = false;
         this.creditScore = 0;
         this.hasActiveLoan = false;
+    }
+
+    private Money hitungLimitMaksimal(Money penghasilan) {
+        BigDecimal kalkulasi = penghasilan.getAmount().multiply(PERSENTASE_LIMIT);
+        return new Money(kalkulasi, penghasilan.getCurrency());
     }
 
     public Loan ajukanPinjaman(LoanId loanid, Money nominal, int tenor){
@@ -42,14 +48,14 @@ public class Borrower {
             throw new IllegalStateException("Peminjaman ditolak karena Credit score di bawah ambang batas");
         }
 
-        //validasi nominal gaboleh <= 0
-        if (nominal.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Nominal pinjaman harus lebih dari 0");
+        //validasi nominal gaboleh kurang dari minimum peminjaman
+        if (nominal.getAmount().compareTo(MINIMAL_PEMINJAMAN) < 0) {
+            throw new IllegalArgumentException("Nominal pinjaman harus lebih dari 100.000");
         }
 
         //validasi nominal <= limit
         if (this.limitPinjaman.isLessThan(nominal)) {
-            // Jika sisa limit lebih kecil dari yang mau dipinjam, tolak!
+            // Jika sisa limit lebih kecil dari yang mau dipinjam, ditolak
             throw new IllegalStateException("Sisa limit pinjaman tidak mencukupi");
         }
 

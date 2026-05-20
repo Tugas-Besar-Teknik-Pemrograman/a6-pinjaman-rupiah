@@ -9,6 +9,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -25,7 +27,7 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        userDummy = new User("Faqih Shiam", "faqih@gmail.com", "passwordKuat123", 20, 1);
+        userDummy = new User("Faqih Shiam", "faqih@gmail.com", "passwordKuat123", 20, 1,new BigDecimal("1000000"));
     }
 
     @Test

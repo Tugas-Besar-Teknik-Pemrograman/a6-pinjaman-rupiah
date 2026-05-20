@@ -1,6 +1,8 @@
 package com.p2p.bdd;
 
 import com.p2p.application.service.UserService;
+import com.p2p.domain.borrower.BorrowerRepository;
+import com.p2p.domain.lender.LenderRepository;
 import com.p2p.domain.user.User;
 import com.p2p.domain.user.UserRepository;
 import io.cucumber.java.Before;
@@ -11,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -19,6 +23,12 @@ public class RegistrasiPenggunaSteps {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private BorrowerRepository borrowerRepository;
+
+    @Mock
+    private LenderRepository lenderRepository;
+    
     @InjectMocks
     private UserService userService;
 
@@ -39,14 +49,15 @@ public class RegistrasiPenggunaSteps {
 
     @Given("Pengguna dengan email {string} sudah terdaftar di sistem")
     public void pengguna_dengan_email_sudah_terdaftar_di_sistem(String email) {
-        User existingUser = new User("User Lama", email, "password123", 25, 1);
+        User existingUser = new User("User Lama", email, "password123", 25, 1,new BigDecimal("0"));
         when(userRepository.findByEmail(email)).thenReturn(existingUser);
     }
 
     @When("Calon pengguna mendaftar dengan nama {string}, email {string}, password {string}, usia {int} tahun, dan role {int}")
     public void calon_pengguna_mendaftar_dengan_nama_email_password_usia_tahun_dan_role(String nama, String email, String password, Integer usia, Integer role) {
         try {
-            hasilUser = userService.registerUser(nama, email, password, usia, role);
+            BigDecimal dummyPenghasilan = new BigDecimal("10000000");
+            hasilUser = userService.registerUser(nama, email, password, usia, role, dummyPenghasilan);
         } catch (Exception e) {
             exceptionDitolak = e;
         }
@@ -55,7 +66,7 @@ public class RegistrasiPenggunaSteps {
     @When("Calon pengguna mencoba mendaftar menggunakan email {string}")
     public void calon_pengguna_mencoba_mendaftar_menggunakan_email(String email) {
         try {
-            hasilUser = userService.registerUser("Dummy Name", email, "DummyPass123", 25, 1);
+            hasilUser = userService.registerUser("Dummy Name", email, "DummyPass123", 25, 1, new BigDecimal("1000000"));
         } catch (Exception e) {
             exceptionDitolak = e;
         }

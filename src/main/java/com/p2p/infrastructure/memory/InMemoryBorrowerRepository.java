@@ -4,7 +4,9 @@ import com.p2p.domain.borrower.Borrower;
 import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.borrower.BorrowerRepository;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class InMemoryBorrowerRepository implements BorrowerRepository {
@@ -20,6 +22,11 @@ public class InMemoryBorrowerRepository implements BorrowerRepository {
         if (borrower != null && borrower.getId() != null) {
             borrowers.put(borrower.getId(), borrower);
         }
+    }
+
+    @Override
+    public List<Borrower> findAll() {
+        return new ArrayList<>(borrowers.values());
     }
 
     public void clear() {

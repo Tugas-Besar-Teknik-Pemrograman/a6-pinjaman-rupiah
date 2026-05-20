@@ -3,7 +3,9 @@ import com.p2p.domain.user.User;
 import com.p2p.domain.user.UserId;
 import com.p2p.domain.user.UserRepository;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class InMemoryUserRepository implements UserRepository{
@@ -31,6 +33,11 @@ public class InMemoryUserRepository implements UserRepository{
         }
     }
     
+    @Override
+    public List<User> findAll() {
+        return new ArrayList<>(users.values());
+    }
+
     public void clear() {
         users.clear();
     }

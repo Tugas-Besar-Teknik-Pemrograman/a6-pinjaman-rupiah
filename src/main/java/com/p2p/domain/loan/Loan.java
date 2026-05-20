@@ -150,7 +150,9 @@ public class Loan {
     }
 
     public boolean isOverduePaid() {
-        return "OVERDUE".equals(this.status);
+        if (!"OVERDUE".equals(this.status)) return false;
+        if (this.currentMonthBill == null) return false;
+        return this.currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) == 0;
     }
 
     public void setTotalTerkumpul(Money totalTerkumpul) {

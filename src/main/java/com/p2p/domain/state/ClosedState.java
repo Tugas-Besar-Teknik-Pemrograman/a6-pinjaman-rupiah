@@ -6,8 +6,19 @@ public class ClosedState implements State {
 
 	@Override
 	public void ubahStatus(Loan loan) {
-		if (loan != null && "REPAYMENT".equals(loan.getStatus())) {
-			loan.ubahStatus("CLOSED");
+		if (loan == null) return;
+		String status = loan.getStatus();
+		if ("PENDING".equals(status) || "FUNDING".equals(status)) {
+			if ("FUNDING".equals(status) && !loan.isPinjamanExpired()) {
+				throw new IllegalStateException(
+					"Pinjaman belum kadaluarsa, tidak bisa dibatalkan"
+				);
+			}
+			loan.ubahStatus("CANCELED");
+		} else {
+			throw new IllegalStateException(
+				"Tidak bisa CANCELED dari status: " + status
+			);
 		}
 	}
 }

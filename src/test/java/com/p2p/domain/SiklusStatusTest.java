@@ -160,7 +160,7 @@ public class SiklusStatusTest {
  
         // Generate tagihan dan bayar
         loan.generateMonthlyBill();
-        Money paymentAmount = new Money(new BigDecimal("13334"), "IDR");
+        Money paymentAmount = new Money(new BigDecimal("63334"), "IDR");
         loan.payInstallment(paymentAmount);
  
         // Setelah bayar, currentMonthBill = 0 → isOverduePaid() = true

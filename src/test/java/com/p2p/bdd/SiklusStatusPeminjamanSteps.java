@@ -10,6 +10,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -128,6 +129,8 @@ public class SiklusStatusPeminjamanSteps {
 
     @When("borrower melewati tanggal jatuh tempo pembayaran cicilan")
     public void borrower_melewati_tanggal_jatuh_tempo_pembayaran_cicilan() {
+        // Simulasikan pinjaman telah melewati tanggal jatuh tempo
+        loan.setTanggalJatuhTempo(LocalDate.now().minusDays(1));
         LoanStateFactory.overdue().ubahStatus(loan);
     }
 

@@ -7,6 +7,7 @@ import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.strategy.FixedInterestStrategy;
 import com.p2p.domain.lender.Lender;
 import com.p2p.domain.valueobject.Money;
+import com.p2p.domain.state.*;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -43,7 +43,7 @@ public class AppContext {
         notificationService  = new NotificationService(repos.getLoanRepository(), notifObserver);
         userService          = new UserService(repos.getUserRepository(), repos.getBorrowerRepository(), repos.getLenderRepository());
         loanService          = new LoanService(repos.getLoanRepository(), repos.getBorrowerRepository(),
-                                               notificationService, publisher);
+                                               publisher, notificationService);
         fundingService       = new FundingService(repos.getLoanRepository(), repos.getLenderRepository());
         withdrawalService    = new WithdrawalService(repos.getLenderRepository());
     }

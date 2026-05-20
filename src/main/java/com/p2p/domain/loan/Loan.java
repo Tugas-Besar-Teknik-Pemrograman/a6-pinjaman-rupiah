@@ -144,7 +144,9 @@ public class Loan {
     }
 
     public boolean isPinjamanOverdue() {
-        return "DISBURSED".equals(this.status) || "REPAYMENT".equals(this.status);
+        if (!"DISBURSED".equals(this.status) && !"REPAYMENT".equals(this.status)) return false;
+        if (this.tanggalJatuhTempo == null) return false;
+        return LocalDate.now().isAfter(this.tanggalJatuhTempo);
     }
 
     public boolean isOverduePaid() {

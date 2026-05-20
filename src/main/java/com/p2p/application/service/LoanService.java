@@ -110,4 +110,7 @@ public class LoanService {
         notificationService.kirimNotifikasi(borrowerId, "Pencairan gagal: pendanaan belum terpenuhi");
         return "gagal";
     }
+    public Loan getLoan(LoanId loanId) {
+        return loanRepository.findById(loanId);
+    }
 }

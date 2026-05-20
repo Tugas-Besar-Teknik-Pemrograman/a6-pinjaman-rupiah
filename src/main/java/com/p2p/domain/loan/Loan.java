@@ -190,4 +190,25 @@ public class Loan {
     public Money getCurrentMonthBill() {
         return currentMonthBill;
     }
+
+    public LocalDate getTanggalJatuhTempo() {
+        return tanggalJatuhTempo;
+    }
+ 
+    public LocalDate getTanggalKadaluarsaFunding() {
+        return tanggalKadaluarsaFunding;
+    }
+
+    public Map<LenderId, Money> getListPendana() {
+        return Collections.unmodifiableMap(daftarPendana);
+    }
+
+    // Untuk keperluan test (inject tanggal yang sudah lewat)
+    public void setTanggalKadaluarsaFunding(LocalDate tanggal) {
+        this.tanggalKadaluarsaFunding = tanggal;
+    }
+ 
+    public void setTanggalJatuhTempo(LocalDate tanggal) {
+        this.tanggalJatuhTempo = tanggal;
+    }
 }

@@ -138,14 +138,17 @@ public class SiklusStatusTest {
 
         @Test
         public void Test8PinjamanOverdue() {
-            loan.ubahStatus("DISBURSED");
-            assertEquals("DISBURSED", loan.getStatus());
-
-            loan.isPinjamanOverdue();
-            if(loan.isPinjamanOverdue() == true){
-                loan.ubahStatus("OVERDUE");
-            }
-
+            loan.ubahStatus("REPAYMENT");
+            // Inject tanggal jatuh tempo yang sudah lewat kemarin
+            loan.setTanggalJatuhTempo(LocalDate.now().minusDays(1));
+    
+            assertTrue(loan.isPinjamanOverdue(),
+                "Seharusnya overdue karena tanggal jatuh tempo sudah lewat");
+    
+            // OverdueState akan validasi isPinjamanOverdue() sebelum ubah status
+            assertDoesNotThrow(() -> {
+                new com.p2p.domain.state.OverdueState().ubahStatus(loan);
+            });
             assertEquals("OVERDUE", loan.getStatus());
         }
 

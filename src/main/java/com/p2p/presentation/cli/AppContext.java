@@ -1,7 +1,7 @@
 package com.p2p.presentation.cli;
 
 import com.p2p.application.observer.LoanEventPublisher;
-import com.p2p.application.observer.NotificationObserver;
+import com.p2p.application.observer.BorrowerNotificationObserver;
 import com.p2p.application.service.FundingService;
 import com.p2p.application.service.LoanService;
 import com.p2p.application.service.NotificationService;
@@ -37,7 +37,7 @@ public class AppContext {
     private AppContext() {
         repos = RepositoryFactory.getInstance();
 
-        NotificationObserver notifObserver = new NotificationObserver();
+        BorrowerNotificationObserver notifObserver = new BorrowerNotificationObserver();
         LoanEventPublisher publisher = new LoanEventPublisher();
 
         notificationService  = new NotificationService(repos.getLoanRepository(), notifObserver);

@@ -45,9 +45,19 @@ public class LoanService {
 
     public void bayarCicilan(LoanId loanId, Money amount) throws Exception {
         Loan loan = loanRepository.findById(loanId);
-        if (loan == null) throw new Exception("Loan tidak ditemukan");
+        if (loan == null) {
+            throw new Exception("Loan tidak ditemukan");
+        }
+        
+        // Pendelegasian ke entitas Domain.
+        // Segala validasi denda overdue, perubahan status lunas (CLOSED), 
+        // atau kurang bayar, akan di-handle di dalam method ini.
         loan.payInstallment(amount);
+        
         loanRepository.save(loan);
+        
+        // Catatan: Jika nanti integrasi dengan Notification/Event Publisher
+        // sudah siap, notifikasi pembayaran bisa di-trigger dari sini.
     }
 
     public void prosesPencairan(LoanId loanId) {
@@ -88,5 +98,8 @@ public class LoanService {
         }
         notificationService.kirimNotifikasi(borrowerId, "Pencairan gagal: pendanaan belum terpenuhi");
         return "gagal";
+    }
+    public Loan getLoan(LoanId loanId) {
+        return loanRepository.findById(loanId);
     }
 }

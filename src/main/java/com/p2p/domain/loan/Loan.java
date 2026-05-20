@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-
 public class Loan {
     private LoanId loanid;
     private BorrowerId borrowerId;
@@ -93,10 +92,20 @@ public class Loan {
         this.interestStrategy = strategy;
     }
 
+    // MODIFIKASI: Penambahan denda OVERDUE
     public void generateMonthlyBill() {
         if (this.interestStrategy != null) {
-            this.currentMonthBill = this.interestStrategy.calculateInstallment(
+            Money tagihanNormal = this.interestStrategy.calculateInstallment(
                     this.targetNominal, this.remainingPrincipal, this.tenor);
+            
+            BigDecimal totalAmount = tagihanNormal.getAmount();
+
+            if ("OVERDUE".equals(this.status)) {
+                BigDecimal dendaOverdue = new BigDecimal("50000"); // Contoh denda flat 50.000
+                totalAmount = totalAmount.add(dendaOverdue);
+            }
+
+            this.currentMonthBill = new Money(totalAmount, "IDR");
         }
     }
 
@@ -110,11 +119,11 @@ public class Loan {
 
         BigDecimal principalPortion = this.targetNominal.getAmount()
                 .divide(new BigDecimal(this.tenor), RoundingMode.HALF_UP);
-                this.remainingPrincipal = new Money(
+        this.remainingPrincipal = new Money(
                 this.remainingPrincipal.getAmount().subtract(principalPortion),
                 this.remainingPrincipal.getCurrency());
+                
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
-
         this.tenorSisa--;
 
         if (this.tanggalJatuhTempo != null) {
@@ -131,6 +140,13 @@ public class Loan {
         if (isLunas()) {
             LoanStateFactory.closed().ubahStatus(this);
         }
+    }
+
+    public Money getSisaTagihanKeseluruhan() {
+        if (this.remainingPrincipal == null) {
+            return this.targetNominal;
+        }
+        return this.remainingPrincipal;
     }
 
     public boolean isLunas() {

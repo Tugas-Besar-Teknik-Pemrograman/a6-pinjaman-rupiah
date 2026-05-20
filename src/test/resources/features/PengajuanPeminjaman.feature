@@ -38,11 +38,11 @@ Feature: Pengajuan peminjaman borrower
     When Borrower mengajukan peminjaman sebesar 200000
     Then Sistem akan menolak peminjaman
 
-  Scenario: [PP-07] Pengajuan peminjaman ditolak karena nominal tidak valid (nol atau negatif)
+  Scenario: [PP-07] Pengajuan peminjaman ditolak karena nominal tidak valid kurang dari minimum
     Given Borrower dengan ID "01" terverifikasi
-    When Borrower mengajukan peminjaman sebesar -1
-    Then Sistem akan menolak peminjaman dengan pesan "Nominal pinjaman harus lebih dari 0"
-
+    When Borrower mengajukan peminjaman sebesar 50000
+    Then Sistem akan menolak peminjaman dengan pesan "Nominal pinjaman harus lebih dari 100.000"
+    
   Scenario: [PP-08] Pengajuan peminjaman ditolak karena Borrower masih memiliki pinjaman aktif
     Given Borrower dengan ID "01" terverifikasi
     And Borrower "01" memiliki pinjaman aktif dengan status "DISBURSED"

@@ -3,6 +3,8 @@ package com.p2p.bdd;
 import com.p2p.application.service.UserService;
 import com.p2p.domain.user.User;
 import com.p2p.domain.user.UserRepository;
+import com.p2p.domain.borrower.BorrowerRepository;
+import com.p2p.domain.lender.LenderRepository;
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -11,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.math.BigDecimal;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -18,6 +22,12 @@ public class LoginSteps {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private BorrowerRepository borrowerRepository;
+
+    @Mock
+    private LenderRepository lenderRepository;
 
     @InjectMocks
     private UserService userService;
@@ -34,7 +44,7 @@ public class LoginSteps {
 
     @Given("Pengguna dengan email {string} dan password {string} sudah terdaftar sebagai role {int}")
     public void pengguna_sudah_terdaftar(String email, String password, Integer role) {
-        User mockUser = new User("User Testing", email, password, 20, role);
+        User mockUser = new User("User Testing", email, password, 20, role, new BigDecimal("0"));
         when(userRepository.findByEmail(email)).thenReturn(mockUser);
     }
 

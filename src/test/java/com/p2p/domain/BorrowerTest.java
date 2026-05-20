@@ -37,7 +37,7 @@ class BorrowerTest {
         assertNotNull(loanBaru, "Loan harus berhasil dibuat");
         assertEquals(loanIdBaru, loanBaru.getId());
 
-        BigDecimal sisaLimitExpected = new BigDecimal("10000000");
+        BigDecimal sisaLimitExpected = new BigDecimal("3000000.00");
         assertEquals(sisaLimitExpected, borrower.getLimitPinjaman().getAmount());
 
         assertTrue(borrower.hasActiveLoan(), "Borrower harus ditandai memiliki pinjaman aktif");
@@ -58,14 +58,14 @@ class BorrowerTest {
     }
 
     @Test
-    void pengajuan_peminjaman_ditolak_jika_mengajukan_nominal_negatif_atau_nol(){
+    void pengajuan_peminjaman_ditolak_jika_mengajukan_nominal_kurang_dari_minimum(){
         Money nominalpinjaman1 = new Money(new BigDecimal("-10"), "IDR");
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,()-> {
             borrower.ajukanPinjaman(new LoanId("001"), nominalpinjaman1, 12);
         });
 
-        assertEquals("Nominal pinjaman harus lebih dari 0", exception.getMessage());
+        assertEquals("Nominal pinjaman harus lebih dari 100.000", exception.getMessage());
     }
 
     @Test
@@ -134,7 +134,7 @@ class BorrowerTest {
         assertEquals("FUNDING", loanBaru.getStatus(), "Status pinjaman baru harus FUNDING");
         assertTrue(borrower.hasActiveLoan(), "Borrower harus ditandai memiliki pinjaman aktif");
 
-        BigDecimal sisaLimitExpected = new BigDecimal("10000000");
+        BigDecimal sisaLimitExpected = new BigDecimal("3000000.00");
         assertEquals(sisaLimitExpected, borrower.getLimitPinjaman().getAmount(), "Limit plafon tidak boleh berubah");
     }
 }

@@ -139,7 +139,8 @@ public class Loan {
     }
 
     public boolean isPinjamanExpired() {
-        return "FUNDING".equals(this.status);
+        if (!"FUNDING".equals(this.status)) return false;
+        return LocalDate.now().isAfter(this.tanggalKadaluarsaFunding);
     }
 
     public boolean isPinjamanOverdue() {

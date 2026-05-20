@@ -153,14 +153,17 @@ public class SiklusStatusTest {
         }
 
         @Test
-        public void Test9PinjamanMenjadiRepaymentLagi() {
-            loan.ubahStatus("OVERDUE");
-            assertEquals("OVERDUE", loan.getStatus());
-
-            loan.isOverduePaid();
-            if(loan.isOverduePaid() == true){
-                loan.ubahStatus("REPAYMENT");
-            }
-            assertEquals("REPAYMENT", loan.getStatus());
-        }
+        public void Test9PinjamanMenjadiRepaymentLagi() throws Exception {
+        loan.ubahStatus("OVERDUE");
+        loan.setTanggalJatuhTempo(LocalDate.now().minusDays(1));
+ 
+        // Generate tagihan dan bayar
+        loan.generateMonthlyBill();
+        Money paymentAmount = new Money(new BigDecimal("13334"), "IDR");
+        loan.payInstallment(paymentAmount);
+ 
+        // Setelah bayar, currentMonthBill = 0 → isOverduePaid() = true
+        // payInstallment sudah trigger repayment() untuk status OVERDUE
+        assertEquals("REPAYMENT", loan.getStatus());
+    }
 }

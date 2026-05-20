@@ -7,6 +7,8 @@ import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,9 +23,16 @@ public class Loan {
     private int tenorSisa;
     private String status;
 
+
     private InterestCalculationStrategy interestStrategy;
     private Money currentMonthBill;
     private Map<LenderId, Money> daftarPendana;
+
+    private LocalDate tanggalDibuat;
+    private LocalDate tanggalKadaluarsaFunding;
+    private LocalDate tanggalJatuhTempo; 
+
+    private static final int BATAS_HARI_FUNDING = 28;
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal, int tenor) {
         this.loanid = loanid;
@@ -36,6 +45,8 @@ public class Loan {
         this.daftarPendana = new HashMap<>();
         this.status = "PENDING";
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
+        this.tanggalDibuat = LocalDate.now();
+        this.tanggalKadaluarsaFunding = LocalDate.now().plusDays(BATAS_HARI_FUNDING);
     }
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal) {
@@ -66,6 +77,12 @@ public class Loan {
         if (totalBaru.compareTo(this.targetNominal.getAmount()) == 0) {
             LoanStateFactory.fundingReady().ubahStatus(this);
         }
+    }
+
+    public void DisburseLoan() {
+        // Dipanggil saat DISBURSED — cicilan pertama jatuh tempo 28 hari sejak cair
+        this.tanggalJatuhTempo = LocalDate.now().plusDays(28);
+        LoanStateFactory.disbursed().ubahStatus(this);
     }
 
     public void bayarCicilan(String repaymentId, Money jumlahBayar) throws Exception {
@@ -100,7 +117,14 @@ public class Loan {
 
         this.tenorSisa--;
 
+        if (this.tanggalJatuhTempo != null) {
+            this.tanggalJatuhTempo = LocalDate.now().plusDays(30);
+        }
+ 
         if (this.status.equals("DISBURSED")) {
+            LoanStateFactory.repayment().ubahStatus(this);
+        } else if (this.status.equals("OVERDUE")) {
+            // Bayar setelah overdue → kembali ke REPAYMENT
             LoanStateFactory.repayment().ubahStatus(this);
         }
 

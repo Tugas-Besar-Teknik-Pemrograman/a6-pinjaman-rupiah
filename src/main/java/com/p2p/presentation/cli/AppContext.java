@@ -55,7 +55,7 @@ public class AppContext {
         return instance;
     }
 
-    // --- Getters service ---
+    // Getters service
     public UserService getUserService() {
         return userService;
     }

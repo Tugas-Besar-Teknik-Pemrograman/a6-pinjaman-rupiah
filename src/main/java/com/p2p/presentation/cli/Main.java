@@ -37,46 +37,123 @@ public class Main {
 
     private static boolean tampilLogin(AppContext ctx, Scanner scanner) {
         System.out.println("\n=== MENU UTAMA ===");
-        System.out.println("1. Login");
-        System.out.println("2. Keluar");
+        System.out.println("1. Registrasi");
+        System.out.println("2. Login");
+        System.out.println("3. Keluar");
         System.out.print("Pilih: ");
         String pilihan = scanner.nextLine().trim();
 
-        if ("2".equals(pilihan)) {
-            return true;
-        }
+        switch (pilihan) {
+            case "1" -> {
+                System.out.println("\nREGISTRASI USER");
+                System.out.print("Nama : ");
+                String nama = scanner.nextLine().trim();
 
-        System.out.println("\n=== LOGIN ===");
-        System.out.print("Email    : ");
-        String email = scanner.nextLine().trim();
-        System.out.print("Password : ");
-        String password = scanner.nextLine().trim();
+                System.out.print("Email : ");
+                String email = scanner.nextLine().trim();
 
-        if (AppContext.ADMIN_EMAIL.equals(email) && AppContext.ADMIN_PASSWORD.equals(password)) {
-            ctx.setCurrentUserId("admin");
-            ctx.setCurrentRole("ADMIN");
-            System.out.println("Login berhasil sebagai Admin.");
-            return false;
-        }
+                System.out.print("Password : ");
+                String password = scanner.nextLine().trim();
 
-        try {
-            var user = ctx.getUserService().login(email, password);
-            ctx.setCurrentUserId(user.getId().toString());
+                System.out.print("Konfirmasi Password : ");
+                String konfirmasiPassword = scanner.nextLine().trim();
 
-            String borrowerId = ctx.getBorrowerId(user.getId().toString());
-            String lenderId   = ctx.getLenderId(user.getId().toString());
+                if (!password.equals(konfirmasiPassword)) {
+                    System.out.println("Registrasi gagal, Password dan konfirmasi password ga cocok");
+                    return false;
+                }
 
-            if (borrowerId != null) {
-                ctx.setCurrentRole("BORROWER");
-            } else if (lenderId != null) {
-                ctx.setCurrentRole("LENDER");
-            } else {
-                ctx.setCurrentRole("USER");
+                System.out.print("Usia : ");
+                int usia;
+                try {
+                    usia = Integer.parseInt(scanner.nextLine().trim());
+                } catch (NumberFormatException e) {
+                    System.out.println("Registrasi gagal, Usia harus berupa angka");
+                    return false;
+                }
+
+                System.out.println("Pilih Role:");
+                System.out.println("1. Borrower");
+                System.out.println("2. Lender");
+                System.out.print("Pilih Role (1/2): ");
+                String rolePilihan = scanner.nextLine().trim();
+                int role;
+                java.math.BigDecimal penghasilan = java.math.BigDecimal.ZERO;
+
+                if ("1".equals(rolePilihan)) {
+                    role = 1;
+                    System.out.print("Penghasilan Bulanan (Rp): ");
+                    try {
+                        penghasilan = new java.math.BigDecimal(scanner.nextLine().trim());
+                    } catch (NumberFormatException e) {
+                        System.out.println("Registrasi gagal: Penghasilan harus berupa angka!");
+                        return false;
+                    }
+                } else if ("2".equals(rolePilihan)) {
+                    role = 2;
+                } else {
+                    System.out.println("Registrasi gagal: Pilihan role tidak valid!");
+                    return false;
+                }
+
+                try {
+                    var user = ctx.getUserService().registerUser(nama, email, password, usia, role, penghasilan);
+                    System.out.println("------------------------------------------");
+                    System.out.println("Registrasi Berhasil!");
+                    System.out.println("ID User : " + user.getId().getValue());
+                    System.out.println("Role    : " + (role == 1 ? "BORROWER" : "LENDER"));
+                    System.out.println("------------------------------------------");
+                } catch (Exception e) {
+                    System.out.println("Registrasi gagal: " + e.getMessage());
+                }
+                return false;
             }
-            System.out.println("Login berhasil sebagai " + ctx.getCurrentRole() + ".");
-        } catch (Exception e) {
-            System.out.println("Login gagal: " + e.getMessage());
+            case "2" -> {
+                System.out.println("\n=== LOGIN ===");
+                System.out.print("Email    : ");
+                String email = scanner.nextLine().trim();
+                System.out.print("Password : ");
+                String password = scanner.nextLine().trim();
+
+                if (AppContext.ADMIN_EMAIL.equals(email) && AppContext.ADMIN_PASSWORD.equals(password)) {
+                    ctx.setCurrentUserId("admin");
+                    ctx.setCurrentRole("ADMIN");
+                    System.out.println("Login berhasil sebagai Admin.");
+                    return false;
+                }
+
+                try {
+                    var user = ctx.getUserService().login(email, password);
+                    String userIdStr = user.getId().getValue();
+                    ctx.setCurrentUserId(userIdStr);
+
+                    // Dynamic role resolution by checking repositories
+                    var borrower = ctx.getRepos().getBorrowerRepository().findById(new com.p2p.domain.borrower.BorrowerId(userIdStr));
+                    if (borrower != null) {
+                        ctx.linkBorrower(userIdStr, userIdStr);
+                        ctx.setCurrentRole("BORROWER");
+                    } else {
+                        var lender = ctx.getRepos().getLenderRepository().findById(new com.p2p.domain.lender.LenderId(userIdStr));
+                        if (lender != null) {
+                            ctx.linkLender(userIdStr, userIdStr);
+                            ctx.setCurrentRole("LENDER");
+                        } else {
+                            ctx.setCurrentRole("USER");
+                        }
+                    }
+                    System.out.println("Login berhasil sebagai " + ctx.getCurrentRole() + ".");
+                } catch (Exception e) {
+                    System.out.println("Login gagal: " + e.getMessage());
+                }
+                return false;
+            }
+            case "3" -> {
+                return true;
+            }
+            default -> {
+                System.out.println("Pilihan tidak valid.");
+                return false;
+            }
         }
-        return false;
     }
 }

@@ -21,7 +21,8 @@ public class Loan {
     private int tenor;
     private int tenorSisa;
     private String status;
-
+    private long maturityDate; // Timestamp jatuh tempo (milliseconds)
+    private Money overdueFeesAccrued; // Denda yang terkumpul
 
     private InterestCalculationStrategy interestStrategy;
     private Money currentMonthBill;
@@ -44,8 +45,8 @@ public class Loan {
         this.daftarPendana = new HashMap<>();
         this.status = "PENDING";
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
-        this.tanggalDibuat = LocalDate.now();
-        this.tanggalKadaluarsaFunding = LocalDate.now().plusDays(BATAS_HARI_FUNDING);
+        this.maturityDate = 0; // Belum ada jatuh tempo sampai pencairan disetujui
+        this.overdueFeesAccrued = new Money(BigDecimal.ZERO, "IDR");
     }
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal) {
@@ -207,24 +208,32 @@ public class Loan {
         return currentMonthBill;
     }
 
-    public LocalDate getTanggalJatuhTempo() {
-        return tanggalJatuhTempo;
-    }
- 
-    public LocalDate getTanggalKadaluarsaFunding() {
-        return tanggalKadaluarsaFunding;
+    public long getMaturityDate() {
+        return maturityDate;
     }
 
-    public Map<LenderId, Money> getListPendana() {
-        return Collections.unmodifiableMap(daftarPendana);
+    public void setMaturityDate(long maturityDate) {
+        this.maturityDate = maturityDate;
     }
 
-    // Untuk keperluan test (inject tanggal yang sudah lewat)
-    public void setTanggalKadaluarsaFunding(LocalDate tanggal) {
-        this.tanggalKadaluarsaFunding = tanggal;
+    public Money getOverdueFeesAccrued() {
+        return overdueFeesAccrued;
     }
- 
-    public void setTanggalJatuhTempo(LocalDate tanggal) {
-        this.tanggalJatuhTempo = tanggal;
+
+    public void setOverdueFeesAccrued(Money overdueFeesAccrued) {
+        this.overdueFeesAccrued = overdueFeesAccrued;
+    }
+
+    public void addOverdueFee(Money fee) {
+        BigDecimal newTotal = this.overdueFeesAccrued.getAmount().add(fee.getAmount());
+        this.overdueFeesAccrued = new Money(newTotal, this.overdueFeesAccrued.getCurrency());
+    }
+
+    public Map<LenderId, Money> getDaftarPendana() {
+        return daftarPendana;
+    }
+
+    public Money getRemainingPrincipal() {
+        return remainingPrincipal;
     }
 }

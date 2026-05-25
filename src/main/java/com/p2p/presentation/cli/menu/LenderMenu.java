@@ -3,6 +3,7 @@ package com.p2p.presentation.cli.menu;
 import com.p2p.domain.lender.Lender;
 import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.loan.Loan;
+import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.presentation.cli.AppContext;
 
@@ -27,7 +28,7 @@ public class LenderMenu {
             System.out.println("\n=== MENU LENDER ===");
             System.out.println("1. Tambah Saldo (Top Up)");
             System.out.println("2. Lihat Pinjaman yang Bisa Didanai");
-            System.out.println("3. Investasi di Pinjaman             [TODO - Darva]");
+            System.out.println("3. Investasi di Pinjaman");
             System.out.println("4. Proses Pencairan                  [TODO - Rajbi]");
             System.out.println("5. Tarik Saldo                       [TODO - Darva]");
             System.out.println("6. Logout");
@@ -37,7 +38,8 @@ public class LenderMenu {
             switch (pilihan) {
                 case "1" -> menuTopUp();
                 case "2" -> menuLihatPinjamanFunding();
-                case "3", "4", "5" -> System.out.println("Fitur ini belum diimplementasi.");
+                case "3" -> menuInvestasi();
+                case "4", "5" -> System.out.println("Fitur ini belum diimplementasi.");
                 case "6" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
@@ -104,5 +106,30 @@ public class LenderMenu {
             System.out.println("Sisa Dibutuhkan  : Rp " + sisa);
         }
         System.out.println("------------------------------------------");
+    }
+
+    private void menuInvestasi() {
+        System.out.println("\n--- Investasi di Pinjaman ---");
+        System.out.print("Masukkan Loan ID: ");
+        String loanIdStr = scanner.nextLine().trim();
+        System.out.print("Masukkan nominal investasi (Rp): ");
+        try {
+            long nominal = Long.parseLong(scanner.nextLine().trim());
+
+            String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
+            LenderId lenderId = new LenderId(lenderIdStr);
+            LoanId loanId = new LoanId(loanIdStr);
+            Money amount = new Money(BigDecimal.valueOf(nominal), "IDR");
+
+            ctx.getFundingService().invest(lenderId, loanId, amount);
+
+            Lender lender = ctx.getRepos().getLenderRepository().findById(lenderId);
+            System.out.println("Investasi berhasil!");
+            System.out.println("Saldo terbaru : Rp " + lender.getSaldoBalance().getAmount());
+        } catch (NumberFormatException e) {
+            System.out.println("Gagal, input nominal harus berupa angka!");
+        } catch (Exception e) {
+            System.out.println("Gagal investasi: " + e.getMessage());
+        }
     }
 }

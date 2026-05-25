@@ -30,7 +30,7 @@ public class LenderMenu {
             System.out.println("2. Lihat Pinjaman yang Bisa Didanai");
             System.out.println("3. Investasi di Pinjaman");
             System.out.println("4. Proses Pencairan                  [TODO - Rajbi]");
-            System.out.println("5. Tarik Saldo                       [TODO - Darva]");
+            System.out.println("5. Tarik Saldo");
             System.out.println("6. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
@@ -39,7 +39,8 @@ public class LenderMenu {
                 case "1" -> menuTopUp();
                 case "2" -> menuLihatPinjamanFunding();
                 case "3" -> menuInvestasi();
-                case "4", "5" -> System.out.println("Fitur ini belum diimplementasi.");
+                case "4" -> System.out.println("Fitur ini belum diimplementasi.");
+                case "5" -> menuTarikSaldo();
                 case "6" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
@@ -130,6 +131,35 @@ public class LenderMenu {
             System.out.println("Gagal, input nominal harus berupa angka!");
         } catch (Exception e) {
             System.out.println("Gagal investasi: " + e.getMessage());
+        }
+    }
+
+    private void menuTarikSaldo() {
+        System.out.println("\n--- Tarik Saldo ---");
+
+        String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
+        LenderId lenderId = new LenderId(lenderIdStr);
+        Lender lender = ctx.getRepos().getLenderRepository().findById(lenderId);
+        if (lender == null) {
+            System.out.println("Gagal, data Lender tidak ditemukan.");
+            return;
+        }
+
+        System.out.println("Saldo saat ini : Rp " + lender.getSaldoBalance().getAmount());
+        System.out.print("Masukkan nominal penarikan (Rp, minimal 100000): ");
+        try {
+            long nominal = Long.parseLong(scanner.nextLine().trim());
+            Money amount = new Money(BigDecimal.valueOf(nominal), "IDR");
+
+            ctx.getWithdrawalService().withdraw(lenderId, amount);
+
+            Lender updated = ctx.getRepos().getLenderRepository().findById(lenderId);
+            System.out.println("Penarikan berhasil!");
+            System.out.println("Saldo terbaru  : Rp " + updated.getSaldoBalance().getAmount());
+        } catch (NumberFormatException e) {
+            System.out.println("Gagal, input nominal harus berupa angka!");
+        } catch (Exception e) {
+            System.out.println("Gagal tarik saldo: " + e.getMessage());
         }
     }
 }

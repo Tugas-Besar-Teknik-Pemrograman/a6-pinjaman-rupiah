@@ -3,6 +3,9 @@ package com.p2p.application.service;
 import com.p2p.domain.borrower.Borrower;
 import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.borrower.BorrowerRepository;
+import com.p2p.domain.lender.Lender;
+import com.p2p.domain.lender.LenderId;
+import com.p2p.domain.lender.LenderRepository;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.LoanRepository;
@@ -10,11 +13,12 @@ import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.application.observer.LoanEventPublisher;
 import com.p2p.domain.event.PencairanBerhasilEvent;
-import java.time.LocalDate;
+import java.util.Map;
 
 public class LoanService {
     private LoanRepository loanRepository;
     private BorrowerRepository borrowerRepository;
+    private LenderRepository lenderRepository;
     private NotificationService notificationService;
     private LoanEventPublisher loanEventPublisher;
 
@@ -23,6 +27,14 @@ public class LoanService {
     public LoanService(LoanRepository loanRepository, BorrowerRepository borrowerRepository, LoanEventPublisher loanEventPublisher, NotificationService notificationService) {
         this.loanRepository = loanRepository;
         this.borrowerRepository = borrowerRepository;
+        this.loanEventPublisher = loanEventPublisher;
+        this.notificationService = notificationService;
+    }
+
+    public LoanService(LoanRepository loanRepository, BorrowerRepository borrowerRepository, LenderRepository lenderRepository, LoanEventPublisher loanEventPublisher, NotificationService notificationService) {
+        this.loanRepository = loanRepository;
+        this.borrowerRepository = borrowerRepository;
+        this.lenderRepository = lenderRepository;
         this.loanEventPublisher = loanEventPublisher;
         this.notificationService = notificationService;
     }
@@ -42,6 +54,10 @@ public class LoanService {
         borrowerRepository.save(borrower);
         loanRepository.save(loan);
         return loan;
+    }
+
+    public Loan getLoan(LoanId loanId) {
+        return loanRepository.findById(loanId);
     }
 
     public void bayarCicilan(LoanId loanId, Money amount) throws Exception {
@@ -107,8 +123,39 @@ public class LoanService {
         notificationService.kirimNotifikasi(borrowerId, "Pencairan gagal: pendanaan belum terpenuhi");
         return "gagal";
     }
-    public Loan getLoan(LoanId loanId) {
-        return loanRepository.findById(loanId);
+
+    public void menolakPencairan(LoanId loanId, String alasan) {
+        Loan loan = loanRepository.findById(loanId);
+        if (loan == null) {
+            throw new IllegalArgumentException("Loan tidak ditemukan");
+        }
+        if (!loan.getStatus().equals("FUNDING_READY")) {
+            throw new IllegalStateException("Hanya pinjaman dengan status FUNDING_READY yang bisa ditolak");
+        }
+        
+        // Refund ke semua lender
+        Map<LenderId, Money> daftarPendana = loan.getDaftarPendana();
+        if (lenderRepository != null) {
+            for (Map.Entry<LenderId, Money> entry : daftarPendana.entrySet()) {
+                LenderId lenderId = entry.getKey();
+                Money refundAmount = entry.getValue();
+                Lender lender = lenderRepository.findById(lenderId);
+                if (lender != null) {
+                    lender.tambahSaldo(refundAmount);
+                    lenderRepository.save(lender);
+                }
+            }
+        }
+        
+        // Update status loan menjadi CANCELLED
+        LoanStateFactory.cancelled().ubahStatus(loan);
+        loanRepository.save(loan);
+        
+        // Notifikasi borrower
+        if (notificationService != null) {
+            notificationService.kirimNotifikasi(loan.getBorrowerId(), 
+                "Pencairan pinjaman Anda ditolak. Alasan: " + alasan + ". Dana sudah dikembalikan ke lender.");
+        }
     }
 
     /**

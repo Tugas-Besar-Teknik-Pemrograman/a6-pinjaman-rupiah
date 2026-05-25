@@ -2,10 +2,13 @@ package com.p2p.presentation.cli.menu;
 
 import com.p2p.domain.lender.Lender;
 import com.p2p.domain.lender.LenderId;
+import com.p2p.domain.loan.Loan;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.presentation.cli.AppContext;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
 import java.util.Scanner;
 
 public class LenderMenu {
@@ -23,7 +26,7 @@ public class LenderMenu {
         while (!kembali) {
             System.out.println("\n=== MENU LENDER ===");
             System.out.println("1. Tambah Saldo (Top Up)");
-            System.out.println("2. Lihat Pinjaman yang Bisa Didanai  [TODO - Darva]");
+            System.out.println("2. Lihat Pinjaman yang Bisa Didanai");
             System.out.println("3. Investasi di Pinjaman             [TODO - Darva]");
             System.out.println("4. Proses Pencairan                  [TODO - Rajbi]");
             System.out.println("5. Tarik Saldo                       [TODO - Darva]");
@@ -33,7 +36,8 @@ public class LenderMenu {
 
             switch (pilihan) {
                 case "1" -> menuTopUp();
-                case "2", "3", "4", "5" -> System.out.println("Fitur ini belum diimplementasi.");
+                case "2" -> menuLihatPinjamanFunding();
+                case "3", "4", "5" -> System.out.println("Fitur ini belum diimplementasi.");
                 case "6" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
@@ -71,5 +75,34 @@ public class LenderMenu {
         } catch (Exception e) {
             System.out.println("Gagal top up: " + e.getMessage());
         }
+    }
+
+    private void menuLihatPinjamanFunding() {
+        System.out.println("\n--- Daftar Pinjaman yang Bisa Didanai ---");
+        List<Loan> semuaLoan = ctx.getRepos().getLoanRepository().findAll();
+        List<Loan> loanFunding = semuaLoan.stream()
+                .filter(l -> "FUNDING".equals(l.getStatus()))
+                .toList();
+
+        if (loanFunding.isEmpty()) {
+            System.out.println("Belum ada pinjaman yang bisa didanai saat ini.");
+            return;
+        }
+
+        for (Loan loan : loanFunding) {
+            BigDecimal target = loan.getTargetNominal().getAmount();
+            BigDecimal terkumpul = loan.getTotalTerkumpul().getAmount();
+            BigDecimal sisa = target.subtract(terkumpul);
+            BigDecimal progres = terkumpul
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(target, 2, RoundingMode.HALF_UP);
+
+            System.out.println("------------------------------------------");
+            System.out.println("ID Pinjaman      : " + loan.getId().getValue());
+            System.out.println("Target Nominal   : Rp " + target);
+            System.out.println("Total Terkumpul  : Rp " + terkumpul + " (" + progres + "%)");
+            System.out.println("Sisa Dibutuhkan  : Rp " + sisa);
+        }
+        System.out.println("------------------------------------------");
     }
 }

@@ -10,6 +10,7 @@ import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.application.observer.LoanEventPublisher;
 import com.p2p.domain.event.PencairanBerhasilEvent;
+import java.time.LocalDate;
 
 public class LoanService {
     private LoanRepository loanRepository;
@@ -48,16 +49,23 @@ public class LoanService {
         if (loan == null) {
             throw new Exception("Loan tidak ditemukan");
         }
-        
+
         // Pendelegasian ke entitas Domain.
-        // Segala validasi denda overdue, perubahan status lunas (CLOSED), 
+        // Segala validasi denda overdue, perubahan status lunas (CLOSED),
         // atau kurang bayar, akan di-handle di dalam method ini.
         loan.payInstallment(amount);
-        
+
         loanRepository.save(loan);
-        
-        // Catatan: Jika nanti integrasi dengan Notification/Event Publisher
-        // sudah siap, notifikasi pembayaran bisa di-trigger dari sini.
+
+        // [FIX BUG] Jika pinjaman sudah lunas, update hasActiveLoan
+        // borrower menjadi false agar borrower bisa mengajukan pinjaman baru.
+        if ("CLOSED".equals(loan.getStatus())) {
+            Borrower borrower = borrowerRepository.findById(loan.getBorrowerId());
+            if (borrower != null) {
+                borrower.setHasActiveLoan(false);
+                borrowerRepository.save(borrower);
+            }
+        }
     }
 
     public void prosesPencairan(LoanId loanId) {
@@ -101,5 +109,55 @@ public class LoanService {
     }
     public Loan getLoan(LoanId loanId) {
         return loanRepository.findById(loanId);
+    }
+
+    /**
+     * Menandai sebuah pinjaman sebagai OVERDUE jika sudah melewati tanggal jatuh tempo.
+     * Dipanggil secara manual dari CLI (menu simulasi) atau bisa dijadwalkan secara otomatis.
+     *
+     * @throws IllegalStateException jika loan tidak ditemukan, statusnya tidak eligible,
+     *                                atau tanggal jatuh tempo belum terlewat.
+     */
+    public void tandaiOverdue(LoanId loanId) {
+        Loan loan = loanRepository.findById(loanId);
+        if (loan == null) {
+            throw new IllegalArgumentException("Loan tidak ditemukan");
+        }
+        // isPinjamanOverdue() sudah melakukan cek status (DISBURSED/REPAYMENT) dan tanggal
+        if (!loan.isPinjamanOverdue()) {
+            throw new IllegalStateException(
+                "Pinjaman belum jatuh tempo atau statusnya tidak eligible untuk OVERDUE " +
+                "(harus DISBURSED/REPAYMENT dan tanggal jatuh tempo sudah terlewat)"
+            );
+        }
+        LoanStateFactory.overdue().ubahStatus(loan);
+        // Regenerasi tagihan agar denda Rp50.000 ikut terhitung
+        loan.generateMonthlyBill();
+        loanRepository.save(loan);
+    }
+
+    /**
+     * Memajukan tanggal jatuh tempo pinjaman ke hari kemarin untuk keperluan
+     * simulasi CLI, sehingga pinjaman langsung bisa ditandai OVERDUE.
+     * Hanya boleh dipanggil pada lingkungan simulasi/testing.
+     
+     * @throws IllegalArgumentException jika loan tidak ditemukan.
+     * @throws IllegalStateException    jika status bukan DISBURSED atau REPAYMENT.
+     */
+    public void simulasiMajukanJatuhTempo(LoanId loanId) {
+        Loan loan = loanRepository.findById(loanId);
+        if (loan == null) {
+            throw new IllegalArgumentException("Loan tidak ditemukan");
+        }
+        String status = loan.getStatus();
+        if (!"DISBURSED".equals(status) && !"REPAYMENT".equals(status)) {
+            throw new IllegalStateException(
+                "Simulasi hanya bisa dilakukan pada status DISBURSED atau REPAYMENT, " +
+                "status saat ini: " + status
+            );
+        }
+        // Set tanggal jatuh tempo ke kemarin agar isPinjamanOverdue() = true
+        loan.setTanggalJatuhTempo(LocalDate.now().minusDays(1));
+        loanRepository.save(loan);
     }
 }

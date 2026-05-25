@@ -56,6 +56,10 @@ public class LoanService {
         return loan;
     }
 
+    public Loan getLoan(LoanId loanId) {
+        return loanRepository.findById(loanId);
+    }
+
     public void bayarCicilan(LoanId loanId, Money amount) throws Exception {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) {

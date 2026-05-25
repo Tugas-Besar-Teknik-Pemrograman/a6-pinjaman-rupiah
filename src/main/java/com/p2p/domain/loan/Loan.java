@@ -233,6 +233,22 @@ public class Loan {
         return daftarPendana;
     }
 
+    public Map<LenderId, Money> getListPendana() {
+        return daftarPendana;
+    }
+
+    public LocalDate getTanggalJatuhTempo() {
+        return tanggalJatuhTempo;
+    }
+
+    public void setTanggalJatuhTempo(LocalDate tanggalJatuhTempo) {
+        this.tanggalJatuhTempo = tanggalJatuhTempo;
+    }
+
+    public void setTanggalKadaluarsaFunding(LocalDate tanggalKadaluarsaFunding) {
+        this.tanggalKadaluarsaFunding = tanggalKadaluarsaFunding;
+    }
+
     public Money getRemainingPrincipal() {
         return remainingPrincipal;
     }

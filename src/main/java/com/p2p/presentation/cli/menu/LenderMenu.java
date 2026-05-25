@@ -1,7 +1,11 @@
 package com.p2p.presentation.cli.menu;
 
+import com.p2p.domain.lender.Lender;
+import com.p2p.domain.lender.LenderId;
+import com.p2p.domain.valueobject.Money;
 import com.p2p.presentation.cli.AppContext;
 
+import java.math.BigDecimal;
 import java.util.Scanner;
 
 public class LenderMenu {
@@ -42,6 +46,27 @@ public class LenderMenu {
 
     private void menuTopUp() {
         System.out.println("\n--- Tambah Saldo (Top Up) ---");
-        System.out.println("Fitur ini belum diimplementasi.");
+        System.out.print("Masukkan nominal top up (Rp): ");
+        try {
+            long nominal = Long.parseLong(scanner.nextLine().trim());
+
+            String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
+            LenderId lenderId = new LenderId(lenderIdStr);
+            Lender lender = ctx.getRepos().getLenderRepository().findById(lenderId);
+            if (lender == null) {
+                System.out.println("Gagal, data Lender tidak ditemukan.");
+                return;
+            }
+
+            Money nominalTambah = new Money(BigDecimal.valueOf(nominal), "IDR");
+            lender.tambahSaldo(nominalTambah);
+            ctx.getRepos().getLenderRepository().save(lender);
+
+            System.out.println("Top up berhasil!");
+        } catch (NumberFormatException e) {
+            System.out.println("Gagal, input nominal harus berupa angka!");
+        } catch (Exception e) {
+            System.out.println("Gagal top up: " + e.getMessage());
+        }
     }
 }

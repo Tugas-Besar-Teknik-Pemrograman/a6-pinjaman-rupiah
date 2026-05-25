@@ -46,23 +46,26 @@ public class LenderMenu {
 
     private void menuTopUp() {
         System.out.println("\n--- Tambah Saldo (Top Up) ---");
+
+        String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
+        LenderId lenderId = new LenderId(lenderIdStr);
+        Lender lender = ctx.getRepos().getLenderRepository().findById(lenderId);
+        if (lender == null) {
+            System.out.println("Gagal, data Lender tidak ditemukan.");
+            return;
+        }
+
+        System.out.println("Saldo saat ini : Rp " + lender.getSaldoBalance().getAmount());
         System.out.print("Masukkan nominal top up (Rp): ");
         try {
             long nominal = Long.parseLong(scanner.nextLine().trim());
-
-            String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
-            LenderId lenderId = new LenderId(lenderIdStr);
-            Lender lender = ctx.getRepos().getLenderRepository().findById(lenderId);
-            if (lender == null) {
-                System.out.println("Gagal, data Lender tidak ditemukan.");
-                return;
-            }
 
             Money nominalTambah = new Money(BigDecimal.valueOf(nominal), "IDR");
             lender.tambahSaldo(nominalTambah);
             ctx.getRepos().getLenderRepository().save(lender);
 
             System.out.println("Top up berhasil!");
+            System.out.println("Saldo terbaru  : Rp " + lender.getSaldoBalance().getAmount());
         } catch (NumberFormatException e) {
             System.out.println("Gagal, input nominal harus berupa angka!");
         } catch (Exception e) {

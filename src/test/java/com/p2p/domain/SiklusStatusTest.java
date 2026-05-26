@@ -85,7 +85,7 @@ public class SiklusStatusTest {
             
             // Act: borrower melakukan pembayaran angsuran pertama
             Money paymentAmount = new Money(new BigDecimal("13334"), "IDR");
-            loan.payInstallment(paymentAmount);
+            loan.bayarCicilan(paymentAmount);
 
             // Assert: status masih REPAYMENT sampai semua cicilan lunas
             assertEquals("REPAYMENT", loan.getStatus());
@@ -106,7 +106,7 @@ public class SiklusStatusTest {
     
             loanSatuBulan.generateMonthlyBill();
             Money paymentAmount = new Money(new BigDecimal("105000"), "IDR");
-            loanSatuBulan.payInstallment(paymentAmount);
+            loanSatuBulan.bayarCicilan(paymentAmount);
  
         assertEquals("CLOSED", loanSatuBulan.getStatus());
         }
@@ -161,7 +161,7 @@ public class SiklusStatusTest {
         // Generate tagihan dan bayar
         loan.generateMonthlyBill();
         Money paymentAmount = new Money(new BigDecimal("63334"), "IDR");
-        loan.payInstallment(paymentAmount);
+        loan.bayarCicilan(paymentAmount);
  
         // Setelah bayar, currentMonthBill = 0 → isOverduePaid() = true
         // payInstallment sudah trigger repayment() untuk status OVERDUE

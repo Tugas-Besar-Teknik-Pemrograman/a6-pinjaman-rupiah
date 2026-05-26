@@ -17,7 +17,7 @@ public class Loan {
     private BorrowerId borrowerId;
     private Money targetNominal;
     private Money totalTerkumpul;
-    private Money remainingPrincipal;
+    private Money sisaPokok;
     private int tenor;
     private int tenorSisa;
     private String status;
@@ -40,7 +40,7 @@ public class Loan {
         this.targetNominal = targetNominal;
         this.tenor = tenor;
         this.tenorSisa = tenor;
-        this.remainingPrincipal = targetNominal;
+        this.sisaPokok = targetNominal;
         this.totalTerkumpul = new Money(BigDecimal.ZERO, "IDR");
         this.daftarPendana = new HashMap<>();
         this.status = "PENDING";
@@ -79,14 +79,14 @@ public class Loan {
         }
     }
 
-    public void DisburseLoan() {
+    public void cairkanPinjaman() {
         // Dipanggil saat DISBURSED — cicilan pertama jatuh tempo 28 hari sejak cair
         this.tanggalJatuhTempo = LocalDate.now().plusDays(28);
         LoanStateFactory.disbursed().ubahStatus(this);
     }
 
     public void bayarCicilan(String repaymentId, Money jumlahBayar) throws Exception {
-        payInstallment(jumlahBayar);
+        bayarCicilan(jumlahBayar);
     }
 
     public void setInterestStrategy(InterestCalculationStrategy strategy) {
@@ -96,8 +96,8 @@ public class Loan {
     // MODIFIKASI: Penambahan denda OVERDUE
     public void generateMonthlyBill() {
         if (this.interestStrategy != null) {
-            Money tagihanNormal = this.interestStrategy.calculateInstallment(
-                    this.targetNominal, this.remainingPrincipal, this.tenor);
+            Money tagihanNormal = this.interestStrategy.hitungCicilan(
+                    this.targetNominal, this.sisaPokok, this.tenor);
             
             BigDecimal totalAmount = tagihanNormal.getAmount();
 
@@ -110,7 +110,7 @@ public class Loan {
         }
     }
 
-    public void payInstallment(Money paymentAmount) throws Exception {
+    public void bayarCicilan(Money paymentAmount) throws Exception {
         if (this.currentMonthBill == null) {
             throw new Exception("Tidak ada tagihan aktif");
         }
@@ -120,9 +120,9 @@ public class Loan {
 
         BigDecimal principalPortion = this.targetNominal.getAmount()
                 .divide(new BigDecimal(this.tenor), RoundingMode.HALF_UP);
-        this.remainingPrincipal = new Money(
-                this.remainingPrincipal.getAmount().subtract(principalPortion),
-                this.remainingPrincipal.getCurrency());
+        this.sisaPokok = new Money(
+                this.sisaPokok.getAmount().subtract(principalPortion),
+                this.sisaPokok.getCurrency());
                 
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
         this.tenorSisa--;
@@ -144,15 +144,15 @@ public class Loan {
     }
 
     public Money getSisaTagihanKeseluruhan() {
-        if (this.remainingPrincipal == null) {
+        if (this.sisaPokok == null) {
             return this.targetNominal;
         }
-        return this.remainingPrincipal;
+        return this.sisaPokok;
     }
 
     public boolean isLunas() {
         return this.tenorSisa <= 0
-                || this.remainingPrincipal.getAmount().compareTo(BigDecimal.ZERO) <= 0;
+                || this.sisaPokok.getAmount().compareTo(BigDecimal.ZERO) <= 0;
     }
 
     public boolean isPinjamanExpired() {
@@ -166,7 +166,7 @@ public class Loan {
         return LocalDate.now().isAfter(this.tanggalJatuhTempo);
     }
 
-    public boolean isOverduePaid() {
+    public boolean apakahOverdueSudahDibayar() {
         if (!"OVERDUE".equals(this.status)) return false;
         if (this.currentMonthBill == null) return false;
         return this.currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) == 0;
@@ -204,27 +204,27 @@ public class Loan {
         return tenorSisa;
     }
 
-    public Money getCurrentMonthBill() {
+    public Money getTagihanBulanIni() {
         return currentMonthBill;
     }
 
-    public long getMaturityDate() {
+    public long getTanggalJatuhTempoTimestamp() {
         return maturityDate;
     }
 
-    public void setMaturityDate(long maturityDate) {
+    public void setTanggalJatuhTempoTimestemp(long maturityDate) {
         this.maturityDate = maturityDate;
     }
 
-    public Money getOverdueFeesAccrued() {
+    public Money getTotalDendaTerkumpul() {
         return overdueFeesAccrued;
     }
 
-    public void setOverdueFeesAccrued(Money overdueFeesAccrued) {
+    public void setTotalDendaTerkumpul(Money overdueFeesAccrued) {
         this.overdueFeesAccrued = overdueFeesAccrued;
     }
 
-    public void addOverdueFee(Money fee) {
+    public void tambahDenda(Money fee) {
         BigDecimal newTotal = this.overdueFeesAccrued.getAmount().add(fee.getAmount());
         this.overdueFeesAccrued = new Money(newTotal, this.overdueFeesAccrued.getCurrency());
     }
@@ -249,7 +249,7 @@ public class Loan {
         this.tanggalKadaluarsaFunding = tanggalKadaluarsaFunding;
     }
 
-    public Money getRemainingPrincipal() {
-        return remainingPrincipal;
+    public Money getSisaPokok() {
+        return sisaPokok;
     }
 }

@@ -16,8 +16,8 @@ public class SyariahInterestStrategy extends BaseInterestStrategy {
      * setiap bulan.
      */
     @Override
-    public Money calculateInstallment(Money initialPrincipal, Money remainingPrincipal, int tenor) {
-        BigDecimal principalPmt = calculatePrincipalPortion(initialPrincipal, tenor).getAmount();
+    public Money hitungCicilan(Money initialPrincipal, Money remainingPrincipal, int tenor) {
+        BigDecimal principalPmt = hitungBagianPokok(initialPrincipal, tenor).getAmount();
         return new Money(principalPmt.add(flatMargin), initialPrincipal.getCurrency());
     }
 }

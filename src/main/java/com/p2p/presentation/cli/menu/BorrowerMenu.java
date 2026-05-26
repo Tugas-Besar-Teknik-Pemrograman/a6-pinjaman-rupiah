@@ -115,8 +115,8 @@ public class BorrowerMenu {
                         System.out.println("Sisa Tenor       : " + loan.getTenorSisa() + " bulan");
                         System.out.println("Sisa Tagihan     : Rp " + loan.getSisaTagihanKeseluruhan().getAmount());
                         
-                        if (loan.getCurrentMonthBill() != null && loan.getCurrentMonthBill().getAmount().compareTo(BigDecimal.ZERO) > 0) {
-                            System.out.println("Tagihan Bulan Ini: Rp " + loan.getCurrentMonthBill().getAmount());
+                        if (loan.getTagihanBulanIni() != null && loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) > 0) {
+                            System.out.println("Tagihan Bulan Ini: Rp " + loan.getTagihanBulanIni().getAmount());
                         } else {
                             System.out.println("Tagihan Bulan Ini: -");
                         }
@@ -177,9 +177,9 @@ public class BorrowerMenu {
             System.out.println("   Status Pinjaman   : " + status);
             System.out.println("   Sisa Pokok        : Rp " + loan.getSisaTagihanKeseluruhan().getAmount());
             System.out.println("   Sisa Tenor        : " + loan.getTenorSisa() + " bulan");
-            if (loan.getCurrentMonthBill() != null &&
-                    loan.getCurrentMonthBill().getAmount().compareTo(BigDecimal.ZERO) > 0) {
-                System.out.println("   Tagihan Bulan Ini : Rp " + loan.getCurrentMonthBill().getAmount());
+            if (loan.getTagihanBulanIni() != null &&
+                    loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) > 0) {
+                System.out.println("   Tagihan Bulan Ini : Rp " + loan.getTagihanBulanIni().getAmount());
                 if ("OVERDUE".equals(status)) {
                     System.out.println("   *** Termasuk denda keterlambatan Rp 50.000 ***");
                 }
@@ -253,7 +253,7 @@ public class BorrowerMenu {
                     ctx.getLoanService().tandaiOverdue(new LoanId(loanIdStr));
                     Loan loan = ctx.getLoanService().getLoan(new LoanId(loanIdStr));
                     System.out.println("Pinjaman " + loanIdStr + " sekarang berstatus OVERDUE.");
-                    System.out.println("   Tagihan Bulan Ini : Rp " + loan.getCurrentMonthBill().getAmount());
+                    System.out.println("   Tagihan Bulan Ini : Rp " + loan.getTagihanBulanIni().getAmount());
                     System.out.println("   (Sudah termasuk denda keterlambatan Rp 50.000)");
                     System.out.println("   Silakan bayar cicilan sebelum denda bertambah.");
                 } catch (Exception e) {

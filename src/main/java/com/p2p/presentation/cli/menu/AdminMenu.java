@@ -175,7 +175,7 @@ public class AdminMenu {
                 // Accept pencairan
                 LoanService loanService = ctx.getLoanService();
                 long maturityDate = System.currentTimeMillis() + (28L * 24 * 60 * 60 * 1000); // +28 hari
-                selectedLoan.setMaturityDate(maturityDate);
+                selectedLoan.setTanggalJatuhTempoTimestemp(maturityDate);
                 
                 loanService.prosesPencairan(selectedLoan.getId());
                 System.out.println("Pencairan pinjaman " + selectedLoan.getId() + " berhasil disetujui!");
@@ -220,7 +220,7 @@ public class AdminMenu {
 
         BigDecimal outstandingPrincipal = allLoans.stream()
                 .filter(l -> "REPAYMENT".equals(l.getStatus()))
-                .map(l -> l.getRemainingPrincipal().getAmount())
+                .map(l -> l.getSisaPokok().getAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal fundingInProgress = allLoans.stream()
@@ -241,7 +241,7 @@ public class AdminMenu {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalOverdueFees = allLoans.stream()
-                .map(l -> l.getOverdueFeesAccrued().getAmount())
+                .map(l -> l.getTotalDendaTerkumpul().getAmount())
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Display Laporan

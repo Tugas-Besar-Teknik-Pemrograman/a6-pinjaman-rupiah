@@ -15,8 +15,8 @@ public class FixedInterestStrategy extends BaseInterestStrategy {
      * Bunga dihitung dari pokok awal pinjaman, bukan sisa pokok. Jadi cicilan tiap bulan selalu sama
      */
     @Override
-    public Money calculateInstallment(Money initialPrincipal, Money remainingPrincipal, int tenor) {
-        BigDecimal principalPmt = calculatePrincipalPortion(initialPrincipal, tenor).getAmount();
+    public Money hitungCicilan(Money initialPrincipal, Money remainingPrincipal, int tenor) {
+        BigDecimal principalPmt = hitungBagianPokok(initialPrincipal, tenor).getAmount();
         BigDecimal interestPmt = initialPrincipal.getAmount().multiply(rate);
         return new Money(principalPmt.add(interestPmt), initialPrincipal.getCurrency());
     }

@@ -96,7 +96,7 @@ public class PembayaranCicilanSteps {
     @When("borrower membayar lunas tagihan pertama")
     @When("borrower melakukan pembayaran sesuai tagihan bulan ini")
     public void payFull() throws Exception {
-        loanService.bayarCicilan(loan.getId(), loan.getCurrentMonthBill());
+        loanService.bayarCicilan(loan.getId(), loan.getTagihanBulanIni());
     }
 
     @When("borrower melakukan pembayaran kurang dari tagihan bulan ini")
@@ -122,7 +122,7 @@ public class PembayaranCicilanSteps {
     @Then("nominal tagihan mencapai {long}")
     @Then("tagihan bulan kedua harus {long}")
     public void checkBill(long expected) {
-        assertEquals(new BigDecimal(expected).setScale(0), loan.getCurrentMonthBill().getAmount().setScale(0));
+        assertEquals(new BigDecimal(expected).setScale(0), loan.getTagihanBulanIni().getAmount().setScale(0));
     }
 
     @Then("Sistem akan menerima pembayaran")
@@ -132,7 +132,7 @@ public class PembayaranCicilanSteps {
 
     @Then("sisa tagihan bulan ini akan menjadi {int}")
     public void checkRemainingBill(int remaining) {
-        assertEquals(new BigDecimal(remaining).setScale(0), loan.getCurrentMonthBill().getAmount().setScale(0));
+        assertEquals(new BigDecimal(remaining).setScale(0), loan.getTagihanBulanIni().getAmount().setScale(0));
     }
 
     @Then("sistem akan menolak pembayaran")
@@ -147,7 +147,7 @@ public class PembayaranCicilanSteps {
 
     @Then("sisa tagihan bulan ini akan tetap")
     public void billRemains() {
-        assertTrue(loan.getCurrentMonthBill().getAmount().compareTo(BigDecimal.ZERO) > 0);
+        assertTrue(loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) > 0);
     }
 
     @Then("sisa tagihan keseluruhan akan menjadi {int}")
@@ -163,7 +163,7 @@ public class PembayaranCicilanSteps {
     @Then("nominal tagihan harus lebih besar dari {int} karena ditambah denda keterlambatan")
     public void nominal_tagihan_harus_lebih_besar_dari_karena_ditambah_denda_keterlambatan(Integer baseAmount) {
         BigDecimal base = new BigDecimal(baseAmount);
-        BigDecimal currentBill = loan.getCurrentMonthBill().getAmount();
+        BigDecimal currentBill = loan.getTagihanBulanIni().getAmount();
         
         assertTrue(currentBill.compareTo(base) > 0, 
             "Tagihan saat ini (" + currentBill + ") seharusnya lebih besar dari " + base + " karena ada denda OVERDUE.");

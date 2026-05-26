@@ -15,8 +15,8 @@ public class FloatingInterestStrategy extends BaseInterestStrategy {
      * Bunga dihitung dari sisa pokok pinjaman, sehingga cicilan makin kecil setiap bulan.
      */
     @Override
-    public Money calculateInstallment(Money initialPrincipal, Money remainingPrincipal, int tenor) {
-        BigDecimal principalPmt = calculatePrincipalPortion(initialPrincipal, tenor).getAmount();
+    public Money hitungCicilan(Money initialPrincipal, Money remainingPrincipal, int tenor) {
+        BigDecimal principalPmt = hitungBagianPokok(initialPrincipal, tenor).getAmount();
         BigDecimal interestPmt = remainingPrincipal.getAmount().multiply(monthlyRate);
         return new Money(principalPmt.add(interestPmt), initialPrincipal.getCurrency());
     }

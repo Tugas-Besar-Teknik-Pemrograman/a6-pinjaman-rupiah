@@ -84,7 +84,7 @@ public class LoanService {
         // Pendelegasian ke entitas Domain.
         // Segala validasi denda overdue, perubahan status lunas (CLOSED),
         // atau kurang bayar, akan di-handle di dalam method ini.
-        loan.payInstallment(amount);
+        loan.bayarCicilan(amount);
 
         loanRepository.save(loan);
 

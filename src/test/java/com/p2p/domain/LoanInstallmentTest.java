@@ -23,7 +23,7 @@ class LoanInstallmentTest {
         Money target = new Money(new BigDecimal("10000000"), "IDR");
         FixedInterestStrategy strategy = new FixedInterestStrategy(new BigDecimal("0.05"));
 
-        Money result = strategy.calculateInstallment(target, target, 5);
+        Money result = strategy.hitungCicilan(target, target, 5);
 
         // pokok: 10jt/5 = 2jt, bunga: 10jt * 5% = 500rb, total = 2.5jt
         assertEquals(0, new BigDecimal("2500000").compareTo(
@@ -37,7 +37,7 @@ class LoanInstallmentTest {
         Money target = new Money(new BigDecimal("10000000"), "IDR");
         SyariahInterestStrategy strategy = new SyariahInterestStrategy(new BigDecimal("150000"));
 
-        Money result = strategy.calculateInstallment(target, target, 5);
+        Money result = strategy.hitungCicilan(target, target, 5);
 
         // pokok: 10jt/5 = 2jt, margin flat: 150rb, total = 2.15jt
         assertEquals(0, new BigDecimal("2150000").compareTo(
@@ -50,7 +50,7 @@ class LoanInstallmentTest {
         Money remaining = new Money(new BigDecimal("4000000"), "IDR");
         SyariahInterestStrategy strategy = new SyariahInterestStrategy(new BigDecimal("150000"));
 
-        Money result = strategy.calculateInstallment(target, remaining, 5);
+        Money result = strategy.hitungCicilan(target, remaining, 5);
 
         // margin flat tetap 150rb meski sisa pokok berkurang — berbeda dari floating
         assertEquals(0, new BigDecimal("2150000").compareTo(
@@ -64,7 +64,7 @@ class LoanInstallmentTest {
         Money target = new Money(new BigDecimal("10000000"), "IDR");
         FloatingInterestStrategy strategy = new FloatingInterestStrategy(new BigDecimal("0.05"));
 
-        Money result = strategy.calculateInstallment(target, target, 5);
+        Money result = strategy.hitungCicilan(target, target, 5);
 
         assertEquals(0, new BigDecimal("2500000").compareTo(
                 result.getAmount().setScale(0, RoundingMode.HALF_UP)));
@@ -76,7 +76,7 @@ class LoanInstallmentTest {
         Money remaining = new Money(new BigDecimal("8000000"), "IDR");
         FloatingInterestStrategy strategy = new FloatingInterestStrategy(new BigDecimal("0.05"));
 
-        Money result = strategy.calculateInstallment(target, remaining, 5);
+        Money result = strategy.hitungCicilan(target, remaining, 5);
 
         assertEquals(0, new BigDecimal("2400000").compareTo(
                 result.getAmount().setScale(0, RoundingMode.HALF_UP)));
@@ -92,9 +92,9 @@ class LoanInstallmentTest {
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
         loan.generateMonthlyBill();
 
-        loan.payInstallment(loan.getCurrentMonthBill());
+        loan.bayarCicilan(loan.getTagihanBulanIni());
 
-        assertEquals(0, BigDecimal.ZERO.compareTo(loan.getCurrentMonthBill().getAmount()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(loan.getTagihanBulanIni().getAmount()));
     }
 
     @Test
@@ -107,7 +107,7 @@ class LoanInstallmentTest {
 
         Money tooSmall = new Money(new BigDecimal("1000"), "IDR");
 
-        Exception ex = assertThrows(Exception.class, () -> loan.payInstallment(tooSmall));
+        Exception ex = assertThrows(Exception.class, () -> loan.bayarCicilan(tooSmall));
         assertEquals("Nominal pembayaran kurang dari nominal tagihan", ex.getMessage());
     }
 
@@ -119,12 +119,12 @@ class LoanInstallmentTest {
         loan.setInterestStrategy(new FloatingInterestStrategy(new BigDecimal("0.05")));
         loan.generateMonthlyBill();
 
-        loan.payInstallment(loan.getCurrentMonthBill());
+        loan.bayarCicilan(loan.getTagihanBulanIni());
         loan.generateMonthlyBill();
 
         // bulan 2: sisa pokok 8jt, bunga 8jt*5%=400rb, total 2.4jt
         assertEquals(0, new BigDecimal("2400000").compareTo(
-                loan.getCurrentMonthBill().getAmount().setScale(0, RoundingMode.HALF_UP)));
+                loan.getTagihanBulanIni().getAmount().setScale(0, RoundingMode.HALF_UP)));
     }
 
     // TDD: isLunas() & status CLOSED 
@@ -138,7 +138,7 @@ class LoanInstallmentTest {
 
         for (int i = 0; i < 5; i++) {
             loan.generateMonthlyBill();
-            loan.payInstallment(loan.getCurrentMonthBill());
+            loan.bayarCicilan(loan.getTagihanBulanIni());
         }
 
         assertTrue(loan.isLunas());
@@ -153,7 +153,7 @@ class LoanInstallmentTest {
 
         for (int i = 0; i < 5; i++) {
             loan.generateMonthlyBill();
-            loan.payInstallment(loan.getCurrentMonthBill());
+            loan.bayarCicilan(loan.getTagihanBulanIni());
         }
 
         assertEquals("CLOSED", loan.getStatus());
@@ -168,7 +168,7 @@ class LoanInstallmentTest {
 
         // baru bayar 1 dari 5 cicilan
         loan.generateMonthlyBill();
-        loan.payInstallment(loan.getCurrentMonthBill());
+        loan.bayarCicilan(loan.getTagihanBulanIni());
 
         assertFalse(loan.isLunas());
     }
@@ -196,7 +196,7 @@ class LoanInstallmentTest {
         // Tagihan normal (berdasarkan test case atas) = 2.500.000
         // Jika ada denda (misal flat 50.000 atau percentage), maka harus > 2.500.000
         BigDecimal normalBill = new BigDecimal("2500000");
-        BigDecimal currentBillAmount = loan.getCurrentMonthBill().getAmount();
+        BigDecimal currentBillAmount = loan.getTagihanBulanIni().getAmount();
         
         assertTrue(currentBillAmount.compareTo(normalBill) > 0, 
             "Tagihan " + currentBillAmount + " seharusnya > " + normalBill + " karena ada denda overdue");
@@ -211,7 +211,7 @@ class LoanInstallmentTest {
         loan.generateMonthlyBill();
         
         // Bayar lunas tagihan bulan ini (termasuk denda)
-        loan.payInstallment(loan.getCurrentMonthBill());
+        loan.bayarCicilan(loan.getTagihanBulanIni());
         
         // Jika belum lunas total cicilan, status harusnya kembali normal (bukan OVERDUE lagi)
         assertEquals("REPAYMENT", loan.getStatus()); 

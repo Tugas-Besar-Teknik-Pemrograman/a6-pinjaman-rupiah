@@ -82,6 +82,9 @@ public class BorrowerMenu {
         String id = scanner.nextLine().trim();
         try {
             Loan loan = ctx.getLoanService().getLoan(new LoanId(id));
+            if (loan == null) {
+                throw new Exception("Loan tidak ditemukan.");
+            }
             System.out.println("Status: " + loan.getStatus() + " | Sisa: Rp " + loan.getSisaTagihanKeseluruhan().getAmount());
         } catch (Exception e) {
             System.out.println("Gagal: " + e.getMessage());
@@ -93,6 +96,9 @@ public class BorrowerMenu {
         String id = scanner.nextLine().trim();
         try {
             Loan loan = ctx.getLoanService().getLoan(new LoanId(id));
+            if (loan == null) {
+                throw new Exception("Loan tidak ditemukan.");
+            }
             System.out.println("Tagihan bulan ini: Rp " + (loan.getTagihanBulanIni() != null ? loan.getTagihanBulanIni().getAmount() : "0"));
             System.out.print("Nominal Bayar: ");
             long bayar = Long.parseLong(scanner.nextLine().trim());

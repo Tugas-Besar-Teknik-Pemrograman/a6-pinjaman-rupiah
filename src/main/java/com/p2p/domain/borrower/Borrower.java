@@ -5,6 +5,7 @@ import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.domain.state.LoanStateFactory;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class Borrower {
     private static final int AMBANG_BATAS = 600;
@@ -15,9 +16,11 @@ public class Borrower {
     private boolean kycStatus;
     private int creditScore;
     private boolean hasActiveLoan;
+    private Money penghasilan;
 
     public Borrower(BorrowerId id, Money penghasilan) {
         this.id = id;
+        this.penghasilan = penghasilan;
         this.limitPinjaman = hitungLimitMaksimal(penghasilan);
         this.kycStatus = false;
         this.creditScore = 0;
@@ -29,10 +32,84 @@ public class Borrower {
         return new Money(kalkulasi, penghasilan.getCurrency());
     }
 
+    public Money getPenghasilan() {
+        return this.penghasilan;
+    }
+
+    public void setPenghasilan(Money penghasilan) {
+        this.penghasilan = penghasilan;
+    }
+
+    public Money hitungLimitDenganTenorDanBunga(int tenor, String interestType) {
+        BigDecimal rate = BigDecimal.ZERO;
+        if ("flat".equalsIgnoreCase(interestType) || "fixed".equalsIgnoreCase(interestType)) {
+            rate = new BigDecimal("0.05");
+        } else if ("float".equalsIgnoreCase(interestType) || "floating".equalsIgnoreCase(interestType)) {
+            rate = new BigDecimal("0.05");
+        } else if ("syariah".equalsIgnoreCase(interestType)) {
+            rate = BigDecimal.ZERO;
+        }
+        return hitungLimitDenganTenorDanBunga(tenor, rate);
+    }
+
+    public Money hitungLimitDenganTenorDanBunga(int tenor, BigDecimal bungaBulanan) {
+        if (this.penghasilan == null) {
+            return this.limitPinjaman;
+        }
+        if (tenor <= 0) {
+            throw new IllegalArgumentException("Tenor harus lebih besar dari 0");
+        }
+        BigDecimal batasCicilan = this.penghasilan.getAmount().multiply(PERSENTASE_LIMIT);
+        
+        // Limit = (Batas Cicilan * Tenor) / (1 + Bunga Bulanan * Tenor)
+        BigDecimal numerator = batasCicilan.multiply(BigDecimal.valueOf(tenor));
+        BigDecimal tenorBunga = bungaBulanan.multiply(BigDecimal.valueOf(tenor));
+        BigDecimal denominator = BigDecimal.ONE.add(tenorBunga);
+        
+        BigDecimal limit = numerator.divide(denominator, 2, RoundingMode.HALF_UP);
+        return new Money(limit, this.penghasilan.getCurrency());
+    }
+
     public Loan ajukanPinjaman(LoanId loanid, Money nominal, int tenor){
         validasiPinjaman(nominal);
         this.hasActiveLoan = true;
         Loan loan = new Loan(loanid, this.id, nominal, tenor);
+        LoanStateFactory.pendingToFunding().ubahStatus(loan);
+        return loan;
+    }
+
+    public Loan ajukanPinjaman(LoanId loanid, Money nominal, int tenor, String interestType) {
+        return ajukanPinjaman(loanid, nominal, tenor, interestType, null);
+    }
+
+    public Loan ajukanPinjaman(LoanId loanid, Money nominal, int tenor, String interestType, BigDecimal customRateOrMargin) {
+        BigDecimal rate = BigDecimal.ZERO;
+        if ("flat".equalsIgnoreCase(interestType) || "fixed".equalsIgnoreCase(interestType)) {
+            rate = (customRateOrMargin != null) ? customRateOrMargin : new BigDecimal("0.05");
+        } else if ("float".equalsIgnoreCase(interestType) || "floating".equalsIgnoreCase(interestType)) {
+            rate = (customRateOrMargin != null) ? customRateOrMargin : new BigDecimal("0.05");
+        } else if ("syariah".equalsIgnoreCase(interestType)) {
+            rate = BigDecimal.ZERO;
+        }
+
+        // Hitung limit secara dinamis berdasarkan Tenor dan Bunga
+        this.limitPinjaman = hitungLimitDenganTenorDanBunga(tenor, rate);
+
+        validasiPinjaman(nominal);
+        this.hasActiveLoan = true;
+
+        Loan loan = new Loan(loanid, this.id, nominal, tenor);
+
+        // Set strategy pada loan
+        if ("flat".equalsIgnoreCase(interestType) || "fixed".equalsIgnoreCase(interestType)) {
+            loan.setInterestStrategy(new com.p2p.domain.loan.strategy.FixedInterestStrategy(rate));
+        } else if ("float".equalsIgnoreCase(interestType) || "floating".equalsIgnoreCase(interestType)) {
+            loan.setInterestStrategy(new com.p2p.domain.loan.strategy.FloatingInterestStrategy(rate));
+        } else if ("syariah".equalsIgnoreCase(interestType)) {
+            BigDecimal margin = (customRateOrMargin != null) ? customRateOrMargin : new BigDecimal("150000");
+            loan.setInterestStrategy(new com.p2p.domain.loan.strategy.SyariahInterestStrategy(margin));
+        }
+
         LoanStateFactory.pendingToFunding().ubahStatus(loan);
         return loan;
     }

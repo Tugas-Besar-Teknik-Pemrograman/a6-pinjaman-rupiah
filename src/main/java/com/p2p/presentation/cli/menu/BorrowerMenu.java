@@ -42,14 +42,43 @@ public class BorrowerMenu {
                         break;
                     }
 
-                    System.out.print("Masukkan Nominal Pinjaman (Rp): ");
                     try {
+                        var borrowerObj = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
+                        if (borrowerObj != null && borrowerObj.getPenghasilan() != null) {
+                            BigDecimal batasCicilan = borrowerObj.getPenghasilan().getAmount().multiply(new BigDecimal("0.30"));
+                            System.out.println("Batas Cicilan Anda (30% dari Penghasilan): Rp " + batasCicilan);
+                        }
+
+                        System.out.print("Masukkan Nominal Pinjaman (Rp): ");
                         long nominal = Long.parseLong(scanner.nextLine().trim());
                         System.out.print("Masukkan Tenor (Bulan): ");
                         int tenor = Integer.parseInt(scanner.nextLine().trim());
 
+                        System.out.println("Pilih Jenis Bunga:");
+                        System.out.println("1. Syariah (Bunga 0%)");
+                        System.out.println("2. Float (Bunga 5% per bulan)");
+                        System.out.println("3. Flat (Bunga 5% per bulan)");
+                        System.out.print("Pilih (1/2/3): ");
+                        String pilihanBunga = scanner.nextLine().trim();
+                        String interestType;
+                        if ("1".equals(pilihanBunga)) {
+                            interestType = "syariah";
+                        } else if ("2".equals(pilihanBunga)) {
+                            interestType = "float";
+                        } else if ("3".equals(pilihanBunga)) {
+                            interestType = "flat";
+                        } else {
+                            System.out.println("\nGagal, Pilihan jenis bunga tidak valid!");
+                            break;
+                        }
+
+                        if (borrowerObj != null) {
+                            Money currentCalculatedLimit = borrowerObj.hitungLimitDenganTenorDanBunga(tenor, interestType);
+                            System.out.println("Limit pinjaman Anda untuk pengajuan ini: Rp " + currentCalculatedLimit.getAmount());
+                        }
+
                         Money amount = new Money(BigDecimal.valueOf(nominal), "IDR");
-                        Loan loan = ctx.getLoanService().ajukanPinjaman(new BorrowerId(borrowerIdStr), amount, tenor);
+                        Loan loan = ctx.getLoanService().ajukanPinjaman(new BorrowerId(borrowerIdStr), amount, tenor, interestType);
 
                         System.out.println("\nPengajuan pinjaman berhasil diajukan!");
                         System.out.println("   Loan ID : " + loan.getId().getValue());

@@ -111,6 +111,9 @@ public class Loan {
     }
 
     public void bayarCicilan(Money paymentAmount) throws Exception {
+        if (!"DISBURSED".equals(this.status) && !"REPAYMENT".equals(this.status) && !"OVERDUE".equals(this.status)) {
+            throw new Exception("Pinjaman belum dicairkan atau tidak aktif untuk pembayaran.");
+        }
         if (this.currentMonthBill == null) {
             throw new Exception("Tidak ada tagihan aktif");
         }

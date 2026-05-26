@@ -25,243 +25,101 @@ public class BorrowerMenu {
         while (!kembali) {
             System.out.println("\n=== MENU BORROWER ===");
             System.out.println("1. Ajukan Pinjaman Baru");
-            System.out.println("2. Lihat Status Pinjaman  [TODO - Arsel]");
-            System.out.println("3. Bayar Cicilan          [DONE - Imam]");
-            System.out.println("4. Simulasi Jatuh Tempo   [DONE - Imam]");
+            System.out.println("2. Lihat Status Pinjaman");
+            System.out.println("3. Bayar Cicilan");
+            System.out.println("4. Simulasi Jatuh Tempo");
             System.out.println("5. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
 
             switch (pilihan) {
-               
-                case "1" -> {
-                    System.out.println("\nAJUKAN PINJAMAN BARU");
-                    String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-                    if (borrowerIdStr == null) {
-                        System.out.println("Gagal, Profil Borrower tidak ditemukan.");
-                        break;
-                    }
-
-                    try {
-                        var borrowerObj = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
-                        if (borrowerObj != null && borrowerObj.getPenghasilan() != null) {
-                            BigDecimal batasCicilan = borrowerObj.getPenghasilan().getAmount().multiply(new BigDecimal("0.30"));
-                            System.out.println("Batas Cicilan Anda (30% dari Penghasilan): Rp " + batasCicilan);
-                        }
-
-                        System.out.print("Masukkan Nominal Pinjaman (Rp): ");
-                        long nominal = Long.parseLong(scanner.nextLine().trim());
-                        System.out.print("Masukkan Tenor (Bulan): ");
-                        int tenor = Integer.parseInt(scanner.nextLine().trim());
-
-                        System.out.println("Pilih Jenis Bunga:");
-                        System.out.println("1. Syariah (Bunga 0%)");
-                        System.out.println("2. Float (Bunga 5% per bulan)");
-                        System.out.println("3. Flat (Bunga 5% per bulan)");
-                        System.out.print("Pilih (1/2/3): ");
-                        String pilihanBunga = scanner.nextLine().trim();
-                        String interestType;
-                        if ("1".equals(pilihanBunga)) {
-                            interestType = "syariah";
-                        } else if ("2".equals(pilihanBunga)) {
-                            interestType = "float";
-                        } else if ("3".equals(pilihanBunga)) {
-                            interestType = "flat";
-                        } else {
-                            System.out.println("\nGagal, Pilihan jenis bunga tidak valid!");
-                            break;
-                        }
-
-                        if (borrowerObj != null) {
-                            Money currentCalculatedLimit = borrowerObj.hitungLimitDenganTenorDanBunga(tenor, interestType);
-                            System.out.println("Limit pinjaman Anda untuk pengajuan ini: Rp " + currentCalculatedLimit.getAmount());
-                        }
-
-                        Money amount = new Money(BigDecimal.valueOf(nominal), "IDR");
-                        Loan loan = ctx.getLoanService().ajukanPinjaman(new BorrowerId(borrowerIdStr), amount, tenor, interestType);
-
-                        System.out.println("\nPengajuan pinjaman berhasil diajukan!");
-                        System.out.println("   Loan ID : " + loan.getId().getValue());
-                        System.out.println("   Status  : " + loan.getStatus());
-
-                    } catch (NumberFormatException e) {
-                        System.out.println("\nGagal, Input nominal/tenor harus berupa angka!");
-                    } catch (Exception e) {
-                        System.out.println("\nGagal mengajukan pinjaman: " + e.getMessage());
-                    }
-                }
-
-                case "2" -> {
-                    System.out.println("\n=== STATUS PINJAMAN ===");
-                    System.out.print("Masukkan ID Pinjaman (Loan ID): ");
-                    String inputLoanId = scanner.nextLine().trim();
-
-                    try {
-                        Loan loan = ctx.getLoanService().getLoan(new LoanId(inputLoanId));
-                        BigDecimal totalTerkumpul = loan.getTotalTerkumpul().getAmount();
-                        BigDecimal targetNominal = loan.getTargetNominal().getAmount();
-                        BigDecimal progresPendanaan = BigDecimal.ZERO;
-                        if (targetNominal.compareTo(BigDecimal.ZERO) > 0) {
-                            progresPendanaan = totalTerkumpul
-                                    .multiply(new BigDecimal("100"))
-                                    .divide(targetNominal, 2, RoundingMode.HALF_UP);
-                        }
-
-                        System.out.println("------------------------------------------");
-                        System.out.println("ID Pinjaman      : " + loan.getId().getValue());
-                        System.out.println("Status Pinjaman  : " + loan.getStatus());
-                        System.out.println("Target Nominal   : Rp " + targetNominal);
-                        System.out.println("Total Terkumpul  : Rp " + totalTerkumpul + " (" + progresPendanaan + "%)");
-                        System.out.println("Sisa Tenor       : " + loan.getTenorSisa() + " bulan");
-                        System.out.println("Sisa Tagihan     : Rp " + loan.getSisaTagihanKeseluruhan().getAmount());
-                        
-                        if (loan.getTagihanBulanIni() != null && loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) > 0) {
-                            System.out.println("Tagihan Bulan Ini: Rp " + loan.getTagihanBulanIni().getAmount());
-                        } else {
-                            System.out.println("Tagihan Bulan Ini: -");
-                        }
-                        System.out.println("Jatuh Tempo Berikutnya: " + (loan.getTanggalJatuhTempo() != null ? loan.getTanggalJatuhTempo() : "-"));
-                        System.out.println("\nRiwayat Pendana:");
-                        if (loan.getListPendana().isEmpty()) {
-                            System.out.println("- Belum ada pendana.");
-                        } else {
-                            loan.getListPendana().forEach((lenderId, amount) ->
-                                    System.out.println("- " + lenderId + " : Rp " + amount.getAmount()));
-                        }
-                        System.out.println("------------------------------------------");
-                    } catch (Exception e) {
-                        System.out.println("Gagal mengambil status pinjaman: " + e.getMessage());
-                    }
-                }
-
-                case "3" -> {
-                    menuBayarCicilan();
-                }
-
-                case "4" -> {
-                    menuSimulasiOverdue();
-                }
-                
+                case "1" -> menuAjukanPinjaman();
+                case "2" -> menuLihatStatusPinjaman();
+                case "3" -> menuBayarCicilan();
+                case "4" -> menuSimulasiOverdue();
                 case "5" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
                     kembali = true;
                 }
-
                 default -> System.out.println("Pilihan tidak valid.");
             }
         }
     }
 
-    // Submenu: Bayar Cicilan
-    private void menuBayarCicilan() {
-        System.out.println("\n=== BAYAR CICILAN ===");
-        System.out.print("Masukkan ID Pinjaman (Loan ID): ");
-        String inputLoanId = scanner.nextLine().trim();
+    private void menuAjukanPinjaman() {
+        System.out.println("\n=== AJUKAN PINJAMAN BARU ===");
+        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
+        if (borrowerIdStr == null) return;
 
-        // Tampilkan tagihan aktif sebelum minta nominal pembayaran
         try {
-            Loan loan = ctx.getLoanService().getLoan(new LoanId(inputLoanId));
-            if (loan == null) {
-                System.out.println("Error: Pinjaman dengan ID tersebut tidak ditemukan.");
-                return;
-            }
+            var borrowerObj = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
+            System.out.print("Masukkan Nominal Pinjaman (Rp): ");
+            long nominal = Long.parseLong(scanner.nextLine().trim());
+            System.out.print("Masukkan Tenor (Bulan): ");
+            int tenor = Integer.parseInt(scanner.nextLine().trim());
 
-            String status = loan.getStatus();
-            if (!"DISBURSED".equals(status) && !"REPAYMENT".equals(status) && !"OVERDUE".equals(status)) {
-                System.out.println("Pinjaman tidak dalam status pembayaran (status saat ini: " + status + ").");
-                return;
-            }
+            System.out.println("Pilih Jenis Bunga: 1. Syariah 2. Float 3. Flat");
+            System.out.print("Pilih (1/2/3): ");
+            String pilihanBunga = scanner.nextLine().trim();
+            String interestType = switch (pilihanBunga) {
+                case "1" -> "syariah";
+                case "2" -> "float";
+                case "3" -> "flat";
+                default -> throw new IllegalArgumentException("Invalid!");
+            };
 
-            // Tampilkan ringkasan tagihan
-            System.out.println("   Status Pinjaman   : " + status);
-            System.out.println("   Sisa Pokok        : Rp " + loan.getSisaTagihanKeseluruhan().getAmount());
-            System.out.println("   Sisa Tenor        : " + loan.getTenorSisa() + " bulan");
-            if (loan.getTagihanBulanIni() != null &&
-                    loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) > 0) {
-                System.out.println("   Tagihan Bulan Ini : Rp " + loan.getTagihanBulanIni().getAmount());
-                if ("OVERDUE".equals(status)) {
-                    System.out.println("   *** Termasuk denda keterlambatan Rp 50.000 ***");
-                }
-            } else {
-                System.out.println("   (Tagihan bulan ini belum di-generate. Silakan hubungi admin.)");
-            }
-
+            Money amount = new Money(BigDecimal.valueOf(nominal), "IDR");
+            Loan loan = ctx.getLoanService().ajukanPinjaman(new BorrowerId(borrowerIdStr), amount, tenor, interestType);
+            System.out.println("Berhasil! ID: " + loan.getId().getValue());
         } catch (Exception e) {
-            System.out.println("Gagal memuat info pinjaman: " + e.getMessage());
-            return;
-        }
-
-        System.out.print("Masukkan Nominal Pembayaran (Rp): ");
-        try {
-            long nominalPembayaran = Long.parseLong(scanner.nextLine().trim());
-            Money amount = new Money(BigDecimal.valueOf(nominalPembayaran), "IDR");
-
-            // Panggil service untuk membayar cicilan
-            ctx.getLoanService().bayarCicilan(new LoanId(inputLoanId), amount);
-
-            // Fetch ulang loan untuk melihat status terbarunya setelah dibayar
-            Loan updatedLoan = ctx.getLoanService().getLoan(new LoanId(inputLoanId));
-
-            System.out.println("------------------------------------------");
-            if ("CLOSED".equals(updatedLoan.getStatus())) {
-                System.out.println("Pembayaran diterima! Selamat, Pinjaman " + inputLoanId + " telah LUNAS.");
-                System.out.println("Anda sekarang bisa mengajukan pinjaman baru.");
-            } else {
-                System.out.println("Cicilan berhasil dibayar!");
-                System.out.println("   Status Pinjaman : " + updatedLoan.getStatus());
-                System.out.println("   Sisa Pokok      : Rp " + updatedLoan.getSisaTagihanKeseluruhan().getAmount());
-                System.out.println("   Sisa Tenor      : " + updatedLoan.getTenorSisa() + " bulan");
-                if (updatedLoan.getTanggalJatuhTempo() != null) {
-                    System.out.println("   Jatuh Tempo     : " + updatedLoan.getTanggalJatuhTempo());
-                }
-            }
-
-        } catch (NumberFormatException e) {
-            System.out.println("Error: Nominal pembayaran harus berupa angka tanpa titik/koma!");
-        } catch (Exception e) {
-            System.out.println("Gagal membayar cicilan: " + e.getMessage());
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
-    // Submenu: Simulasi Jatuh Tempo & Tandai OVERDUE
-    private void menuSimulasiOverdue() {
-        System.out.println("\n=== SIMULASI JATUH TEMPO & OVERDUE ===");
-        System.out.println("Menu ini untuk keperluan simulasi/demo.");
-        System.out.println("1. Majukan tanggal jatuh tempo ke kemarin (agar bisa ditandai OVERDUE)");
-        System.out.println("2. Tandai pinjaman sebagai OVERDUE (jika sudah melewati jatuh tempo)");
-        System.out.println("3. Kembali");
-        System.out.print("Pilih: ");
-        String sub = scanner.nextLine().trim();
+    private void menuLihatStatusPinjaman() {
+        System.out.print("Masukkan Loan ID: ");
+        String id = scanner.nextLine().trim();
+        try {
+            Loan loan = ctx.getLoanService().getLoan(new LoanId(id));
+            if (loan == null) {
+                throw new Exception("Loan tidak ditemukan.");
+            }
+            System.out.println("Status: " + loan.getStatus() + " | Sisa: Rp " + loan.getSisaTagihanKeseluruhan().getAmount());
+        } catch (Exception e) {
+            System.out.println("Gagal: " + e.getMessage());
+        }
+    }
 
-        switch (sub) {
-            case "1" -> {
-                System.out.print("Masukkan ID Pinjaman (Loan ID): ");
-                String loanIdStr = scanner.nextLine().trim();
-                try {
-                    ctx.getLoanService().simulasiMajukanJatuhTempo(new LoanId(loanIdStr));
-                    System.out.println("Berhasil! Tanggal jatuh tempo dimajukan ke kemarin.");
-                    System.out.println("Sekarang pilih opsi 2 untuk menandai pinjaman sebagai OVERDUE.");
-                } catch (Exception e) {
-                    System.out.println("Gagal: " + e.getMessage());
-                }
+    private void menuBayarCicilan() {
+        System.out.print("Masukkan Loan ID: ");
+        String id = scanner.nextLine().trim();
+        try {
+            Loan loan = ctx.getLoanService().getLoan(new LoanId(id));
+            if (loan == null) {
+                throw new Exception("Loan tidak ditemukan.");
             }
-            case "2" -> {
-                System.out.print("Masukkan ID Pinjaman (Loan ID): ");
-                String loanIdStr = scanner.nextLine().trim();
-                try {
-                    ctx.getLoanService().tandaiOverdue(new LoanId(loanIdStr));
-                    Loan loan = ctx.getLoanService().getLoan(new LoanId(loanIdStr));
-                    System.out.println("Pinjaman " + loanIdStr + " sekarang berstatus OVERDUE.");
-                    System.out.println("   Tagihan Bulan Ini : Rp " + loan.getTagihanBulanIni().getAmount());
-                    System.out.println("   (Sudah termasuk denda keterlambatan Rp 50.000)");
-                    System.out.println("   Silakan bayar cicilan sebelum denda bertambah.");
-                } catch (Exception e) {
-                    System.out.println("Gagal menandai OVERDUE: " + e.getMessage());
-                }
-            }
-            case "3" -> { /* kembali */ }
-            default -> System.out.println("Pilihan tidak valid.");
+            System.out.println("Tagihan bulan ini: Rp " + (loan.getTagihanBulanIni() != null ? loan.getTagihanBulanIni().getAmount() : "0"));
+            System.out.print("Nominal Bayar: ");
+            long bayar = Long.parseLong(scanner.nextLine().trim());
+            ctx.getLoanService().bayarCicilan(new LoanId(id), new Money(BigDecimal.valueOf(bayar), "IDR"));
+            System.out.println("Pembayaran sukses.");
+        } catch (Exception e) {
+            System.out.println("Gagal: " + e.getMessage());
+        }
+    }
+
+    private void menuSimulasiOverdue() {
+        System.out.println("1. Majukan Jatuh Tempo | 2. Tandai Overdue");
+        String opt = scanner.nextLine();
+        System.out.print("Loan ID: ");
+        String id = scanner.nextLine();
+        try {
+            if ("1".equals(opt)) ctx.getLoanService().simulasiMajukanJatuhTempo(new LoanId(id));
+            else if ("2".equals(opt)) ctx.getLoanService().tandaiOverdue(new LoanId(id));
+            System.out.println("Simulasi sukses.");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 }

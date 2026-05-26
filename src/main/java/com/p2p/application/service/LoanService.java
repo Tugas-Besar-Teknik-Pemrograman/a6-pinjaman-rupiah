@@ -56,6 +56,21 @@ public class LoanService {
         return loan;
     }
 
+    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor, String interestType) throws Exception {
+        return ajukanPinjaman(borrowerId, amount, tenor, interestType, null);
+    }
+
+    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor, String interestType, java.math.BigDecimal customRateOrMargin) throws Exception {
+        Borrower borrower = borrowerRepository.findById(borrowerId);
+        if (borrower == null) {
+            throw new Exception("Borrower tidak ditemukan");
+        }
+        Loan loan = borrower.ajukanPinjaman(new LoanId(), amount, tenor, interestType, customRateOrMargin);
+        borrowerRepository.save(borrower);
+        loanRepository.save(loan);
+        return loan;
+    }
+
     public Loan getLoan(LoanId loanId) {
         return loanRepository.findById(loanId);
     }

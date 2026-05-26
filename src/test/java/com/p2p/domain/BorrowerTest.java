@@ -137,4 +137,31 @@ class BorrowerTest {
         BigDecimal sisaLimitExpected = new BigDecimal("3000000.00");
         assertEquals(sisaLimitExpected, borrower.getLimitPinjaman().getAmount(), "Limit plafon tidak boleh berubah");
     }
+
+    @Test
+    void hitungLimitDenganTenorDanBunga_syariah_hasilBenar() {
+        // Income = 10,000,000, Tenor = 12, Syariah (bunga 0%)
+        // Batas Cicilan = 3,000,000
+        // Limit = 3,000,000 / (1/12 + 0.0) = 36,000,000
+        Money limit = borrower.hitungLimitDenganTenorDanBunga(12, "syariah");
+        assertEquals(0, new BigDecimal("36000000.00").compareTo(limit.getAmount()));
+    }
+
+    @Test
+    void hitungLimitDenganTenorDanBunga_flat_hasilBenar() {
+        // Income = 10,000,000, Tenor = 12, Flat (bunga 5% = 0.05)
+        // Batas Cicilan = 3,000,000
+        // Limit = 3,000,000 / (1/12 + 0.05) = 22,500,000
+        Money limit = borrower.hitungLimitDenganTenorDanBunga(12, "flat");
+        assertEquals(0, new BigDecimal("22500000.00").compareTo(limit.getAmount()));
+    }
+
+    @Test
+    void hitungLimitDenganTenorDanBunga_float_hasilBenar() {
+        // Income = 10,000,000, Tenor = 12, Float (bunga 5% = 0.05)
+        // Batas Cicilan = 3,000,000
+        // Limit = 3,000,000 / (1/12 + 0.05) = 22,500,000
+        Money limit = borrower.hitungLimitDenganTenorDanBunga(12, "float");
+        assertEquals(0, new BigDecimal("22500000.00").compareTo(limit.getAmount()));
+    }
 }

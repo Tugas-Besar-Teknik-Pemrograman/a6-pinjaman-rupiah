@@ -59,7 +59,7 @@ public class BorrowerMenu {
             System.out.print("Masukkan Tenor (Bulan): ");
             int tenor = Integer.parseInt(scanner.nextLine().trim());
 
-            System.out.println("Pilih Jenis Bunga: 1. Syariah, 2. Float, 3. Flat");
+            System.out.println("Pilih Jenis Bunga: 1. Syariah 2. Float 3. Flat");
             System.out.print("Pilih (1/2/3): ");
             String pilihanBunga = scanner.nextLine().trim();
             String interestType = switch (pilihanBunga) {

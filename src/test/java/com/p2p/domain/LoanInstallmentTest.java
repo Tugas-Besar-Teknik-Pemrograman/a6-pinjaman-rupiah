@@ -98,6 +98,30 @@ class LoanInstallmentTest {
     }
 
     @Test
+    void cairkanPinjaman_menghasilkanTagihanAwal() {
+        Money target = new Money(new BigDecimal("10000000"), "IDR");
+        Loan loan = new Loan(new LoanId("LN-001A"), new BorrowerId("BR-001"), target, 5);
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.ubahStatus("FUNDING_READY");
+
+        loan.cairkanPinjaman();
+
+        assertEquals("DISBURSED", loan.getStatus());
+        assertTrue(loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) > 0);
+    }
+
+    @Test
+    void payInstallment_tagihanBelumTersedia_throwException() {
+        Money target = new Money(new BigDecimal("10000000"), "IDR");
+        Loan loan = new Loan(new LoanId("LN-001B"), new BorrowerId("BR-001"), target, 5);
+        loan.ubahStatus("DISBURSED");
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+
+        Exception ex = assertThrows(Exception.class, () -> loan.bayarCicilan(new Money(new BigDecimal("1"), "IDR")));
+        assertEquals("Tagihan bulan ini belum tersedia", ex.getMessage());
+    }
+
+    @Test
     void payInstallment_kurang_throwException() {
         Money target = new Money(new BigDecimal("10000000"), "IDR");
         Loan loan = new Loan(new LoanId("LN-002"), new BorrowerId("BR-001"), target, 5);

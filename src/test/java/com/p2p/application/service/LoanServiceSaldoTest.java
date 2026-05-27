@@ -71,4 +71,38 @@ class LoanServiceSaldoTest {
         assertEquals(0, new BigDecimal("120000").compareTo(borrower.getSaldoBalance().getAmount().setScale(0, RoundingMode.HALF_UP)));
         assertEquals("REPAYMENT", loan.getStatus());
     }
+
+    @Test
+    void simulasiTenorBerikutnya_menghasilkan_tagihan_baru() throws Exception {
+        LoanRepository loanRepository = mock(LoanRepository.class);
+        BorrowerRepository borrowerRepository = mock(BorrowerRepository.class);
+        
+        LoanService loanService = new LoanService(loanRepository, borrowerRepository, null, null);
+        
+        Borrower borrower = new Borrower(new BorrowerId("BR-3"), new Money(new BigDecimal("10000000"), "IDR"));
+        borrower.setKycStatus(true);
+        borrower.setCreditScore(700);
+        borrower.tambahSaldo(new Money(new BigDecimal("5000000"), "IDR"));
+        
+        Loan loan = new Loan(new LoanId("LN-3"), borrower.getId(), new Money(new BigDecimal("1000000"), "IDR"), 5);
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.ubahStatus("DISBURSED");
+        loan.generateMonthlyBill(); // tagihan awal terbentuk
+        
+        when(loanRepository.findById(loan.getId())).thenReturn(loan);
+        when(borrowerRepository.findById(borrower.getId())).thenReturn(borrower);
+        
+        // Bayar cicilan pertama
+        loanService.bayarCicilan(loan.getId(), loan.getTagihanBulanIni());
+        
+        // Cek tagihan bulan ini harusnya 0 setelah bayar
+        assertEquals(0, BigDecimal.ZERO.compareTo(loan.getTagihanBulanIni().getAmount()));
+        
+        // Jalankan simulasi tenor berikutnya
+        loanService.simulasiTenorBerikutnya(loan.getId());
+        
+        // Tagihan baru untuk bulan ke-2 harusnya terbentuk
+        BigDecimal expectedBill = new BigDecimal("250000"); // pokok 1jt/5=200rb + bunga 1jt*5%=50rb = 250rb
+        assertEquals(0, expectedBill.compareTo(loan.getTagihanBulanIni().getAmount().setScale(0, RoundingMode.HALF_UP)));
+    }
 }

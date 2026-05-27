@@ -84,7 +84,7 @@ public class AdminMenu {
         }
 
         // Input credit score
-        System.out.print("Masukkan Credit Score (300-850): ");
+        System.out.print("Masukkan Credit Score : ");
         int creditScore;
         try {
             creditScore = Integer.parseInt(scanner.nextLine().trim());

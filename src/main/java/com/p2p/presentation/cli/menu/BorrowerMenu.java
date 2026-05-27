@@ -32,7 +32,8 @@ public class BorrowerMenu {
             System.out.println("4. Bayar Cicilan");
             System.out.println("5. Proses Pencairan");
             System.out.println("6. Simulasi Jatuh Tempo");
-            System.out.println("7. Logout");
+            System.out.println("7. Simulasi Tenor Selanjutnya");
+            System.out.println("8. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
 
@@ -43,7 +44,8 @@ public class BorrowerMenu {
                 case "4" -> menuBayarCicilan();
                 case "5" -> menuProsesPencairan();
                 case "6" -> menuSimulasiOverdue();
-                case "7" -> {
+                case "7" -> menuSimulasiTenorSelanjutnya();
+                case "8" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
                     kembali = true;
@@ -93,6 +95,11 @@ public class BorrowerMenu {
 
         try {
             var borrowerObj = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
+            if (borrowerObj == null) {
+                System.out.println("Gagal, data Borrower tidak ditemukan.");
+                return;
+            }
+
             System.out.print("Masukkan Nominal Pinjaman (Rp): ");
             long nominal = Long.parseLong(scanner.nextLine().trim());
             System.out.print("Masukkan Tenor (Bulan): ");
@@ -105,11 +112,93 @@ public class BorrowerMenu {
                 case "1" -> "syariah";
                 case "2" -> "float";
                 case "3" -> "flat";
-                default -> throw new IllegalArgumentException("Invalid!");
+                default -> throw new IllegalArgumentException("Pilihan bunga tidak valid!");
             };
 
-            Money amount = new Money(BigDecimal.valueOf(nominal), "IDR");
-            Loan loan = ctx.getLoanService().ajukanPinjaman(new BorrowerId(borrowerIdStr), amount, tenor, interestType);
+            BigDecimal nominalBigDecimal = BigDecimal.valueOf(nominal);
+            
+            // Lakukan pre-validasi sebelum menampilkan detail preview
+            if (!borrowerObj.isKycStatus()) {
+                throw new IllegalStateException("Peminjaman ditolak karena Borrower belum terverifikasi (KYC)");
+            }
+            if (borrowerObj.getCreditScore() < 600) {
+                throw new IllegalStateException("Peminjaman ditolak karena Credit score di bawah ambang batas");
+            }
+            if (nominalBigDecimal.compareTo(new BigDecimal("100000")) < 0) {
+                throw new IllegalArgumentException("Nominal pinjaman harus lebih dari 100.000");
+            }
+            if (borrowerObj.hasActiveLoan()) {
+                throw new IllegalStateException("Lunasi Peminjaman sebelumnya dulu");
+            }
+
+            BigDecimal bungaRate = BigDecimal.ZERO;
+            if ("flat".equalsIgnoreCase(interestType) || "fixed".equalsIgnoreCase(interestType)) {
+                bungaRate = new BigDecimal("0.05");
+            } else if ("float".equalsIgnoreCase(interestType) || "floating".equalsIgnoreCase(interestType)) {
+                bungaRate = new BigDecimal("0.05");
+            }
+            
+            Money limitDinamis = borrowerObj.hitungLimitDenganTenorDanBunga(tenor, bungaRate);
+            Money requestedAmount = new Money(nominalBigDecimal, "IDR");
+            if (limitDinamis.isLessThan(requestedAmount)) {
+                throw new IllegalStateException("Sisa limit pinjaman tidak mencukupi");
+            }
+
+            // Jika lolos pre-validasi, hitung rincian simulasi cicilan
+            BigDecimal principalPerMonth = nominalBigDecimal.divide(BigDecimal.valueOf(tenor), 2, RoundingMode.HALF_UP);
+            BigDecimal totalInterest = BigDecimal.ZERO;
+            BigDecimal adminFee = nominalBigDecimal.multiply(new BigDecimal("0.01")).setScale(0, RoundingMode.HALF_UP); // 1% admin fee
+            
+            System.out.println("\n=================================================");
+            System.out.println("            PREVIEW PENGAJUAN PINJAMAN           ");
+            System.out.println("=================================================");
+            System.out.printf("Nominal Pinjaman : Rp %,.0f%n", nominalBigDecimal);
+            System.out.printf("Tenor            : %d Bulan%n", tenor);
+            System.out.printf("Jenis Bunga      : %s%n", interestType.toUpperCase());
+            System.out.printf("Biaya Admin (1%%) : Rp %,.0f (dipotong saat pencairan)%n", adminFee);
+            System.out.println("-------------------------------------------------");
+            System.out.println("           Simulasi Cicilan Bulanan              ");
+            System.out.println("-------------------------------------------------");
+            
+            BigDecimal sisaPokok = nominalBigDecimal;
+            BigDecimal totalPengembalian = BigDecimal.ZERO;
+            
+            for (int i = 1; i <= tenor; i++) {
+                BigDecimal bungaAtauMargin = BigDecimal.ZERO;
+                if ("flat".equals(interestType)) {
+                    bungaAtauMargin = nominalBigDecimal.multiply(new BigDecimal("0.05")).setScale(0, RoundingMode.HALF_UP);
+                } else if ("float".equals(interestType)) {
+                    bungaAtauMargin = sisaPokok.multiply(new BigDecimal("0.05")).setScale(0, RoundingMode.HALF_UP);
+                } else if ("syariah".equals(interestType)) {
+                    bungaAtauMargin = new BigDecimal("150000");
+                }
+                
+                BigDecimal totalCicilanBulanIni = principalPerMonth.add(bungaAtauMargin);
+                totalPengembalian = totalPengembalian.add(totalCicilanBulanIni);
+                totalInterest = totalInterest.add(bungaAtauMargin);
+                
+                System.out.printf("Bulan %2d: Pokok Rp %,.0f + %s Rp %,.0f = Cicilan Rp %,.0f%n", 
+                        i, 
+                        principalPerMonth, 
+                        "syariah".equals(interestType) ? "Margin" : "Bunga", 
+                        bungaAtauMargin, 
+                        totalCicilanBulanIni);
+                
+                sisaPokok = sisaPokok.subtract(principalPerMonth);
+            }
+            
+            System.out.println("-------------------------------------------------");
+            System.out.printf("Total Bunga/Margin : Rp %,.0f%n", totalInterest);
+            System.out.printf("Total Pengembalian : Rp %,.0f%n", totalPengembalian);
+            System.out.println("=================================================");
+            System.out.print("Apakah Anda setuju dengan rincian di atas? (y/n): ");
+            String persetujuan = scanner.nextLine().trim();
+            if (!"y".equalsIgnoreCase(persetujuan)) {
+                System.out.println("Pengajuan pinjaman dibatalkan. Kembali ke menu.");
+                return;
+            }
+
+            Loan loan = ctx.getLoanService().ajukanPinjaman(new BorrowerId(borrowerIdStr), requestedAmount, tenor, interestType);
             System.out.println("Berhasil! ID: " + loan.getId().getValue());
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -212,6 +301,65 @@ public class BorrowerMenu {
             System.out.println("Simulasi sukses.");
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void menuSimulasiTenorSelanjutnya() {
+        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
+        if (borrowerIdStr == null) {
+            System.out.println("Gagal, Profil Borrower tidak ditemukan.");
+            return;
+        }
+
+        List<Loan> allLoans = ctx.getRepos().getLoanRepository().findAll();
+        List<Loan> activeLoans = allLoans.stream()
+                .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
+                .filter(l -> "DISBURSED".equals(l.getStatus()) || "REPAYMENT".equals(l.getStatus()) || "OVERDUE".equals(l.getStatus()))
+                .toList();
+
+        if (activeLoans.isEmpty()) {
+            System.out.println("Anda tidak memiliki pinjaman aktif yang sedang berjalan.");
+            return;
+        }
+
+        Loan selectedLoan;
+        if (activeLoans.size() == 1) {
+            selectedLoan = activeLoans.get(0);
+            System.out.println("Menemukan 1 pinjaman aktif: " + selectedLoan.getId().getValue() + ". Memproses simulasi tenor berikutnya...");
+        } else {
+            System.out.println("\n--- Pinjaman Aktif Anda ---");
+            for (int i = 0; i < activeLoans.size(); i++) {
+                Loan l = activeLoans.get(i);
+                System.out.printf("%d) %s - Tagihan Bulan Ini: Rp %s - Sisa Tenor: %d bulan%n", 
+                        i + 1, l.getId().getValue(), 
+                        (l.getTagihanBulanIni() != null ? l.getTagihanBulanIni().getAmount() : "0"),
+                        l.getTenorSisa());
+            }
+            System.out.print("Pilih nomor pinjaman untuk disimulasikan (atau '0' untuk batal): ");
+            String choice = scanner.nextLine().trim();
+            if ("0".equals(choice)) return;
+            try {
+                int idx = Integer.parseInt(choice) - 1;
+                if (idx < 0 || idx >= activeLoans.size()) {
+                    System.out.println("Pilihan tidak valid.");
+                    return;
+                }
+                selectedLoan = activeLoans.get(idx);
+            } catch (NumberFormatException e) {
+                System.out.println("Input tidak valid.");
+                return;
+            }
+        }
+
+        try {
+            ctx.getLoanService().simulasiTenorBerikutnya(selectedLoan.getId());
+            Loan updated = ctx.getRepos().getLoanRepository().findById(selectedLoan.getId());
+            System.out.println("Simulasi sukses! Tagihan baru untuk bulan selanjutnya telah dibuat.");
+            System.out.println("Tagihan Bulan Ini  : Rp " + (updated.getTagihanBulanIni() != null ? updated.getTagihanBulanIni().getAmount() : "0"));
+            System.out.println("Sisa Tenor         : " + updated.getTenorSisa() + " bulan");
+            System.out.println("Tanggal Jatuh Tempo: " + updated.getTanggalJatuhTempo());
+        } catch (Exception e) {
+            System.out.println("Gagal mensimulasikan tenor berikutnya: " + e.getMessage());
         }
     }
 }

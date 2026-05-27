@@ -247,4 +247,30 @@ public class LoanService {
         loan.setTanggalJatuhTempo(LocalDate.now().minusDays(1));
         loanRepository.save(loan);
     }
+
+    public void simulasiTenorBerikutnya(LoanId loanId) throws Exception {
+        Loan loan = loanRepository.findById(loanId);
+        if (loan == null) {
+            throw new IllegalArgumentException("Loan tidak ditemukan");
+        }
+        String status = loan.getStatus();
+        if (!"DISBURSED".equals(status) && !"REPAYMENT".equals(status) && !"OVERDUE".equals(status)) {
+            throw new IllegalStateException(
+                "Simulasi tenor berikutnya hanya bisa dilakukan pada status DISBURSED, REPAYMENT, atau OVERDUE. " +
+                "Status saat ini: " + status
+            );
+        }
+        if (loan.isLunas()) {
+            throw new IllegalStateException("Pinjaman sudah lunas.");
+        }
+        if (loan.getTagihanBulanIni() != null && loan.getTagihanBulanIni().getAmount().compareTo(java.math.BigDecimal.ZERO) > 0) {
+            throw new IllegalStateException("Harap bayar cicilan bulan ini terlebih dahulu sebelum mensimulasikan tenor berikutnya.");
+        }
+
+        loan.generateMonthlyBill();
+        if (loan.getTanggalJatuhTempo() != null) {
+            loan.setTanggalJatuhTempo(loan.getTanggalJatuhTempo().plusDays(30));
+        }
+        loanRepository.save(loan);
+    }
 }

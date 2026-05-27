@@ -17,6 +17,7 @@ public class Borrower {
     private int creditScore;
     private boolean hasActiveLoan;
     private Money penghasilan;
+    private Money saldoBalance;
 
     public Borrower(BorrowerId id, Money penghasilan) {
         this.id = id;
@@ -25,6 +26,7 @@ public class Borrower {
         this.kycStatus = false;
         this.creditScore = 0;
         this.hasActiveLoan = false;
+        this.saldoBalance = new Money(BigDecimal.ZERO, penghasilan.getCurrency());
     }
 
     private Money hitungLimitMaksimal(Money penghasilan) {
@@ -38,6 +40,38 @@ public class Borrower {
 
     public void setPenghasilan(Money penghasilan) {
         this.penghasilan = penghasilan;
+    }
+
+    public void tambahSaldo(Money nominalTambah) {
+        validatePositiveAmount(nominalTambah);
+        updateSaldo(nominalTambah.getAmount());
+    }
+
+    public void kurangiSaldo(Money nominalKurang) {
+        validatePositiveAmount(nominalKurang);
+        validateSufficientSaldo(nominalKurang);
+        updateSaldo(nominalKurang.getAmount().negate());
+    }
+
+    public Money getSaldoBalance() {
+        return this.saldoBalance;
+    }
+
+    private void validatePositiveAmount(Money nominal) {
+        if (nominal.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Nominal harus lebih dari 0");
+        }
+    }
+
+    private void validateSufficientSaldo(Money nominalKurang) {
+        if (this.saldoBalance.getAmount().compareTo(nominalKurang.getAmount()) < 0) {
+            throw new IllegalArgumentException("Saldo borrower tidak mencukupi");
+        }
+    }
+
+    private void updateSaldo(BigDecimal amount) {
+        BigDecimal newBalance = this.saldoBalance.getAmount().add(amount);
+        this.saldoBalance = new Money(newBalance, this.saldoBalance.getCurrency());
     }
 
     public Money hitungLimitDenganTenorDanBunga(int tenor, String interestType) {

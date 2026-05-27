@@ -106,7 +106,7 @@ public class LoanService {
             throw new IllegalArgumentException("Loan tidak ditemukan");
         }
         if (loan.getStatus().equals("FUNDING_READY")) {
-            LoanStateFactory.disbursed().ubahStatus(loan);
+            loan.cairkanPinjaman();
             loanRepository.save(loan);
             if (loanEventPublisher != null) {
                loanEventPublisher.publishPencairanBerhasil(new PencairanBerhasilEvent(loanId, loan.getBorrowerId()));

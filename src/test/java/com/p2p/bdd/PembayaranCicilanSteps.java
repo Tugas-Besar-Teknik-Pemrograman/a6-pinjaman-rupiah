@@ -9,7 +9,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.p2p.application.service.LoanService;
+import com.p2p.domain.borrower.Borrower;
 import com.p2p.domain.borrower.BorrowerId;
+import com.p2p.domain.borrower.BorrowerRepository;
 import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanRepository;
@@ -22,10 +24,14 @@ public class PembayaranCicilanSteps {
     @Mock
     private LoanRepository loanRepository;
 
+    @Mock
+    private BorrowerRepository borrowerRepository;
+
     @InjectMocks
     private LoanService loanService;
 
     private Loan loan;
+    private Borrower borrower;
     private Exception exception;
 
     public PembayaranCicilanSteps() {
@@ -39,10 +45,16 @@ public class PembayaranCicilanSteps {
         LoanId loanId = new LoanId(id);
         BorrowerId borrowerId = new BorrowerId("BR-001");
 
+        borrower = new Borrower(borrowerId, new Money(new BigDecimal("10000000"), "IDR"));
+        borrower.setKycStatus(true);
+        borrower.setCreditScore(700);
+        borrower.tambahSaldo(new Money(new BigDecimal("10000000"), "IDR"));
+
         this.loan = new Loan(loanId, borrowerId, target, tenor);
         this.loan.ubahStatus("DISBURSED");
         
         when(loanRepository.findById(loanId)).thenReturn(loan);
+        when(borrowerRepository.findById(borrowerId)).thenReturn(borrower);
     }
 
     @Given("loan dengan ID {string} memiliki tagihan bulan ini")
@@ -73,6 +85,8 @@ public class PembayaranCicilanSteps {
     public void loan_dengan_id_memiliki_sisa_tagihan_keseluruhan_sebesar_dan_status(String id, Integer amount, String status) {
         setupLoan(id, amount.longValue(), 1); 
         this.loan.ubahStatus(status);
+        this.loan.setInterestStrategy(new FixedInterestStrategy(BigDecimal.ZERO));
+        this.loan.generateMonthlyBill();
     }
 
     @Given("loan dengan ID {string} memiliki status {string}")

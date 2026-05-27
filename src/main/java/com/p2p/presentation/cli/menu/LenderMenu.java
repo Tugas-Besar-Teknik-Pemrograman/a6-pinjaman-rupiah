@@ -29,7 +29,7 @@ public class LenderMenu {
             System.out.println("1. Tambah Saldo (Top Up)");
             System.out.println("2. Lihat Pinjaman yang Bisa Didanai");
             System.out.println("3. Investasi di Pinjaman");
-            System.out.println("4. Proses Pencairan");
+            System.out.println("4. Proses Pencairan (Disabled — dikelola di menu Borrower)");
             System.out.println("5. Tarik Saldo");
             System.out.println("6. Logout");
             System.out.print("Pilih: ");
@@ -39,7 +39,7 @@ public class LenderMenu {
                 case "1" -> menuTopUp();
                 case "2" -> menuLihatPinjamanFunding();
                 case "3" -> menuInvestasi();
-                case "4" -> prosesPencairan();
+                case "4" -> System.out.println("Fitur 'Proses Pencairan' dipindahkan ke menu Borrower. Silakan minta borrower untuk melakukan pencairan.");
                 case "5" -> menuTarikSaldo();
                 case "6" -> {
                     ctx.logout();
@@ -164,64 +164,7 @@ public class LenderMenu {
     }
 
     private void prosesPencairan() {
-        String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
-        if (lenderIdStr == null) {
-            System.out.println("Gagal, Profil Lender tidak ditemukan.");
-            return;
-        }
-        LenderId lenderId = new LenderId(lenderIdStr);
-
-        List<Loan> allLoans = ctx.getRepos().getLoanRepository().findAll();
-        List<Loan> lenderLoans = allLoans.stream()
-                .filter(l -> l.getDaftarPendana().containsKey(lenderId))
-                .toList();
-
-        if (lenderLoans.isEmpty()) {
-            System.out.println("\nAnda belum menginvestasikan dana pada pinjaman manapun.");
-            return;
-        }
-
-        System.out.println("\n--- Daftar Pinjaman yang Anda Danai ---");
-        System.out.printf("%-3s %-15s %-15s %-15s %-15s %-15s%n", "No", "Loan ID", "Target Nominal", "Dana Anda", "Terkumpul", "Status");
-        System.out.println("-".repeat(95));
-        for (int i = 0; i < lenderLoans.size(); i++) {
-            Loan l = lenderLoans.get(i);
-            Money danaLender = l.getDaftarPendana().get(lenderId);
-            System.out.printf("%-3d %-15s Rp %-12s Rp %-12s Rp %-12s %-15s%n",
-                    i + 1,
-                    l.getId().getValue(),
-                    l.getTargetNominal().getAmount().toString(),
-                    danaLender.getAmount().toString(),
-                    l.getTotalTerkumpul().getAmount().toString(),
-                    l.getStatus());
-        }
-
-        System.out.print("\nPilih no pinjaman untuk memproses pencairan (atau '0' untuk batal): ");
-        String choice = scanner.nextLine().trim();
-        if ("0".equals(choice)) {
-            return;
-        }
-
-        try {
-            int index = Integer.parseInt(choice) - 1;
-            if (index < 0 || index >= lenderLoans.size()) {
-                System.out.println("Pilihan tidak valid.");
-                return;
-            }
-            Loan selectedLoan = lenderLoans.get(index);
-
-            System.out.println("\nMemproses pencairan untuk Loan " + selectedLoan.getId().getValue() + "...");
-            try {
-                ctx.getLoanService().prosesPencairan(selectedLoan.getId());
-                Loan updatedLoan = ctx.getRepos().getLoanRepository().findById(selectedLoan.getId());
-                System.out.println("Pencairan berhasil diproses!");
-                System.out.println("Status pinjaman saat ini: " + updatedLoan.getStatus());
-            } catch (Exception e) {
-                System.out.println("Gagal memproses pencairan: " + e.getMessage());
-            }
-
-        } catch (NumberFormatException e) {
-            System.out.println("Input tidak valid. Harap masukkan nomor.");
-        }
+        System.out.println("\nFitur 'Proses Pencairan' dinonaktifkan pada menu Lender.");
+        System.out.println("Pencairan kini dikelola melalui menu Borrower. Mohon minta borrower untuk melakukan pencairan.");
     }
 }

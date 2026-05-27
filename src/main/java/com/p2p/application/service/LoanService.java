@@ -82,21 +82,39 @@ public class LoanService {
             throw new Exception("Loan tidak ditemukan");
         }
 
+        Borrower borrower = borrowerRepository.findById(loan.getBorrowerId());
+        if (borrower == null) {
+            throw new Exception("Borrower tidak ditemukan");
+        }
+
+        Money tagihanBulanIni = loan.getTagihanBulanIni();
+        if (tagihanBulanIni == null || tagihanBulanIni.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new Exception("Tagihan bulan ini belum tersedia");
+        }
+
+        if (borrower.getSaldoBalance().getAmount().compareTo(tagihanBulanIni.getAmount()) < 0) {
+            throw new IllegalStateException("Saldo borrower tidak mencukupi untuk membayar tagihan bulan ini");
+        }
+
+        if (amount.getAmount().compareTo(tagihanBulanIni.getAmount()) < 0) {
+            throw new IllegalStateException("Nominal pembayaran kurang dari nominal tagihan");
+        }
+
+        borrower.kurangiSaldo(tagihanBulanIni);
+
         // Pendelegasian ke entitas Domain.
         // Segala validasi denda overdue, perubahan status lunas (CLOSED),
         // atau kurang bayar, akan di-handle di dalam method ini.
         loan.bayarCicilan(amount);
 
         loanRepository.save(loan);
+        borrowerRepository.save(borrower);
 
         // [FIX BUG] Jika pinjaman sudah lunas, update hasActiveLoan
         // borrower menjadi false agar borrower bisa mengajukan pinjaman baru.
         if ("CLOSED".equals(loan.getStatus())) {
-            Borrower borrower = borrowerRepository.findById(loan.getBorrowerId());
-            if (borrower != null) {
-                borrower.setHasActiveLoan(false);
-                borrowerRepository.save(borrower);
-            }
+            borrower.setHasActiveLoan(false);
+            borrowerRepository.save(borrower);
         }
     }
 
@@ -106,7 +124,13 @@ public class LoanService {
             throw new IllegalArgumentException("Loan tidak ditemukan");
         }
         if (loan.getStatus().equals("FUNDING_READY")) {
-            LoanStateFactory.disbursed().ubahStatus(loan);
+            loan.cairkanPinjaman();
+            Borrower borrower = borrowerRepository.findById(loan.getBorrowerId());
+            if (borrower == null) {
+                throw new IllegalStateException("Borrower tidak ditemukan untuk pencairan");
+            }
+            borrower.tambahSaldo(loan.getTargetNominal());
+            borrowerRepository.save(borrower);
             loanRepository.save(loan);
             if (loanEventPublisher != null) {
                loanEventPublisher.publishPencairanBerhasil(new PencairanBerhasilEvent(loanId, loan.getBorrowerId()));

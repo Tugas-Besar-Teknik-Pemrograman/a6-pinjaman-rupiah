@@ -25,6 +25,24 @@ class BorrowerTest {
     }
 
     @Test
+    void saldo_awal_borrower_nol() {
+        assertEquals(0, BigDecimal.ZERO.compareTo(borrower.getSaldoBalance().getAmount()));
+    }
+
+    @Test
+    void tambahSaldo_menambah_saldo_borrower() {
+        borrower.tambahSaldo(new Money(new BigDecimal("250000"), "IDR"));
+        assertEquals(0, new BigDecimal("250000").compareTo(borrower.getSaldoBalance().getAmount()));
+    }
+
+    @Test
+    void kurangiSaldo_mengurangi_saldo_borrower() {
+        borrower.tambahSaldo(new Money(new BigDecimal("250000"), "IDR"));
+        borrower.kurangiSaldo(new Money(new BigDecimal("100000"), "IDR"));
+        assertEquals(0, new BigDecimal("150000").compareTo(borrower.getSaldoBalance().getAmount()));
+    }
+
+    @Test
     void pengajuan_pinjaman_disetujui_dan_Loan_terbentuk() {
         // Arrange
         Money nominal = new Money(new BigDecimal("2000000"), "IDR");

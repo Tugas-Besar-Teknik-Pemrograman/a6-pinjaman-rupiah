@@ -83,6 +83,7 @@ public class Loan {
         // Dipanggil saat DISBURSED — cicilan pertama jatuh tempo 28 hari sejak cair
         this.tanggalJatuhTempo = LocalDate.now().plusDays(28);
         LoanStateFactory.disbursed().ubahStatus(this);
+        generateMonthlyBill();
     }
 
     public void bayarCicilan(String repaymentId, Money jumlahBayar) throws Exception {
@@ -116,6 +117,9 @@ public class Loan {
         }
         if (this.currentMonthBill == null) {
             throw new Exception("Tidak ada tagihan aktif");
+        }
+        if (this.currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new Exception("Tagihan bulan ini belum tersedia");
         }
         if (paymentAmount.getAmount().compareTo(this.currentMonthBill.getAmount()) < 0) {
             throw new Exception("Nominal pembayaran kurang dari nominal tagihan");

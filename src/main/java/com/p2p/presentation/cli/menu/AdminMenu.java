@@ -66,12 +66,48 @@ public class AdminMenu {
             return;
         }
         System.out.println("\n--- Daftar Pengguna ---");
-        System.out.printf("%-30s %-20s %-25s %-10s%n", "ID", "Nama", "Email", "Role");
-        System.out.println("-".repeat(90));
+        System.out.printf("%-30s %-20s %-25s %-10s %-15s%n", "ID", "Nama", "Email", "Role", "Status");
+        System.out.println("-".repeat(105));
         for (User u : users) {
-            System.out.printf("%-30s %-20s %-25s %-10s%n",
-                    u.getId(), u.getNama(), u.getEmail(), u.getRole());
+            String status = getStatusKeterangan(u);
+            System.out.printf("%-30s %-20s %-25s %-10s %-15s%n",
+                    u.getId(), u.getNama(), u.getEmail(), getRoleString(u.getRole()), status);
         }
+    }
+
+    private String getStatusKeterangan(User u) {
+        String userId = u.getId().getValue();
+        
+        // Role 1 = Borrower
+        if (u.getRole() == 1) {
+            Borrower borrower = repos.getBorrowerRepository().findById(new BorrowerId(userId));
+            if (borrower != null) {
+                return borrower.isKycStatus() ? "APPROVED" : "PENDING";
+            }
+            return "PENDING";
+        }
+        // Role 2 = Lender
+        else if (u.getRole() == 2) {
+            Lender lender = repos.getLenderRepository().findById(new LenderId(userId));
+            if (lender != null) {
+                return lender.isKycVerified() ? "APPROVED" : "PENDING";
+            }
+            return "PENDING";
+        }
+        // Role 3 = Admin (tidak ada status KYC)
+        else if (u.getRole() == 3) {
+            return "ADMIN";
+        }
+        return "N/A";
+    }
+
+    private String getRoleString(int role) {
+        return switch (role) {
+            case 1 -> "BORROWER";
+            case 2 -> "LENDER";
+            case 3 -> "ADMIN";
+            default -> "UNKNOWN";
+        };
     }
 
     private void approveKycBorrower() {
@@ -127,7 +163,7 @@ public class AdminMenu {
         System.out.println("-".repeat(70));
         for (Loan l : loans) {
             System.out.printf("%-30s %-20s %-15s%n",
-                    l.getId(), l.getTargetNominal(), l.getStatus());
+                    l.getId(), l.getTargetNominal().getAmount(), l.getStatus());
         }
     }
 
@@ -148,7 +184,7 @@ public class AdminMenu {
         for (int i = 0; i < fundingReadyLoans.size(); i++) {
             Loan l = fundingReadyLoans.get(i);
             System.out.printf("%-3d %-30s %-20s %-20s%n",
-                    i + 1, l.getId(), l.getTargetNominal(), l.getTotalTerkumpul());
+                    i + 1, l.getId(), l.getTargetNominal().getAmount(), l.getTotalTerkumpul().getAmount());
         }
 
         System.out.print("Pilih no pinjaman (atau '0' untuk batal): ");

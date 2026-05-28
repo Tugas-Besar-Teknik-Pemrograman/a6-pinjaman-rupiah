@@ -100,6 +100,9 @@ public class LoanService {
             throw new IllegalStateException("Nominal pembayaran kurang dari nominal tagihan");
         }
 
+        // Hitung distribusi SEBELUM bill di-nolkan oleh loan.bayarCicilan()
+        Map<LenderId, Money> distribusiCicilan = loan.hitungDistribusiCicilan();
+
         borrower.kurangiSaldo(tagihanBulanIni);
 
         // Pendelegasian ke entitas Domain.
@@ -115,6 +118,17 @@ public class LoanService {
         if ("CLOSED".equals(loan.getStatus())) {
             borrower.setHasActiveLoan(false);
             borrowerRepository.save(borrower);
+        }
+
+        // Distribusikan cicilan ke tiap lender proporsional sesuai investasi
+        if (lenderRepository != null) {
+            for (Map.Entry<LenderId, Money> entry : distribusiCicilan.entrySet()) {
+                Lender lender = lenderRepository.findById(entry.getKey());
+                if (lender != null) {
+                    lender.tambahSaldo(entry.getValue());
+                    lenderRepository.save(lender);
+                }
+            }
         }
     }
 

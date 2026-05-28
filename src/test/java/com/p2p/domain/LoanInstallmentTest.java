@@ -1,6 +1,7 @@
 package com.p2p.domain;
 
 import com.p2p.domain.borrower.BorrowerId;
+import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.strategy.FixedInterestStrategy;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -230,14 +232,61 @@ class LoanInstallmentTest {
     void payInstallment_statusOverdue_lunas_statusKembaliKeDisbursed() throws Exception {
         Money target = new Money(new BigDecimal("10000000"), "IDR");
         Loan loan = new Loan(new LoanId("LN-009"), new BorrowerId("BR-001"), target, 5);
-        loan.ubahStatus("OVERDUE"); 
+        loan.ubahStatus("OVERDUE");
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
         loan.generateMonthlyBill();
-        
+
         // Bayar lunas tagihan bulan ini (termasuk denda)
         loan.bayarCicilan(loan.getTagihanBulanIni());
-        
+
         // Jika belum lunas total cicilan, status harusnya kembali normal (bukan OVERDUE lagi)
-        assertEquals("REPAYMENT", loan.getStatus()); 
+        assertEquals("REPAYMENT", loan.getStatus());
+    }
+
+    // TDD: Loan.hitungDistribusiCicilan()
+
+    @Test
+    void hitungDistribusiCicilan_satuLender_mendapatSemuaTagihan() {
+        Money target = new Money(new BigDecimal("10000000"), "IDR");
+        LenderId lenderId = new LenderId("LND-D01");
+
+        Loan loan = new Loan(new LoanId("LN-D01"), new BorrowerId("BR-001"), target, 5);
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.tambahPendanaan(lenderId, target);  // → auto FUNDING_READY
+        loan.ubahStatus("DISBURSED");            // override untuk test
+        loan.generateMonthlyBill();              // tagihan = 2.500.000
+
+        Map<LenderId, Money> distribusi = loan.hitungDistribusiCicilan();
+
+        assertEquals(1, distribusi.size());
+        assertEquals(0, new BigDecimal("2500000").compareTo(
+            distribusi.get(lenderId).getAmount().setScale(0, RoundingMode.HALF_UP)));
+    }
+
+    @Test
+    void hitungDistribusiCicilan_duaLender_proporsionalInvestasi() {
+        Money target = new Money(new BigDecimal("10000000"), "IDR");
+        LenderId lenderA = new LenderId("LND-DA");
+        LenderId lenderB = new LenderId("LND-DB");
+
+        Loan loan = new Loan(new LoanId("LN-D02"), new BorrowerId("BR-001"), target, 5);
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        // A: 6jt (60%), B: 4jt (40%) → total penuh → auto FUNDING_READY
+        loan.tambahPendanaan(lenderA, new Money(new BigDecimal("6000000"), "IDR"));
+        loan.tambahPendanaan(lenderB, new Money(new BigDecimal("4000000"), "IDR"));
+        loan.ubahStatus("DISBURSED");
+        loan.generateMonthlyBill(); // tagihan = 2.500.000
+
+        Map<LenderId, Money> distribusi = loan.hitungDistribusiCicilan();
+
+        // Total distribusi harus pas = tagihan (tidak ada yang hilang/lebih)
+        BigDecimal totalDistribusi = distribusi.values().stream()
+            .map(Money::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertEquals(0, new BigDecimal("2500000").compareTo(
+            totalDistribusi.setScale(0, RoundingMode.HALF_UP)));
+
+        // Lender A (60%) dapat Rp 1.500.000
+        assertEquals(0, new BigDecimal("1500000").compareTo(
+            distribusi.get(lenderA).getAmount().setScale(0, RoundingMode.HALF_UP)));
     }
 }

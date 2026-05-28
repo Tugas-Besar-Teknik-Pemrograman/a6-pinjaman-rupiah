@@ -10,6 +10,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Loan {
@@ -238,6 +240,38 @@ public class Loan {
 
     public Map<LenderId, Money> getDaftarPendana() {
         return daftarPendana;
+    }
+
+    public Map<LenderId, Money> hitungDistribusiCicilan() {
+        Map<LenderId, Money> distribusi = new LinkedHashMap<>();
+        if (daftarPendana.isEmpty() || currentMonthBill == null
+                || currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            return distribusi;
+        }
+
+        BigDecimal totalDana = this.totalTerkumpul.getAmount();
+        BigDecimal tagihan   = this.currentMonthBill.getAmount();
+        BigDecimal sisa      = tagihan;
+
+        // Urutkan terbesar dulu — sisa rounding jatuh ke lender terkecil (index terakhir)
+        List<Map.Entry<LenderId, Money>> sorted = daftarPendana.entrySet().stream()
+            .sorted((a, b) -> b.getValue().getAmount().compareTo(a.getValue().getAmount()))
+            .toList();
+
+        for (int i = 0; i < sorted.size(); i++) {
+            LenderId id = sorted.get(i).getKey();
+            BigDecimal bagian;
+            if (i == sorted.size() - 1) {
+                bagian = sisa;
+            } else {
+                BigDecimal proporsi = sorted.get(i).getValue().getAmount()
+                    .divide(totalDana, 10, RoundingMode.HALF_UP);
+                bagian = tagihan.multiply(proporsi).setScale(0, RoundingMode.DOWN);
+                sisa = sisa.subtract(bagian);
+            }
+            distribusi.put(id, new Money(bagian, "IDR"));
+        }
+        return distribusi;
     }
 
     public Map<LenderId, Money> getListPendana() {

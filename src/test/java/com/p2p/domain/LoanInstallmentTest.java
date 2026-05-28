@@ -8,10 +8,12 @@ import com.p2p.domain.loan.strategy.FixedInterestStrategy;
 import com.p2p.domain.loan.strategy.FloatingInterestStrategy;
 import com.p2p.domain.loan.strategy.SyariahInterestStrategy;
 import com.p2p.domain.valueobject.Money;
+import com.p2p.infrastructure.memory.InMemoryLoanRepository;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -288,5 +290,41 @@ class LoanInstallmentTest {
         // Lender A (60%) dapat Rp 1.500.000
         assertEquals(0, new BigDecimal("1500000").compareTo(
             distribusi.get(lenderA).getAmount().setScale(0, RoundingMode.HALF_UP)));
+    }
+
+    // TDD: LoanRepository.findByLenderId()
+
+    @Test
+    void findByLenderId_lenderAdaDiLoan_mengembalikanLoanTersebut() {
+        LenderId lenderId = new LenderId("LND-P01");
+        Money target = new Money(new BigDecimal("5000000"), "IDR");
+
+        Loan loan = new Loan(new LoanId("LN-P01"), new BorrowerId("BR-001"), target, 6);
+        loan.tambahPendanaan(lenderId, target); // → auto FUNDING_READY
+
+        InMemoryLoanRepository repo = new InMemoryLoanRepository();
+        repo.save(loan);
+
+        List<Loan> hasil = repo.findByLenderId(lenderId);
+
+        assertEquals(1, hasil.size());
+        assertEquals("LN-P01", hasil.get(0).getId().getValue());
+    }
+
+    @Test
+    void findByLenderId_lenderTidakAdaDiLoan_mengembalikanListKosong() {
+        LenderId lenderAda = new LenderId("LND-P02");
+        LenderId lenderTidakAda = new LenderId("LND-P03");
+        Money target = new Money(new BigDecimal("5000000"), "IDR");
+
+        Loan loan = new Loan(new LoanId("LN-P02"), new BorrowerId("BR-001"), target, 6);
+        loan.tambahPendanaan(lenderAda, target);
+
+        InMemoryLoanRepository repo = new InMemoryLoanRepository();
+        repo.save(loan);
+
+        List<Loan> hasil = repo.findByLenderId(lenderTidakAda);
+
+        assertTrue(hasil.isEmpty());
     }
 }

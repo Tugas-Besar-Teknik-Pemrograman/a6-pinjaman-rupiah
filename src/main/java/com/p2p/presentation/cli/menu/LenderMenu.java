@@ -30,8 +30,9 @@ public class LenderMenu {
             System.out.println("2. Lihat Pinjaman yang Bisa Didanai");
             System.out.println("3. Investasi di Pinjaman");
             System.out.println("4. Proses Pencairan (Disabled — dikelola di menu Borrower)");
-            System.out.println("5. Tarik Saldo");
-            System.out.println("6. Logout");
+            System.out.println("5. Lihat Portofolio Investasi");
+            System.out.println("6. Tarik Saldo");
+            System.out.println("7. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
 
@@ -40,8 +41,9 @@ public class LenderMenu {
                 case "2" -> menuLihatPinjamanFunding();
                 case "3" -> menuInvestasi();
                 case "4" -> System.out.println("Fitur 'Proses Pencairan' dipindahkan ke menu Borrower. Silakan minta borrower untuk melakukan pencairan.");
-                case "5" -> menuTarikSaldo();
-                case "6" -> {
+                case "5" -> menuPortofolioInvestasi();
+                case "6" -> menuTarikSaldo();
+                case "7" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
                     kembali = true;
@@ -161,6 +163,42 @@ public class LenderMenu {
         } catch (Exception e) {
             System.out.println("Gagal tarik saldo: " + e.getMessage());
         }
+    }
+
+    private void menuPortofolioInvestasi() {
+        System.out.println("\n--- Portofolio Investasi Saya ---");
+
+        String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
+        LenderId lenderId = new LenderId(lenderIdStr);
+
+        List<Loan> portofolio = ctx.getRepos().getLoanRepository().findByLenderId(lenderId);
+
+        if (portofolio.isEmpty()) {
+            System.out.println("Anda belum memiliki investasi aktif.");
+            return;
+        }
+
+        for (Loan loan : portofolio) {
+            BigDecimal investasi = loan.getDaftarPendana().get(lenderId).getAmount();
+            BigDecimal target = loan.getTargetNominal().getAmount();
+            BigDecimal proporsi = investasi
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(target, 2, RoundingMode.HALF_UP);
+
+            System.out.println("------------------------------------------");
+            System.out.println("ID Pinjaman   : " + loan.getId().getValue());
+            System.out.println("Status        : " + loan.getStatus());
+            System.out.println("Investasi     : Rp " + investasi + " (" + proporsi + "%)");
+
+            BigDecimal tagihan = loan.getTagihanBulanIni() != null
+                    ? loan.getTagihanBulanIni().getAmount()
+                    : BigDecimal.ZERO;
+            if (tagihan.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal bagianTagihan = tagihan.multiply(proporsi).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+                System.out.println("Tagihan Bulan : Rp " + bagianTagihan + " (estimasi)");
+            }
+        }
+        System.out.println("------------------------------------------");
     }
 
     private void prosesPencairan() {

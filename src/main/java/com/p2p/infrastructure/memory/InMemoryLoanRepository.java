@@ -1,5 +1,6 @@
 package com.p2p.infrastructure.memory;
 
+import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.LoanRepository;
@@ -27,6 +28,17 @@ public class InMemoryLoanRepository implements LoanRepository {
     @Override
     public List<Loan> findAll() {
         return new ArrayList<>(loans.values());
+    }
+
+    @Override
+    public List<Loan> findByLenderId(LenderId lenderId) {
+        List<Loan> hasil = new ArrayList<>();
+        for (Loan loan : loans.values()) {
+            if (loan.getDaftarPendana().containsKey(lenderId)) {
+                hasil.add(loan);
+            }
+        }
+        return hasil;
     }
 
     public void clear() {

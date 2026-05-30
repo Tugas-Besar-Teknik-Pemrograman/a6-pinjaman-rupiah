@@ -7,8 +7,10 @@ import com.p2p.application.service.LoanService;
 import com.p2p.application.service.NotificationService;
 import com.p2p.application.service.UserService;
 import com.p2p.application.service.WithdrawalService;
+import com.p2p.domain.valueobject.Money;
 import com.p2p.infrastructure.memory.RepositoryFactory;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +27,9 @@ public class AppContext {
     private final WithdrawalService withdrawalService;
     private final NotificationService notificationService;
     private final RepositoryFactory repos;
+
+    // Saldo platform (admin fee 1% dari setiap pencairan)
+    private Money adminSaldo = new Money(BigDecimal.ZERO, "IDR");
 
     // Session
     private String currentUserId;
@@ -46,6 +51,9 @@ public class AppContext {
                                                repos.getLenderRepository(), publisher, notificationService);
         fundingService       = new FundingService(repos.getLoanRepository(), repos.getLenderRepository());
         withdrawalService    = new WithdrawalService(repos.getLenderRepository());
+
+        // Daftarkan callback admin fee agar setiap pencairan otomatis menambah adminSaldo
+        loanService.setAdminFeeCallback(this::tambahAdminSaldo);
     }
 
     public static AppContext getInstance() {
@@ -78,6 +86,15 @@ public class AppContext {
 
     public RepositoryFactory getRepos() {
         return repos;
+    }
+
+    // --- Admin Saldo ---
+    public Money getAdminSaldo() {
+        return adminSaldo;
+    }
+
+    public void tambahAdminSaldo(Money fee) {
+        adminSaldo = new Money(adminSaldo.getAmount().add(fee.getAmount()), "IDR");
     }
 
     // --- Session ---

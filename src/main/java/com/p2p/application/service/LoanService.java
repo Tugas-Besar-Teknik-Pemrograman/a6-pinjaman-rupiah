@@ -13,7 +13,10 @@ import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.application.observer.LoanEventPublisher;
 import com.p2p.domain.event.PencairanBerhasilEvent;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.time.LocalDate;
 
 public class LoanService {
@@ -22,6 +25,9 @@ public class LoanService {
     private LenderRepository lenderRepository;
     private NotificationService notificationService;
     private LoanEventPublisher loanEventPublisher;
+
+    // Callback untuk meneruskan admin fee ke lapisan presentasi (AppContext)
+    private Consumer<Money> adminFeeCallback;
 
     public LoanService() {}
 
@@ -143,7 +149,20 @@ public class LoanService {
             if (borrower == null) {
                 throw new IllegalStateException("Borrower tidak ditemukan untuk pencairan");
             }
+            // Borrower menerima nominal pinjaman penuh tanpa potongan
             borrower.tambahSaldo(loan.getTargetNominal());
+
+            // Hitung admin fee 1% dari nominal pinjaman
+            BigDecimal feeAmount = loan.getTargetNominal().getAmount()
+                    .multiply(new BigDecimal("0.01"))
+                    .setScale(2, RoundingMode.HALF_UP);
+            Money adminFee = new Money(feeAmount, "IDR");
+
+            // Kirim admin fee ke callback (misal: AppContext.tambahAdminSaldo)
+            if (adminFeeCallback != null) {
+                adminFeeCallback.accept(adminFee);
+            }
+
             borrowerRepository.save(borrower);
             loanRepository.save(loan);
             if (loanEventPublisher != null) {
@@ -286,5 +305,13 @@ public class LoanService {
             loan.setTanggalJatuhTempo(loan.getTanggalJatuhTempo().plusDays(30));
         }
         loanRepository.save(loan);
+    }
+
+    /**
+     * Set callback yang akan dipanggil setiap ada admin fee dari pencairan.
+     * Digunakan oleh AppContext untuk meneruskan fee ke adminSaldo.
+     */
+    public void setAdminFeeCallback(Consumer<Money> callback) {
+        this.adminFeeCallback = callback;
     }
 }

@@ -144,4 +144,34 @@ class LoanServiceSaldoTest {
         // Satu-satunya lender → saldo harus bertambah sejumlah tagihan penuh
         assertEquals(0, tagihan.getAmount().compareTo(lender.getSaldoBalance().getAmount()));
     }
+
+    @Test
+    void bayarCicilan_statusOverdue_dendaMasukKeAdminCallback() throws Exception {
+        LoanRepository loanRepository = mock(LoanRepository.class);
+        BorrowerRepository borrowerRepository = mock(BorrowerRepository.class);
+        LenderRepository lenderRepository = mock(LenderRepository.class);
+        LoanService loanService = new LoanService(loanRepository, borrowerRepository, lenderRepository, null, null);
+
+        // Capture apa yang diterima callback
+        Money[] dendaDiterima = {new Money(BigDecimal.ZERO, "IDR")};
+        loanService.setAdminFeeCallback(fee -> dendaDiterima[0] = fee);
+
+        Borrower borrower = new Borrower(new BorrowerId("BR-OD1"), new Money(new BigDecimal("10000000"), "IDR"));
+        borrower.setKycStatus(true);
+        borrower.setCreditScore(700);
+        borrower.tambahSaldo(new Money(new BigDecimal("1000000"), "IDR"));
+
+        Loan loan = new Loan(new LoanId("LN-OD1"), borrower.getId(), new Money(new BigDecimal("1000000"), "IDR"), 5);
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.ubahStatus("OVERDUE");
+        loan.generateMonthlyBill(); // tagihan = 250.000 + 50.000 denda = 300.000
+
+        when(loanRepository.findById(loan.getId())).thenReturn(loan);
+        when(borrowerRepository.findById(borrower.getId())).thenReturn(borrower);
+
+        loanService.bayarCicilan(loan.getId(), loan.getTagihanBulanIni());
+
+        // Callback harus menerima tepat Rp 50.000 denda
+        assertEquals(0, new BigDecimal("50000").compareTo(dendaDiterima[0].getAmount()));
+    }
 }

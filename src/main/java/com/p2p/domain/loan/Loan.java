@@ -35,6 +35,7 @@ public class Loan {
     private LocalDate tanggalJatuhTempo; 
 
     private static final int BATAS_HARI_FUNDING = 28;
+    private static final BigDecimal DENDA_OVERDUE = new BigDecimal("50000");
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal, int tenor) {
         this.loanid = loanid;
@@ -105,8 +106,7 @@ public class Loan {
             BigDecimal totalAmount = tagihanNormal.getAmount();
 
             if ("OVERDUE".equals(this.status)) {
-                BigDecimal dendaOverdue = new BigDecimal("50000"); // Contoh denda flat 50.000
-                totalAmount = totalAmount.add(dendaOverdue);
+                totalAmount = totalAmount.add(DENDA_OVERDUE);
             }
 
             this.currentMonthBill = new Money(totalAmount, "IDR");
@@ -125,6 +125,10 @@ public class Loan {
         }
         if (paymentAmount.getAmount().compareTo(this.currentMonthBill.getAmount()) < 0) {
             throw new Exception("Nominal pembayaran kurang dari nominal tagihan");
+        }
+
+        if ("OVERDUE".equals(this.status)) {
+            tambahDenda(new Money(DENDA_OVERDUE, "IDR"));
         }
 
         BigDecimal principalPortion = this.targetNominal.getAmount()
@@ -251,6 +255,9 @@ public class Loan {
 
         BigDecimal totalDana = this.totalTerkumpul.getAmount();
         BigDecimal tagihan   = this.currentMonthBill.getAmount();
+        if ("OVERDUE".equals(this.status)) {
+            tagihan = tagihan.subtract(DENDA_OVERDUE);
+        }
         BigDecimal sisa      = tagihan;
 
         // Urutkan terbesar dulu — sisa rounding jatuh ke lender terkecil (index terakhir)

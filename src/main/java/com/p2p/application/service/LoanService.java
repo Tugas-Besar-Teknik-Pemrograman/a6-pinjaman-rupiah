@@ -109,12 +109,21 @@ public class LoanService {
         // Hitung distribusi SEBELUM bill di-nolkan oleh loan.bayarCicilan()
         Map<LenderId, Money> distribusiCicilan = loan.hitungDistribusiCicilan();
 
+        // Snapshot denda sebelum bayar — selisihnya dikirim ke admin setelah bayar
+        BigDecimal dendaSebelum = loan.getTotalDendaTerkumpul().getAmount();
+
         borrower.kurangiSaldo(tagihanBulanIni);
 
         // Pendelegasian ke entitas Domain.
         // Segala validasi denda overdue, perubahan status lunas (CLOSED),
         // atau kurang bayar, akan di-handle di dalam method ini.
         loan.bayarCicilan(amount);
+
+        // Kirim denda yang baru dibayar ke admin
+        BigDecimal dendaBaru = loan.getTotalDendaTerkumpul().getAmount().subtract(dendaSebelum);
+        if (dendaBaru.compareTo(BigDecimal.ZERO) > 0 && adminFeeCallback != null) {
+            adminFeeCallback.accept(new Money(dendaBaru, "IDR"));
+        }
 
         loanRepository.save(loan);
         borrowerRepository.save(borrower);

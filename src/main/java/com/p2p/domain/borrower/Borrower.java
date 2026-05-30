@@ -167,7 +167,7 @@ public class Borrower {
         //validasi nominal <= limit
         if (this.limitPinjaman.isLessThan(nominal)) {
             // Jika sisa limit lebih kecil dari yang mau dipinjam, ditolak
-            throw new IllegalStateException("Sisa limit pinjaman tidak mencukupi");
+            throw new IllegalStateException("Pengajuan melebihi limit, limit Anda adalah Rp " + this.limitPinjaman.getAmount());
         }
 
         //validasi pinjaman aktif

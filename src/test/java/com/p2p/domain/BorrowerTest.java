@@ -121,7 +121,7 @@ class BorrowerTest {
             borrower.ajukanPinjaman(new LoanId("005"), nominalLebih, 12);
         });
 
-        assertEquals("Sisa limit pinjaman tidak mencukupi", exception.getMessage());
+        assertEquals("Pengajuan melebihi limit, limit Anda adalah Rp 3000000.00", exception.getMessage());
     }
 
     @Test

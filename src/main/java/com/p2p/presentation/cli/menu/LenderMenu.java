@@ -26,30 +26,60 @@ public class LenderMenu {
         boolean kembali = false;
         while (!kembali) {
             System.out.println("\n=== MENU LENDER ===");
-            System.out.println("1. Tambah Saldo (Top Up)");
-            System.out.println("2. Lihat Pinjaman yang Bisa Didanai");
-            System.out.println("3. Investasi di Pinjaman");
-            System.out.println("4. Proses Pencairan (Disabled — dikelola di menu Borrower)");
-            System.out.println("5. Lihat Portofolio Investasi");
-            System.out.println("6. Tarik Saldo");
-            System.out.println("7. Logout");
+            System.out.println("1. Lihat Profil Lender");
+            System.out.println("2. Tambah Saldo (Top Up)");
+            System.out.println("3. Lihat Pinjaman yang Bisa Didanai");
+            System.out.println("4. Investasi di Pinjaman");
+            System.out.println("5. Proses Pencairan (Disabled — dikelola di menu Borrower)");
+            System.out.println("6. Lihat Portofolio Investasi");
+            System.out.println("7. Tarik Saldo");
+            System.out.println("8. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
 
             switch (pilihan) {
-                case "1" -> menuTopUp();
-                case "2" -> menuLihatPinjamanFunding();
-                case "3" -> menuInvestasi();
-                case "4" -> System.out.println("Fitur 'Proses Pencairan' dipindahkan ke menu Borrower. Silakan minta borrower untuk melakukan pencairan.");
-                case "5" -> menuPortofolioInvestasi();
-                case "6" -> menuTarikSaldo();
-                case "7" -> {
+                case "1" -> menuProfil();
+                case "2" -> menuTopUp();
+                case "3" -> menuLihatPinjamanFunding();
+                case "4" -> menuInvestasi();
+                case "5" -> System.out.println("Fitur 'Proses Pencairan' dipindahkan ke menu Borrower. Silakan minta borrower untuk melakukan pencairan.");
+                case "6" -> menuPortofolioInvestasi();
+                case "7" -> menuTarikSaldo();
+                case "8" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
                     kembali = true;
                 }
                 default -> System.out.println("Pilihan tidak valid.");
             }
+        }
+    }
+
+    private void menuProfil() {
+        String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
+        if (lenderIdStr == null) {
+            System.out.println("Gagal, Profil Lender tidak ditemukan.");
+            return;
+        }
+
+        try {
+            Lender lender = ctx.getRepos().getLenderRepository().findById(new LenderId(lenderIdStr));
+            com.p2p.domain.user.User user = ctx.getRepos().getUserRepository().findById(new com.p2p.domain.user.UserId(ctx.getCurrentUserId()));
+            if (lender == null || user == null) {
+                System.out.println("Gagal, data Lender/User tidak ditemukan.");
+                return;
+            }
+
+            System.out.println("\n=== PROFIL LENDER ===");
+            System.out.println("ID Lender          : " + lender.getId().getValue());
+            System.out.println("Nama               : " + user.getNama());
+            System.out.println("Email              : " + user.getEmail());
+            System.out.println("Usia               : " + user.getUsia() + " tahun");
+            System.out.println("Status KYC         : " + (lender.isKycVerified() ? "Terverifikasi" : "Belum Terverifikasi"));
+            System.out.println("Saldo Saat Ini     : Rp " + lender.getSaldoBalance().getAmount());
+            System.out.println("=======================");
+        } catch (Exception e) {
+            System.out.println("Gagal memuat profil: " + e.getMessage());
         }
     }
 

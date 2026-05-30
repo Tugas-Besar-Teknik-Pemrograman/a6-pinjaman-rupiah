@@ -30,7 +30,7 @@ public class BorrowerMenu {
             System.out.println("2. Ajukan Pinjaman Baru");
             System.out.println("3. Lihat Status Pinjaman");
             System.out.println("4. Bayar Cicilan");
-            System.out.println("5. Proses Pencairan");
+            System.out.println("5. Status Pencairan");
             System.out.println("6. Simulasi Jatuh Tempo");
             System.out.println("7. Simulasi Tenor Selanjutnya");
             System.out.println("8. Logout");
@@ -244,49 +244,26 @@ public class BorrowerMenu {
             return;
         }
 
+        // Tampilkan info status pinjaman yang FUNDING_READY
         List<Loan> allLoans = ctx.getRepos().getLoanRepository().findAll();
         List<Loan> readyLoans = allLoans.stream()
                 .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
                 .filter(l -> "FUNDING_READY".equals(l.getStatus()))
                 .toList();
 
+        System.out.println("\n--- Status Pencairan Pinjaman ---");
         if (readyLoans.isEmpty()) {
-            System.out.println("Tidak ada pinjaman Anda yang siap untuk pencairan (FUNDING_READY).");
-            return;
-        }
-
-        Loan selectedLoan;
-        if (readyLoans.size() == 1) {
-            selectedLoan = readyLoans.get(0);
-            System.out.println("Menemukan 1 pinjaman siap dicairkan: " + selectedLoan.getId().getValue() + ". Memproses pencairan...");
+            System.out.println("Tidak ada pinjaman Anda yang sedang menunggu pencairan.");
         } else {
-            System.out.println("\n--- Pinjaman Anda yang Siap Pencairan ---");
-            for (int i = 0; i < readyLoans.size(); i++) {
-                Loan l = readyLoans.get(i);
-                System.out.printf("%d) %s - Target Rp %s - Terkumpul Rp %s%n", i + 1, l.getId().getValue(), l.getTargetNominal().getAmount(), l.getTotalTerkumpul().getAmount());
+            System.out.println("Pinjaman berikut sudah siap dan menunggu persetujuan pencairan dari Admin:");
+            for (Loan l : readyLoans) {
+                System.out.printf("  • Loan ID : %s%n", l.getId().getValue());
+                System.out.printf("    Nominal : Rp %s%n", l.getTargetNominal().getAmount());
+                System.out.printf("    Status  : %s%n", l.getStatus());
             }
-            System.out.print("Pilih nomor pinjaman untuk dicairkan (atau '0' untuk batal): ");
-            String choice = scanner.nextLine().trim();
-            if ("0".equals(choice)) return;
-            try {
-                int idx = Integer.parseInt(choice) - 1;
-                if (idx < 0 || idx >= readyLoans.size()) {
-                    System.out.println("Pilihan tidak valid.");
-                    return;
-                }
-                selectedLoan = readyLoans.get(idx);
-            } catch (NumberFormatException e) {
-                System.out.println("Input tidak valid.");
-                return;
-            }
-        }
-
-        try {
-            ctx.getLoanService().prosesPencairan(selectedLoan.getId());
-            Loan updated = ctx.getRepos().getLoanRepository().findById(selectedLoan.getId());
-            System.out.println("Pencairan berhasil diproses! Status: " + updated.getStatus());
-        } catch (Exception e) {
-            System.out.println("Gagal memproses pencairan: " + e.getMessage());
+            System.out.println();
+            System.out.println("⚠️  Pencairan hanya dapat dilakukan oleh Admin.");
+            System.out.println("    Silakan hubungi Admin untuk memproses pencairan dana Anda.");
         }
     }
 

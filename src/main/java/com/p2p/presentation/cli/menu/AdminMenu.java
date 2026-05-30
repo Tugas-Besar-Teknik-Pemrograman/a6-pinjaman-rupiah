@@ -7,6 +7,7 @@ import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.user.User;
+import com.p2p.domain.valueobject.Money;
 import com.p2p.infrastructure.memory.RepositoryFactory;
 import com.p2p.presentation.cli.AppContext;
 import com.p2p.application.service.LoanService;
@@ -38,7 +39,8 @@ public class AdminMenu {
             System.out.println("4. Lihat Semua Pinjaman");
             System.out.println("5. Validasi Pencairan Pinjaman");
             System.out.println("6. Laporan Statistik Platform");
-            System.out.println("7. Logout");
+            System.out.println("7. Saldo Platform");
+            System.out.println("8. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
 
@@ -49,7 +51,8 @@ public class AdminMenu {
                 case "4" -> lihatSemuaPinjaman();
                 case "5" -> validasiPencairan();
                 case "6" -> laporanStatistikPlatform();
-                case "7" -> {
+                case "7" -> lihatSaldoPlatform();
+                case "8" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
                     kembali = true;
@@ -212,10 +215,16 @@ public class AdminMenu {
                 LoanService loanService = ctx.getLoanService();
                 long maturityDate = System.currentTimeMillis() + (28L * 24 * 60 * 60 * 1000); // +28 hari
                 selectedLoan.setTanggalJatuhTempoTimestemp(maturityDate);
-                
+
+                BigDecimal feePreview = selectedLoan.getTargetNominal().getAmount()
+                        .multiply(new BigDecimal("0.01"))
+                        .setScale(2, java.math.RoundingMode.HALF_UP);
+
                 loanService.prosesPencairan(selectedLoan.getId());
                 System.out.println("Pencairan pinjaman " + selectedLoan.getId() + " berhasil disetujui!");
                 System.out.println("Tanggal jatuh tempo: " + new java.util.Date(maturityDate));
+                System.out.println("Admin fee 1% dipotong: Rp" + formatCurrency(feePreview));
+                System.out.println("Saldo Platform saat ini: Rp" + formatCurrency(ctx.getAdminSaldo().getAmount()));
             } else if ("2".equals(aksi)) {
                 // Decline pencairan
                 System.out.print("Masukkan alasan penolakan: ");
@@ -305,6 +314,50 @@ public class AdminMenu {
         System.out.println("  • Total Saldo Lender Terkumpul: Rp" + formatCurrency(totalLenderBalance));
         System.out.println("  • Total Dana yang Sudah Diinvestasikan: Rp" + formatCurrency(totalInvestedAmount));
 
+        System.out.println("\n🏦 SALDO PLATFORM:");
+        Money adminSaldo = ctx.getAdminSaldo();
+        System.out.println("  • Saldo Platform (Admin Fee 1%): Rp" + formatCurrency(adminSaldo.getAmount()));
+
+        System.out.println("\n" + "=".repeat(80));
+    }
+
+    private void lihatSaldoPlatform() {
+        Money adminSaldo = ctx.getAdminSaldo();
+        List<Loan> allLoans = repos.getLoanRepository().findAll();
+        
+        // Calculate total admin fees collected
+        BigDecimal totalAdminFees = BigDecimal.ZERO;
+        long totalLoansDisbursed = 0;
+        
+        for (Loan loan : allLoans) {
+            if ("DISBURSED".equals(loan.getStatus()) || "REPAYMENT".equals(loan.getStatus()) || "CLOSED".equals(loan.getStatus())) {
+                totalLoansDisbursed++;
+                BigDecimal adminFee = loan.getTargetNominal().getAmount()
+                        .multiply(new BigDecimal("0.01"))
+                        .setScale(2, java.math.RoundingMode.HALF_UP);
+                totalAdminFees = totalAdminFees.add(adminFee);
+            }
+        }
+        
+        // Display Saldo Platform
+        System.out.println("\n" + "=".repeat(80));
+        System.out.println("                        SALDO PLATFORM SAAT INI");
+        System.out.println("=".repeat(80));
+        
+        System.out.println("\n💳 INFORMASI SALDO PLATFORM:");
+        System.out.println("  • Saldo Saat Ini: Rp" + formatCurrency(adminSaldo.getAmount()));
+        System.out.println("  • Mata Uang: " + adminSaldo.getCurrency());
+        
+        System.out.println("\n📊 STATISTIK ADMIN FEE:");
+        System.out.println("  • Total Pinjaman Dicairkan: " + totalLoansDisbursed);
+        System.out.println("  • Total Admin Fee Terkumpul (1%): Rp" + formatCurrency(totalAdminFees));
+        
+        // Calculate average fee per loan
+        if (totalLoansDisbursed > 0) {
+            BigDecimal avgFee = totalAdminFees.divide(new BigDecimal(totalLoansDisbursed), 2, java.math.RoundingMode.HALF_UP);
+            System.out.println("  • Rata-rata Fee per Pinjaman: Rp" + formatCurrency(avgFee));
+        }
+        
         System.out.println("\n" + "=".repeat(80));
     }
 

@@ -135,14 +135,14 @@ public class LoanService {
             if (borrower == null) {
                 throw new IllegalStateException("Borrower tidak ditemukan untuk pencairan");
             }
+            // Borrower menerima nominal pinjaman penuh tanpa potongan
             borrower.tambahSaldo(loan.getTargetNominal());
 
-            // Potong admin fee 1% dari nominal pinjaman
+            // Hitung admin fee 1% dari nominal pinjaman
             BigDecimal feeAmount = loan.getTargetNominal().getAmount()
                     .multiply(new BigDecimal("0.01"))
                     .setScale(2, RoundingMode.HALF_UP);
             Money adminFee = new Money(feeAmount, "IDR");
-            borrower.kurangiSaldo(adminFee);
 
             // Kirim admin fee ke callback (misal: AppContext.tambahAdminSaldo)
             if (adminFeeCallback != null) {

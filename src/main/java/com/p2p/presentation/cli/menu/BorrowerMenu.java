@@ -26,26 +26,28 @@ public class BorrowerMenu {
         boolean kembali = false;
         while (!kembali) {
             System.out.println("\n=== MENU BORROWER ===");
-            System.out.println("1. Saldo");
-            System.out.println("2. Ajukan Pinjaman Baru");
-            System.out.println("3. Lihat Status Pinjaman");
-            System.out.println("4. Bayar Cicilan");
-            System.out.println("5. Status Pencairan");
-            System.out.println("6. Simulasi Jatuh Tempo");
-            System.out.println("7. Simulasi Tenor Selanjutnya");
-            System.out.println("8. Logout");
+            System.out.println("1. Lihat Profil Borrower");
+            System.out.println("2. Top Up Saldo");
+            System.out.println("3. Ajukan Pinjaman Baru");
+            System.out.println("4. Lihat Status Pinjaman");
+            System.out.println("5. Bayar Cicilan");
+            System.out.println("6. Status Pencairan");
+            System.out.println("7. Simulasi Jatuh Tempo");
+            System.out.println("8. Simulasi Tenor Selanjutnya");
+            System.out.println("9. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
 
             switch (pilihan) {
-                case "1" -> menuSaldo();
-                case "2" -> menuAjukanPinjaman();
-                case "3" -> menuLihatStatusPinjaman();
-                case "4" -> menuBayarCicilan();
-                case "5" -> menuProsesPencairan();
-                case "6" -> menuSimulasiOverdue();
-                case "7" -> menuSimulasiTenorSelanjutnya();
-                case "8" -> {
+                case "1" -> menuProfil();
+                case "2" -> menuTopUp();
+                case "3" -> menuAjukanPinjaman();
+                case "4" -> menuLihatStatusPinjaman();
+                case "5" -> menuBayarCicilan();
+                case "6" -> menuProsesPencairan();
+                case "7" -> menuSimulasiOverdue();
+                case "8" -> menuSimulasiTenorSelanjutnya();
+                case "9" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
                     kembali = true;
@@ -55,7 +57,40 @@ public class BorrowerMenu {
         }
     }
 
-    private void menuSaldo() {
+    private void menuProfil() {
+        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
+        if (borrowerIdStr == null) {
+            System.out.println("Gagal, Profil Borrower tidak ditemukan.");
+            return;
+        }
+
+        try {
+            Borrower borrower = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
+            com.p2p.domain.user.User user = ctx.getRepos().getUserRepository().findById(new com.p2p.domain.user.UserId(ctx.getCurrentUserId()));
+            if (borrower == null || user == null) {
+                System.out.println("Gagal, data Borrower/User tidak ditemukan.");
+                return;
+            }
+
+            System.out.println("\n=== PROFIL BORROWER ===");
+            System.out.println("ID Borrower        : " + borrower.getId().getValue());
+            System.out.println("Nama               : " + user.getNama());
+            System.out.println("Email              : " + user.getEmail());
+            System.out.println("Usia               : " + user.getUsia() + " tahun");
+            System.out.println("Penghasilan Bulanan: Rp " + borrower.getPenghasilan().getAmount());
+            System.out.println("Limit Pinjaman Awal: Rp " + borrower.getLimitPinjaman().getAmount() + " (30% dari Penghasilan)");
+            System.out.println("Catatan Limit      : Limit pengajuan riil dihitung dinamis berdasarkan tenor & jenis bunga");
+            System.out.println("Status KYC         : " + (borrower.isKycStatus() ? "Terverifikasi" : "Belum Terverifikasi"));
+            System.out.println("Credit Score       : " + borrower.getCreditScore());
+            System.out.println("Pinjaman Aktif     : " + (borrower.hasActiveLoan() ? "Ada" : "Tidak Ada"));
+            System.out.println("Saldo Saat Ini     : Rp " + borrower.getSaldoBalance().getAmount());
+            System.out.println("=======================");
+        } catch (Exception e) {
+            System.out.println("Gagal memuat profil: " + e.getMessage());
+        }
+    }
+
+    private void menuTopUp() {
         String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
         if (borrowerIdStr == null) {
             System.out.println("Gagal, Profil Borrower tidak ditemukan.");
@@ -69,7 +104,7 @@ public class BorrowerMenu {
                 return;
             }
 
-            System.out.println("\n--- Saldo Borrower ---");
+            System.out.println("\n--- Top Up Saldo Borrower ---");
             System.out.println("Saldo saat ini : Rp " + borrower.getSaldoBalance().getAmount());
             System.out.print("Masukkan nominal top up (Rp, 0 untuk batal): ");
             long nominal = Long.parseLong(scanner.nextLine().trim());
@@ -141,7 +176,7 @@ public class BorrowerMenu {
             Money limitDinamis = borrowerObj.hitungLimitDenganTenorDanBunga(tenor, bungaRate);
             Money requestedAmount = new Money(nominalBigDecimal, "IDR");
             if (limitDinamis.isLessThan(requestedAmount)) {
-                throw new IllegalStateException("Sisa limit pinjaman tidak mencukupi");
+                throw new IllegalStateException("Pengajuan melebihi limit dinamis untuk tenor " + tenor + " bulan. Limit Anda adalah Rp " + limitDinamis.getAmount());
             }
 
             // Jika lolos pre-validasi, hitung rincian simulasi cicilan

@@ -102,6 +102,14 @@ public class Main {
                     System.out.println("Registrasi Berhasil!");
                     System.out.println("ID User : " + user.getId().getValue());
                     System.out.println("Role    : " + (role == 1 ? "BORROWER" : "LENDER"));
+                    if (role == 1) {
+                        var borrower = ctx.getRepos().getBorrowerRepository().findById(new com.p2p.domain.borrower.BorrowerId(user.getId().getValue()));
+                        if (borrower != null) {
+                            System.out.println("Limit Awal (Kapasitas Cicilan Bulanan): Rp " + borrower.getLimitPinjaman().getAmount() + " (30% x Penghasilan Rp " + borrower.getPenghasilan().getAmount() + ")");
+                            System.out.println("Catatan        : Limit pengajuan riil akan dihitung secara dinamis saat pengajuan pinjaman");
+                            System.out.println("                 tergantung dari tenor dan jenis bunga yang dipilih.");
+                        }
+                    }
                     System.out.println("------------------------------------------");
                 } catch (Exception e) {
                     System.out.println("Registrasi gagal: " + e.getMessage());

@@ -161,11 +161,8 @@ public class LoanService {
             // Borrower menerima nominal pinjaman penuh tanpa potongan
             borrower.tambahSaldo(loan.getTargetNominal());
 
-            // Hitung admin fee 1% dari nominal pinjaman
-            BigDecimal feeAmount = loan.getTargetNominal().getAmount()
-                    .multiply(new BigDecimal("0.01"))
-                    .setScale(2, RoundingMode.HALF_UP);
-            Money adminFee = new Money(feeAmount, "IDR");
+            // Menggunakan admin fee yang sudah dihitung dan disimpan di objek Loan
+            Money adminFee = loan.getAdminFee();
 
             // Kirim admin fee ke callback (misal: AppContext.tambahAdminSaldo)
             if (adminFeeCallback != null) {

@@ -29,6 +29,7 @@ public class Loan {
     private InterestCalculationStrategy interestStrategy;
     private Money currentMonthBill;
     private Map<LenderId, Money> daftarPendana;
+    private Money adminFee;
 
     private LocalDate tanggalDibuat;
     private LocalDate tanggalKadaluarsaFunding;
@@ -50,6 +51,7 @@ public class Loan {
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
         this.maturityDate = 0; // Belum ada jatuh tempo sampai pencairan disetujui
         this.overdueFeesAccrued = new Money(BigDecimal.ZERO, "IDR");
+        this.adminFee = new Money(targetNominal.getAmount().multiply(new BigDecimal("0.01")).setScale(2, RoundingMode.HALF_UP), "IDR");
     }
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal) {
@@ -299,5 +301,9 @@ public class Loan {
 
     public Money getSisaPokok() {
         return sisaPokok;
+    }
+
+    public Money getAdminFee() {
+        return adminFee;
     }
 }

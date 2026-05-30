@@ -162,11 +162,14 @@ public class AdminMenu {
             return;
         }
         System.out.println("\n--- Daftar Pinjaman ---");
-        System.out.printf("%-30s %-20s %-15s%n", "Loan ID", "Nominal", "Status");
-        System.out.println("-".repeat(70));
+        System.out.printf("%-30s %-20s %-25s %-15s%n", "Loan ID", "Nominal", "Estimasi Admin Fee (1%)", "Status");
+        System.out.println("-".repeat(95));
         for (Loan l : loans) {
-            System.out.printf("%-30s %-20s %-15s%n",
-                    l.getId(), l.getTargetNominal().getAmount(), l.getStatus());
+            System.out.printf("%-30s %-20s %-25s %-15s%n",
+                    l.getId(), 
+                    "Rp " + formatCurrency(l.getTargetNominal().getAmount()), 
+                    "Rp " + formatCurrency(l.getAdminFee().getAmount()), 
+                    l.getStatus());
         }
     }
 

@@ -364,4 +364,17 @@ class LoanInstallmentTest {
 
         assertTrue(hasil.isEmpty());
     }
+
+    @Test
+    void loanInitialization_adminFeeIsCorrectlyCalculatedAsOnePercent() {
+        Money target = new Money(new BigDecimal("5000000"), "IDR");
+        Loan loan = new Loan(new LoanId("LN-ADMIN-01"), new BorrowerId("BR-001"), target, 12);
+        
+        // 1% of 5,000,000 = 50,000
+        BigDecimal expectedAdminFee = new BigDecimal("50000");
+        
+        assertNotNull(loan.getAdminFee());
+        assertEquals(0, expectedAdminFee.compareTo(loan.getAdminFee().getAmount()));
+        assertEquals("IDR", loan.getAdminFee().getCurrency());
+    }
 }

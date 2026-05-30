@@ -311,6 +311,26 @@ class LoanInstallmentTest {
         assertEquals("LN-P01", hasil.get(0).getId().getValue());
     }
 
+    // TDD: Denda OVERDUE tidak masuk distribusi lender
+
+    @Test
+    void hitungDistribusiCicilan_statusOverdue_dendaTidakMasukKeDistribusiLender() {
+        Money target = new Money(new BigDecimal("10000000"), "IDR");
+        LenderId lenderId = new LenderId("LND-O01");
+
+        Loan loan = new Loan(new LoanId("LN-O01"), new BorrowerId("BR-001"), target, 5);
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.tambahPendanaan(lenderId, target); // full funding → FUNDING_READY
+        loan.ubahStatus("OVERDUE");
+        loan.generateMonthlyBill(); // tagihan = 2.500.000 + 50.000 denda = 2.550.000
+
+        Map<LenderId, Money> distribusi = loan.hitungDistribusiCicilan();
+
+        // Lender hanya dapat cicilan normal 2.500.000, BUKAN 2.550.000
+        assertEquals(0, new BigDecimal("2500000").compareTo(
+            distribusi.get(lenderId).getAmount().setScale(0, RoundingMode.HALF_UP)));
+    }
+
     @Test
     void findByLenderId_lenderTidakAdaDiLoan_mengembalikanListKosong() {
         LenderId lenderAda = new LenderId("LND-P02");

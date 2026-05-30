@@ -30,10 +30,9 @@ public class LenderMenu {
             System.out.println("2. Tambah Saldo (Top Up)");
             System.out.println("3. Lihat Pinjaman yang Bisa Didanai");
             System.out.println("4. Investasi di Pinjaman");
-            System.out.println("5. Proses Pencairan (Disabled — dikelola di menu Borrower)");
-            System.out.println("6. Lihat Portofolio Investasi");
-            System.out.println("7. Tarik Saldo");
-            System.out.println("8. Logout");
+            System.out.println("5. Lihat Portofolio Investasi");
+            System.out.println("6. Tarik Saldo");
+            System.out.println("7. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
 
@@ -42,10 +41,9 @@ public class LenderMenu {
                 case "2" -> menuTopUp();
                 case "3" -> menuLihatPinjamanFunding();
                 case "4" -> menuInvestasi();
-                case "5" -> System.out.println("Fitur 'Proses Pencairan' dipindahkan ke menu Borrower. Silakan minta borrower untuk melakukan pencairan.");
-                case "6" -> menuPortofolioInvestasi();
-                case "7" -> menuTarikSaldo();
-                case "8" -> {
+                case "5" -> menuPortofolioInvestasi();
+                case "6" -> menuTarikSaldo();
+                case "7" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
                     kembali = true;
@@ -64,7 +62,8 @@ public class LenderMenu {
 
         try {
             Lender lender = ctx.getRepos().getLenderRepository().findById(new LenderId(lenderIdStr));
-            com.p2p.domain.user.User user = ctx.getRepos().getUserRepository().findById(new com.p2p.domain.user.UserId(ctx.getCurrentUserId()));
+            com.p2p.domain.user.User user = ctx.getRepos().getUserRepository()
+                    .findById(new com.p2p.domain.user.UserId(ctx.getCurrentUserId()));
             if (lender == null || user == null) {
                 System.out.println("Gagal, data Lender/User tidak ditemukan.");
                 return;
@@ -75,7 +74,8 @@ public class LenderMenu {
             System.out.println("Nama               : " + user.getNama());
             System.out.println("Email              : " + user.getEmail());
             System.out.println("Usia               : " + user.getUsia() + " tahun");
-            System.out.println("Status KYC         : " + (lender.isKycVerified() ? "Terverifikasi" : "Belum Terverifikasi"));
+            System.out.println(
+                    "Status KYC         : " + (lender.isKycVerified() ? "Terverifikasi" : "Belum Terverifikasi"));
             System.out.println("Saldo Saat Ini     : Rp " + lender.getSaldoBalance().getAmount());
             System.out.println("=======================");
         } catch (Exception e) {
@@ -224,7 +224,8 @@ public class LenderMenu {
                     ? loan.getTagihanBulanIni().getAmount()
                     : BigDecimal.ZERO;
             if (tagihan.compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal bagianTagihan = tagihan.multiply(proporsi).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+                BigDecimal bagianTagihan = tagihan.multiply(proporsi).divide(BigDecimal.valueOf(100), 0,
+                        RoundingMode.HALF_UP);
                 System.out.println("Tagihan Bulan : Rp " + bagianTagihan + " (estimasi)");
             }
         }
@@ -233,6 +234,7 @@ public class LenderMenu {
 
     private void prosesPencairan() {
         System.out.println("\nFitur 'Proses Pencairan' dinonaktifkan pada menu Lender.");
-        System.out.println("Pencairan kini dikelola melalui menu Borrower. Mohon minta borrower untuk melakukan pencairan.");
+        System.out.println(
+                "Pencairan kini dikelola melalui menu Borrower. Mohon minta borrower untuk melakukan pencairan.");
     }
 }

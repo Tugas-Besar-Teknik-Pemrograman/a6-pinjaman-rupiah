@@ -295,6 +295,23 @@ class LoanInstallmentTest {
     // TDD: LoanRepository.findByLenderId()
 
     @Test
+    void bayarCicilan_statusOverdue_dendaTertrackDiOverdueFeesAccrued() throws Exception {
+        Money target = new Money(new BigDecimal("10000000"), "IDR");
+        Loan loan = new Loan(new LoanId("LN-O02"), new BorrowerId("BR-001"), target, 5);
+        loan.ubahStatus("OVERDUE");
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.generateMonthlyBill(); // tagihan = 2.550.000
+
+        loan.bayarCicilan(loan.getTagihanBulanIni());
+
+        // Setelah bayar, denda Rp 50.000 harus tercatat di overdueFeesAccrued
+        assertEquals(0, new BigDecimal("50000").compareTo(
+            loan.getTotalDendaTerkumpul().getAmount()));
+    }
+
+    // TDD: LoanRepository.findByLenderId()
+
+    @Test
     void findByLenderId_lenderAdaDiLoan_mengembalikanLoanTersebut() {
         LenderId lenderId = new LenderId("LND-P01");
         Money target = new Money(new BigDecimal("5000000"), "IDR");

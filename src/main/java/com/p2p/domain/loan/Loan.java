@@ -127,6 +127,10 @@ public class Loan {
             throw new Exception("Nominal pembayaran kurang dari nominal tagihan");
         }
 
+        if ("OVERDUE".equals(this.status)) {
+            tambahDenda(new Money(DENDA_OVERDUE, "IDR"));
+        }
+
         BigDecimal principalPortion = this.targetNominal.getAmount()
                 .divide(new BigDecimal(this.tenor), RoundingMode.HALF_UP);
         this.sisaPokok = new Money(

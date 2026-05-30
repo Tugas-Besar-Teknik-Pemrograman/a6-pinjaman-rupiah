@@ -35,8 +35,16 @@ public class UserService {
             throw new IllegalArgumentException("Format email tidak valid");
         }
 
-        // Buat User
-        User userBaru = new User(nama, email, password, usia, role, penghasilan);
+        // Buat User menggunakan Factory Method pattern
+        com.p2p.domain.user.factory.UserFactory factory;
+        if (role == 1) {
+            factory = new com.p2p.domain.user.factory.BorrowerUserFactory();
+        } else if (role == 2) {
+            factory = new com.p2p.domain.user.factory.LenderUserFactory();
+        } else {
+            throw new IllegalArgumentException("Role pengguna tidak valid");
+        }
+        User userBaru = factory.createUser(nama, email, password, usia, penghasilan);
         userRepository.save(userBaru);
 
         // Ambil ID yang di-generate oleh User untuk dipakai sebagai ID Domain

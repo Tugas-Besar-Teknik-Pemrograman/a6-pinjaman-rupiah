@@ -12,11 +12,14 @@ public class FixedInterestStrategy extends BaseInterestStrategy {
     }
 
     /**
-     * Bunga dihitung dari pokok awal pinjaman, bukan sisa pokok. Jadi cicilan tiap bulan selalu sama
+     * Bunga FLAT: dihitung dari pokok AWAL (bukan sisa pokok).
+     * Jadi bunga tiap bulan selalu sama meski sisa pokok berkurang.
+     * Contoh: pokok 1jt, rate 5%, bunga tiap bulan = 1jt * 5% = 50rb (tetap)
      */
     @Override
     public Money hitungCicilan(Money initialPrincipal, Money remainingPrincipal, int tenor) {
         BigDecimal principalPmt = hitungBagianPokok(initialPrincipal, tenor).getAmount();
+        // Bunga flat: dari pokok AWAL, bukan sisa pokok
         BigDecimal interestPmt = initialPrincipal.getAmount().multiply(rate);
         return new Money(principalPmt.add(interestPmt), initialPrincipal.getCurrency());
     }

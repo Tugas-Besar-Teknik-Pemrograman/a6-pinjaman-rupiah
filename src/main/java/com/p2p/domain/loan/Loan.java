@@ -312,4 +312,18 @@ public class Loan {
     public Money getAdminFee() {
         return adminFee;
     }
+
+    public int getTenor() {
+        return tenor;
+    }
+
+    /**
+     * Menghitung estimasi cicilan bulan berikutnya dari interest strategy.
+     * Berbeda dari tagihanBulanIni yang hanya terisi setelah simulasiTenorBerikutnya dipanggil,
+     * method ini selalu bisa dihitung selama interestStrategy sudah di-set.
+     */
+    public Money hitungEstimasiCicilan() {
+        if (interestStrategy == null) return new Money(BigDecimal.ZERO, "IDR");
+        return interestStrategy.hitungCicilan(targetNominal, sisaPokok, tenor);
+    }
 }

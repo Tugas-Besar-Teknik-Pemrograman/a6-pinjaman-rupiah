@@ -77,13 +77,13 @@ public class LenderMenu {
                 totalDiinvestasikan = totalDiinvestasikan.add(investasi);
 
                 BigDecimal target = loan.getTargetNominal().getAmount();
-                if (target.compareTo(BigDecimal.ZERO) > 0 && loan.getTagihanBulanIni() != null) {
-                    BigDecimal tagihan = loan.getTagihanBulanIni().getAmount();
-                    if (tagihan.compareTo(BigDecimal.ZERO) > 0) {
+                if (target.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal cicilanEstimasi = loan.hitungEstimasiCicilan().getAmount();
+                    if (cicilanEstimasi.compareTo(BigDecimal.ZERO) > 0) {
                         BigDecimal proporsi = investasi
                                 .multiply(BigDecimal.valueOf(100))
                                 .divide(target, 2, RoundingMode.HALF_UP);
-                        BigDecimal bagianReturn = tagihan.multiply(proporsi)
+                        BigDecimal bagianReturn = cicilanEstimasi.multiply(proporsi)
                                 .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
                         estimasiReturnPerBulan = estimasiReturnPerBulan.add(bagianReturn);
                     }

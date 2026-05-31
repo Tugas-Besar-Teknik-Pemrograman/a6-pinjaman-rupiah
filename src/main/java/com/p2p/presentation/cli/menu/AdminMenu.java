@@ -40,7 +40,9 @@ public class AdminMenu {
             System.out.println("5. Validasi Pencairan Pinjaman");
             System.out.println("6. Laporan Statistik Platform");
             System.out.println("7. Saldo Platform");
-            System.out.println("8. Logout");
+            System.out.println("8. Simulasi Jatuh Tempo");
+            System.out.println("9. Simulasi Tenor Selanjutnya");
+            System.out.println("10. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
 
@@ -52,7 +54,9 @@ public class AdminMenu {
                 case "5" -> validasiPencairan();
                 case "6" -> laporanStatistikPlatform();
                 case "7" -> lihatSaldoPlatform();
-                case "8" -> {
+                case "8" -> menuSimulasiOverdue();
+                case "9" -> menuSimulasiTenorSelanjutnya();
+                case "10" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
                     kembali = true;
@@ -127,10 +131,10 @@ public class AdminMenu {
         int creditScore;
         try {
             creditScore = Integer.parseInt(scanner.nextLine().trim());
-            if (creditScore < 300 || creditScore > 850) {
-                System.out.println("Credit score harus berada di antara 300-850.");
+            if (creditScore < 0) {
+                System.out.println("Credit score tidak boleh negatif.");
                 return;
-            }
+}
         } catch (NumberFormatException e) {
             System.out.println("Input credit score tidak valid.");
             return;
@@ -367,4 +371,71 @@ public class AdminMenu {
     private String formatCurrency(BigDecimal amount) {
         return amount.toString().replaceAll("\\B(?=(\\d{3})+(?!\\d))", ",");
     }
+
+    private void menuSimulasiOverdue() {
+    System.out.println("1. Majukan Jatuh Tempo | 2. Tandai Overdue");
+    String opt = scanner.nextLine();
+    System.out.print("Loan ID: ");
+    String id = scanner.nextLine();
+    try {
+        if ("1".equals(opt)) ctx.getLoanService().simulasiMajukanJatuhTempo(new LoanId(id));
+        else if ("2".equals(opt)) ctx.getLoanService().tandaiOverdue(new LoanId(id));
+        System.out.println("Simulasi sukses.");
+    } catch (Exception e) {
+        System.out.println("Error: " + e.getMessage());
+    }
+}
+
+private void menuSimulasiTenorSelanjutnya() {
+    List<Loan> allLoans = repos.getLoanRepository().findAll();
+    List<Loan> activeLoans = allLoans.stream()
+            .filter(l -> "DISBURSED".equals(l.getStatus()) || "REPAYMENT".equals(l.getStatus()) || "OVERDUE".equals(l.getStatus()))
+            .toList();
+
+    if (activeLoans.isEmpty()) {
+        System.out.println("Tidak ada pinjaman aktif yang sedang berjalan.");
+        return;
+    }
+
+    Loan selectedLoan;
+    if (activeLoans.size() == 1) {
+        selectedLoan = activeLoans.get(0);
+        System.out.println("Menemukan 1 pinjaman aktif: " + selectedLoan.getId().getValue() + ". Memproses simulasi tenor berikutnya...");
+    } else {
+        System.out.println("\n--- Pinjaman Aktif ---");
+        for (int i = 0; i < activeLoans.size(); i++) {
+            Loan l = activeLoans.get(i);
+            System.out.printf("%d) %s - Tagihan Bulan Ini: Rp %s - Sisa Tenor: %d bulan%n",
+                    i + 1, l.getId().getValue(),
+                    (l.getTagihanBulanIni() != null ? l.getTagihanBulanIni().getAmount() : "0"),
+                    l.getTenorSisa());
+        }
+        System.out.print("Pilih nomor pinjaman (atau '0' untuk batal): ");
+        String choice = scanner.nextLine().trim();
+        if ("0".equals(choice)) return;
+        try {
+            int idx = Integer.parseInt(choice) - 1;
+            if (idx < 0 || idx >= activeLoans.size()) {
+                System.out.println("Pilihan tidak valid.");
+                return;
+            }
+            selectedLoan = activeLoans.get(idx);
+        } catch (NumberFormatException e) {
+            System.out.println("Input tidak valid.");
+            return;
+        }
+    }
+
+    try {
+        ctx.getLoanService().simulasiTenorBerikutnya(selectedLoan.getId());
+        Loan updated = repos.getLoanRepository().findById(selectedLoan.getId());
+        System.out.println("Simulasi sukses! Tagihan baru untuk bulan selanjutnya telah dibuat.");
+        System.out.println("Tagihan Bulan Ini  : Rp " + (updated.getTagihanBulanIni() != null ? updated.getTagihanBulanIni().getAmount() : "0"));
+        System.out.println("Sisa Tenor         : " + updated.getTenorSisa() + " bulan");
+        System.out.println("Tanggal Jatuh Tempo: " + updated.getTanggalJatuhTempo());
+    } catch (Exception e) {
+        System.out.println("Gagal mensimulasikan tenor berikutnya: " + e.getMessage());
+    }
+}
+
 }

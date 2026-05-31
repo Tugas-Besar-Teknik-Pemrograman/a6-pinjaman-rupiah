@@ -137,10 +137,9 @@ public class Loan {
         if (this.currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new Exception("Tagihan bulan ini belum tersedia");
         }
-        // POIN 3: bayar harus pas sesuai tagihan, tidak boleh lebih tidak boleh kurang
-        if (paymentAmount.getAmount().compareTo(this.currentMonthBill.getAmount()) != 0) {
-            throw new Exception("Nominal pembayaran harus sesuai dengan tagihan: Rp "
-                    + String.format("%,.0f", this.currentMonthBill.getAmount()));
+        // Bayar harus pas sesuai tagihan, tidak boleh kurang
+        if (paymentAmount.getAmount().compareTo(this.currentMonthBill.getAmount()) < 0) {
+            throw new Exception("Nominal pembayaran kurang dari nominal tagihan");
         }
 
         // Catat denda ke total denda terkumpul sebelum di-nolkan

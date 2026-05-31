@@ -103,10 +103,9 @@ public class LoanService {
             throw new IllegalStateException("Saldo borrower tidak mencukupi untuk membayar tagihan bulan ini");
         }
 
-        // POIN 3: bayar harus pas, tidak boleh lebih/kurang
-        if (amount.getAmount().compareTo(tagihanBulanIni.getAmount()) != 0) {
-            throw new IllegalStateException("Nominal pembayaran harus sesuai tagihan: Rp "
-                    + String.format("%,.0f", tagihanBulanIni.getAmount()));
+        // Bayar tidak boleh kurang dari tagihan
+        if (amount.getAmount().compareTo(tagihanBulanIni.getAmount()) < 0) {
+            throw new IllegalStateException("Nominal pembayaran kurang dari nominal tagihan");
         }
 
         // Snapshot distribusi sebelum bill di-nolkan
@@ -114,15 +113,6 @@ public class LoanService {
 
         borrower.kurangiSaldo(tagihanBulanIni);
         loan.bayarCicilan(amount);
-
-        // Auto-generate bill bulan berikutnya agar loan tidak hilang
-        if (!loan.isLunas() && (loan.getTagihanBulanIni() == null
-                || loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) <= 0)) {
-            loan.generateMonthlyBill();
-            if (loan.getTanggalJatuhTempo() != null) {
-                loan.setTanggalJatuhTempo(loan.getTanggalJatuhTempo().plusDays(30));
-            }
-        }
 
         loanRepository.save(loan);
         borrowerRepository.save(borrower);

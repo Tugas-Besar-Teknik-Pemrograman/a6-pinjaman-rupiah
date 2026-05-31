@@ -2,6 +2,7 @@ package com.p2p.presentation.cli.menu;
 
 import com.p2p.domain.lender.Lender;
 import com.p2p.domain.lender.LenderId;
+import com.p2p.domain.lender.ReturnRecord;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.presentation.cli.AppContext;
@@ -389,7 +390,40 @@ public class LenderMenu {
 
     private void menuRiwayatReturn() {
         System.out.println("\n--- Riwayat Return Diterima ---");
-        System.out.println("Fitur ini belum tersedia. Riwayat distribusi cicilan per bulan");
-        System.out.println("akan ditampilkan di sini pada versi berikutnya.");
+
+        String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
+        if (lenderIdStr == null) {
+            System.out.println("Gagal, Profil Lender tidak ditemukan.");
+            return;
+        }
+
+        try {
+            LenderId lenderId = new LenderId(lenderIdStr);
+            Lender lender = ctx.getRepos().getLenderRepository().findById(lenderId);
+            if (lender == null) {
+                System.out.println("Data lender tidak ditemukan.");
+                return;
+            }
+
+            List<ReturnRecord> riwayat = lender.getRiwayatReturn();
+            if (riwayat.isEmpty()) {
+                System.out.println("Belum ada return yang diterima.");
+                return;
+            }
+
+            System.out.printf("%-12s %-20s %16s%n", "Tanggal", "Loan ID", "Return Diterima");
+            System.out.println("-".repeat(52));
+
+            BigDecimal totalReturn = BigDecimal.ZERO;
+            for (ReturnRecord r : riwayat) {
+                System.out.printf("%-12s %-20s %,16.0f%n",
+                        r.getTanggal(), r.getLoanId().getValue(), r.getJumlah().getAmount());
+                totalReturn = totalReturn.add(r.getJumlah().getAmount());
+            }
+            System.out.println("-".repeat(52));
+            System.out.printf("%-34s %,16.0f%n", "Total Return", totalReturn);
+        } catch (Exception e) {
+            System.out.println("Gagal memuat riwayat return: " + e.getMessage());
+        }
     }
 }

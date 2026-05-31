@@ -6,6 +6,7 @@ import com.p2p.domain.borrower.BorrowerRepository;
 import com.p2p.domain.lender.Lender;
 import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.lender.LenderRepository;
+import com.p2p.domain.lender.ReturnRecord;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.LoanRepository;
@@ -153,6 +154,7 @@ public class LoanService {
                 Lender lender = lenderRepository.findById(entry.getKey());
                 if (lender != null) {
                     lender.tambahSaldo(entry.getValue());
+                    lender.tambahReturn(new ReturnRecord(loan.getId(), LocalDate.now(), entry.getValue()));
                     lenderRepository.save(lender);
                 }
             }

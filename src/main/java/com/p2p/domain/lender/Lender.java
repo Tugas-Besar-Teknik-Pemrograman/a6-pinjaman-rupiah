@@ -19,7 +19,7 @@ public class Lender {
         this.saldoBalance = saldoAwal;
         this.kycStatus = false;
     }
-oke
+    
     public void kurangiSaldoUntukInvestasi(Money nominalInvestasi) {
         this.validateInvestmentBalance(nominalInvestasi);
         this.updateBalance(nominalInvestasi.getAmount().negate());

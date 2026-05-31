@@ -8,7 +8,6 @@ import com.p2p.domain.valueobject.Money;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,22 +21,27 @@ public class Loan {
     private Money sisaPokok;
     private int tenor;
     private int tenorSisa;
+    // bulanKe: tracking cicilan ke berapa yang sedang berjalan
+    private int bulanKe;
     private String status;
-    private long maturityDate; // Timestamp jatuh tempo (milliseconds)
-    private Money overdueFeesAccrued; // Denda yang terkumpul
+    private long maturityDate;
+    private Money overdueFeesAccrued;
 
     private InterestCalculationStrategy interestStrategy;
     private String jenisBunga;
     private Money currentMonthBill;
+    // dendaBulanIni: denda OVERDUE bulan ini (sisa pokok * 2%), dikirim ke lender
+    private Money dendaBulanIni;
     private Map<LenderId, Money> daftarPendana;
     private Money adminFee;
 
     private LocalDate tanggalDibuat;
     private LocalDate tanggalKadaluarsaFunding;
-    private LocalDate tanggalJatuhTempo; 
+    private LocalDate tanggalJatuhTempo;
 
     private static final int BATAS_HARI_FUNDING = 28;
-    private static final BigDecimal DENDA_OVERDUE = new BigDecimal("50000");
+    // PERBAIKAN: denda = 2% dari sisa pokok (bukan flat 50rb)
+    private static final BigDecimal RATE_DENDA_OVERDUE = new BigDecimal("0.02");
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal, int tenor) {
         this.loanid = loanid;
@@ -45,14 +49,18 @@ public class Loan {
         this.targetNominal = targetNominal;
         this.tenor = tenor;
         this.tenorSisa = tenor;
+        this.bulanKe = 0;
         this.sisaPokok = targetNominal;
         this.totalTerkumpul = new Money(BigDecimal.ZERO, "IDR");
         this.daftarPendana = new HashMap<>();
         this.status = "PENDING";
         this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
-        this.maturityDate = 0; // Belum ada jatuh tempo sampai pencairan disetujui
+        this.dendaBulanIni = new Money(BigDecimal.ZERO, "IDR");
+        this.maturityDate = 0;
         this.overdueFeesAccrued = new Money(BigDecimal.ZERO, "IDR");
-        this.adminFee = new Money(targetNominal.getAmount().multiply(new BigDecimal("0.01")).setScale(2, RoundingMode.HALF_UP), "IDR");
+        this.adminFee = new Money(
+            targetNominal.getAmount().multiply(new BigDecimal("0.01")).setScale(2, RoundingMode.HALF_UP),
+            "IDR");
     }
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal) {
@@ -65,28 +73,22 @@ public class Loan {
 
     public void tambahPendanaan(LenderId lenderId, Money investasiDiberikan) {
         BigDecimal totalBaru = this.totalTerkumpul.getAmount().add(investasiDiberikan.getAmount());
-
         if (totalBaru.compareTo(this.targetNominal.getAmount()) > 0) {
             throw new IllegalArgumentException("Nominal investasi melebihi target pendanaan");
         }
-
         this.totalTerkumpul = new Money(totalBaru, this.totalTerkumpul.getCurrency());
-
         if (this.daftarPendana.containsKey(lenderId)) {
             BigDecimal uangLama = this.daftarPendana.get(lenderId).getAmount();
-            BigDecimal akumulasi = uangLama.add(investasiDiberikan.getAmount());
-            this.daftarPendana.put(lenderId, new Money(akumulasi, investasiDiberikan.getCurrency()));
+            this.daftarPendana.put(lenderId, new Money(uangLama.add(investasiDiberikan.getAmount()), investasiDiberikan.getCurrency()));
         } else {
             this.daftarPendana.put(lenderId, investasiDiberikan);
         }
-        
         if (totalBaru.compareTo(this.targetNominal.getAmount()) == 0) {
             LoanStateFactory.fundingReady().ubahStatus(this);
         }
     }
 
     public void cairkanPinjaman() {
-        // Dipanggil saat DISBURSED — cicilan pertama jatuh tempo 28 hari sejak cair
         this.tanggalJatuhTempo = LocalDate.now().plusDays(28);
         LoanStateFactory.disbursed().ubahStatus(this);
         generateMonthlyBill();
@@ -100,19 +102,28 @@ public class Loan {
         this.interestStrategy = strategy;
     }
 
-    // MODIFIKASI: Penambahan denda OVERDUE
+    /**
+     * Generate tagihan bulan ini.
+     * Jika OVERDUE: Tagihan = Cicilan Normal + Denda (sisaPokok * 2%)
+     * Denda disimpan terpisah di dendaBulanIni agar bisa dikirim ke lender.
+     */
     public void generateMonthlyBill() {
         if (this.interestStrategy != null) {
             Money tagihanNormal = this.interestStrategy.hitungCicilan(
                     this.targetNominal, this.sisaPokok, this.tenor);
-            
-            BigDecimal totalAmount = tagihanNormal.getAmount();
 
             if ("OVERDUE".equals(this.status)) {
-                totalAmount = totalAmount.add(DENDA_OVERDUE);
+                // Denda = sisa pokok * 2% (sesuai gambar)
+                BigDecimal denda = this.sisaPokok.getAmount()
+                        .multiply(RATE_DENDA_OVERDUE)
+                        .setScale(0, RoundingMode.HALF_UP);
+                this.dendaBulanIni = new Money(denda, "IDR");
+                this.currentMonthBill = new Money(
+                        tagihanNormal.getAmount().add(denda), "IDR");
+            } else {
+                this.dendaBulanIni = new Money(BigDecimal.ZERO, "IDR");
+                this.currentMonthBill = new Money(tagihanNormal.getAmount(), "IDR");
             }
-
-            this.currentMonthBill = new Money(totalAmount, "IDR");
         }
     }
 
@@ -126,12 +137,16 @@ public class Loan {
         if (this.currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             throw new Exception("Tagihan bulan ini belum tersedia");
         }
-        if (paymentAmount.getAmount().compareTo(this.currentMonthBill.getAmount()) < 0) {
-            throw new Exception("Nominal pembayaran kurang dari nominal tagihan");
+        // POIN 3: bayar harus pas sesuai tagihan, tidak boleh lebih tidak boleh kurang
+        if (paymentAmount.getAmount().compareTo(this.currentMonthBill.getAmount()) != 0) {
+            throw new Exception("Nominal pembayaran harus sesuai dengan tagihan: Rp "
+                    + String.format("%,.0f", this.currentMonthBill.getAmount()));
         }
 
-        if ("OVERDUE".equals(this.status)) {
-            tambahDenda(new Money(DENDA_OVERDUE, "IDR"));
+        // Catat denda ke total denda terkumpul sebelum di-nolkan
+        if ("OVERDUE".equals(this.status) && this.dendaBulanIni != null
+                && this.dendaBulanIni.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+            tambahDenda(this.dendaBulanIni);
         }
 
         BigDecimal principalPortion = this.targetNominal.getAmount()
@@ -139,18 +154,17 @@ public class Loan {
         this.sisaPokok = new Money(
                 this.sisaPokok.getAmount().subtract(principalPortion),
                 this.sisaPokok.getCurrency());
-                
+
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
+        this.dendaBulanIni = new Money(BigDecimal.ZERO, "IDR");
         this.tenorSisa--;
+        this.bulanKe++;
 
         if (this.tanggalJatuhTempo != null) {
             this.tanggalJatuhTempo = LocalDate.now().plusDays(30);
         }
- 
-        if (this.status.equals("DISBURSED")) {
-            LoanStateFactory.repayment().ubahStatus(this);
-        } else if (this.status.equals("OVERDUE")) {
-            // Bayar setelah overdue → kembali ke REPAYMENT
+
+        if (this.status.equals("DISBURSED") || this.status.equals("OVERDUE")) {
             LoanStateFactory.repayment().ubahStatus(this);
         }
 
@@ -163,12 +177,8 @@ public class Loan {
     }
 
     public Money getSisaTagihanKeseluruhan() {
-        if (this.sisaPokok == null) {
-            return this.targetNominal;
-        }
-        if (isLunas()) {
-            return new Money(BigDecimal.ZERO, this.sisaPokok.getCurrency());
-        }
+        if (this.sisaPokok == null) return this.targetNominal;
+        if (isLunas()) return new Money(BigDecimal.ZERO, this.sisaPokok.getCurrency());
         return this.sisaPokok;
     }
 
@@ -193,6 +203,45 @@ public class Loan {
         if (this.currentMonthBill == null) return false;
         return this.currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) == 0;
     }
+
+    /**
+     * Distribusi cicilan ke lender.
+     * Jika OVERDUE: denda (sisaPokok*2%) ikut masuk ke lender (bukan admin).
+     * Distribusi proporsional berdasarkan porsi dana masing-masing lender.
+     */
+    public Map<LenderId, Money> hitungDistribusiCicilan() {
+        Map<LenderId, Money> distribusi = new LinkedHashMap<>();
+        if (daftarPendana.isEmpty() || currentMonthBill == null
+                || currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            return distribusi;
+        }
+
+        BigDecimal totalDana = this.totalTerkumpul.getAmount();
+        // PERBAIKAN: semua tagihan (termasuk denda) masuk ke lender
+        BigDecimal tagihan = this.currentMonthBill.getAmount();
+        BigDecimal sisa = tagihan;
+
+        List<Map.Entry<LenderId, Money>> sorted = daftarPendana.entrySet().stream()
+            .sorted((a, b) -> b.getValue().getAmount().compareTo(a.getValue().getAmount()))
+            .toList();
+
+        for (int i = 0; i < sorted.size(); i++) {
+            LenderId id = sorted.get(i).getKey();
+            BigDecimal bagian;
+            if (i == sorted.size() - 1) {
+                bagian = sisa;
+            } else {
+                BigDecimal proporsi = sorted.get(i).getValue().getAmount()
+                    .divide(totalDana, 10, RoundingMode.HALF_UP);
+                bagian = tagihan.multiply(proporsi).setScale(0, RoundingMode.DOWN);
+                sisa = sisa.subtract(bagian);
+            }
+            distribusi.put(id, new Money(bagian, "IDR"));
+        }
+        return distribusi;
+    }
+
+    // ======= Getters & Setters =======
 
     public void setTotalTerkumpul(Money totalTerkumpul) {
         this.totalTerkumpul = totalTerkumpul;
@@ -226,8 +275,20 @@ public class Loan {
         return tenorSisa;
     }
 
+    public int getTenor() {
+        return tenor;
+    }
+
+    public int getBulanKe() {
+        return bulanKe;
+    }
+
     public Money getTagihanBulanIni() {
         return currentMonthBill;
+    }
+
+    public Money getDendaBulanIni() {
+        return dendaBulanIni;
     }
 
     public long getTanggalJatuhTempoTimestamp() {
@@ -253,41 +314,6 @@ public class Loan {
 
     public Map<LenderId, Money> getDaftarPendana() {
         return daftarPendana;
-    }
-
-    public Map<LenderId, Money> hitungDistribusiCicilan() {
-        Map<LenderId, Money> distribusi = new LinkedHashMap<>();
-        if (daftarPendana.isEmpty() || currentMonthBill == null
-                || currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            return distribusi;
-        }
-
-        BigDecimal totalDana = this.totalTerkumpul.getAmount();
-        BigDecimal tagihan   = this.currentMonthBill.getAmount();
-        if ("OVERDUE".equals(this.status)) {
-            tagihan = tagihan.subtract(DENDA_OVERDUE);
-        }
-        BigDecimal sisa      = tagihan;
-
-        // Urutkan terbesar dulu — sisa rounding jatuh ke lender terkecil (index terakhir)
-        List<Map.Entry<LenderId, Money>> sorted = daftarPendana.entrySet().stream()
-            .sorted((a, b) -> b.getValue().getAmount().compareTo(a.getValue().getAmount()))
-            .toList();
-
-        for (int i = 0; i < sorted.size(); i++) {
-            LenderId id = sorted.get(i).getKey();
-            BigDecimal bagian;
-            if (i == sorted.size() - 1) {
-                bagian = sisa;
-            } else {
-                BigDecimal proporsi = sorted.get(i).getValue().getAmount()
-                    .divide(totalDana, 10, RoundingMode.HALF_UP);
-                bagian = tagihan.multiply(proporsi).setScale(0, RoundingMode.DOWN);
-                sisa = sisa.subtract(bagian);
-            }
-            distribusi.put(id, new Money(bagian, "IDR"));
-        }
-        return distribusi;
     }
 
     public Map<LenderId, Money> getListPendana() {
@@ -322,15 +348,6 @@ public class Loan {
         this.jenisBunga = jenisBunga;
     }
 
-    public int getTenor() {
-        return tenor;
-    }
-
-    /**
-     * Menghitung estimasi cicilan bulan berikutnya dari interest strategy.
-     * Berbeda dari tagihanBulanIni yang hanya terisi setelah simulasiTenorBerikutnya dipanggil,
-     * method ini selalu bisa dihitung selama interestStrategy sudah di-set.
-     */
     public Money hitungEstimasiCicilan() {
         if (interestStrategy == null) return new Money(BigDecimal.ZERO, "IDR");
         return interestStrategy.hitungCicilan(targetNominal, sisaPokok, tenor);

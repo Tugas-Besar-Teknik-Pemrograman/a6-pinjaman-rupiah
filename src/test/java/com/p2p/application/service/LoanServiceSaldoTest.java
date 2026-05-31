@@ -98,7 +98,9 @@ class LoanServiceSaldoTest {
 
         loanService.bayarCicilan(loan.getId(), loan.getTagihanBulanIni());
 
-        // Auto-generate bill setelah bayar, jadi tagihan bulan 2 langsung tersedia
+        // PERBAIKAN: Fungsi simulasi harus dipanggil secara eksplisit untuk membuat tagihan baru
+        loanService.simulasiTenorBerikutnya(loan.getId());
+
         BigDecimal expectedBill = new BigDecimal("250000"); // pokok 200rb + bunga 50rb
         assertEquals(0, expectedBill.compareTo(loan.getTagihanBulanIni().getAmount().setScale(0, RoundingMode.HALF_UP)));
     }
@@ -140,7 +142,6 @@ class LoanServiceSaldoTest {
 
     @Test
     void bayarCicilan_statusOverdue_dendaMasukKeLender() throws Exception {
-        // PERBAIKAN: denda OVERDUE masuk ke lender, bukan admin
         LoanRepository loanRepository = mock(LoanRepository.class);
         BorrowerRepository borrowerRepository = mock(BorrowerRepository.class);
         LenderRepository lenderRepository = mock(LenderRepository.class);

@@ -8,9 +8,18 @@ import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.LoanRepository;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class NotificationService {
     private final LoanRepository loanRepository;
     private final BorrowerNotificationObserver notificationObserver;
+
+    // Storage notifikasi per userId (borrowerId / lenderId value)
+    private final Map<String, List<String>> kotakNotifikasi = new HashMap<>();
 
     public NotificationService(LoanRepository loanRepository, BorrowerNotificationObserver notificationObserver) {
         this.loanRepository = loanRepository;
@@ -37,5 +46,18 @@ public class NotificationService {
 
     public void kirimNotifikasi(BorrowerId borrowerId, String message) {
         System.out.println("Notifikasi ke Borrower " + borrowerId + ": " + message);
+    }
+
+    // Simpan notifikasi ke kotak per userId
+    public void simpanNotifikasi(String userId, String pesan) {
+        kotakNotifikasi.computeIfAbsent(userId, k -> new ArrayList<>()).add(pesan);
+    }
+
+    // Ambil semua notifikasi untuk userId (urutan terbaru di atas)
+    public List<String> getNotifikasi(String userId) {
+        List<String> list = kotakNotifikasi.getOrDefault(userId, new ArrayList<>());
+        List<String> reversed = new ArrayList<>(list);
+        Collections.reverse(reversed);
+        return reversed;
     }
 }

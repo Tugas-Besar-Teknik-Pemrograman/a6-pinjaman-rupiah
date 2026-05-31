@@ -145,7 +145,7 @@ public class LenderMenu {
         System.out.println("\n--- Investasi di Pinjaman ---");
         System.out.print("Masukkan Loan ID: ");
         String loanIdStr = scanner.nextLine().trim();
-        System.out.print("Masukkan nominal investasi (Rp): ");
+        System.out.print("Masukkan nominal investasi (Rp, minimal 100.000, kelipatan 100.000): ");
         try {
             long nominal = Long.parseLong(scanner.nextLine().trim());
 

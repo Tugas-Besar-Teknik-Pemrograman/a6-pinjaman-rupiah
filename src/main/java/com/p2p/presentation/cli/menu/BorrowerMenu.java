@@ -300,12 +300,12 @@ public class BorrowerMenu {
         } else {
             System.out.println("Pinjaman berikut sudah siap dan menunggu persetujuan pencairan dari Admin:");
             for (Loan l : readyLoans) {
-                System.out.printf("  • Loan ID : %s%n", l.getId().getValue());
+                System.out.printf("  - Loan ID : %s%n", l.getId().getValue());
                 System.out.printf("    Nominal : Rp %s%n", l.getTargetNominal().getAmount());
                 System.out.printf("    Status  : %s%n", l.getStatus());
             }
             System.out.println();
-            System.out.println("⚠️  Pencairan hanya dapat dilakukan oleh Admin.");
+            System.out.println("[INFO] Pencairan hanya dapat dilakukan oleh Admin.");
             System.out.println("    Silakan hubungi Admin untuk memproses pencairan dana Anda.");
         }
     }

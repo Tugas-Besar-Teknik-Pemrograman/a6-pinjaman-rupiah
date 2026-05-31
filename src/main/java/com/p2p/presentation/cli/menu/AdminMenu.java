@@ -297,29 +297,29 @@ public class AdminMenu {
         System.out.println("                    LAPORAN STATISTIK PLATFORM P2P LENDING");
         System.out.println("=".repeat(80));
 
-        System.out.println("\n📊 DATA PENGGUNA:");
-        System.out.println("  • Total Pengguna Terdaftar: " + totalUsers);
-        System.out.println("  • Total Borrower: " + borrowerCount);
-        System.out.println("  • Total Lender: " + lenderCount);
-        System.out.println("  • Total Admin: " + adminCount);
+        System.out.println("\n[STATISTIK] DATA PENGGUNA:");
+        System.out.println("  - Total Pengguna Terdaftar: " + totalUsers);
+        System.out.println("  - Total Borrower: " + borrowerCount);
+        System.out.println("  - Total Lender: " + lenderCount);
+        System.out.println("  - Total Admin: " + adminCount);
 
-        System.out.println("\n💰 DATA DANA & PINJAMAN:");
-        System.out.println("  • Total Pinjaman Disalurkan: Rp" + formatCurrency(totalDisbursed));
-        System.out.println("  • Outstanding Principal (Dana Aktif Dipinjam): Rp" + formatCurrency(outstandingPrincipal));
-        System.out.println("  • Dana dalam Proses Funding: Rp" + formatCurrency(fundingInProgress));
+        System.out.println("\n[FINANSIAL] DATA DANA & PINJAMAN:");
+        System.out.println("  - Total Pinjaman Disalurkan: Rp" + formatCurrency(totalDisbursed));
+        System.out.println("  - Outstanding Principal (Dana Aktif Dipinjam): Rp" + formatCurrency(outstandingPrincipal));
+        System.out.println("  - Dana dalam Proses Funding: Rp" + formatCurrency(fundingInProgress));
 
-        System.out.println("\n⚠️  INDIKATOR KESEHATAN KREDIT:");
-        System.out.println("  • Jumlah Pinjaman OVERDUE: " + overdueCount + " dari " + totalLoans);
-        System.out.println("  • Rasio Keterlambatan: " + String.format("%.2f%%", overdueRatio));
-        System.out.println("  • Total Denda Terkumpul: Rp" + formatCurrency(totalOverdueFees));
+        System.out.println("\n[PERINGATAN] INDIKATOR KESEHATAN KREDIT:");
+        System.out.println("  - Jumlah Pinjaman OVERDUE: " + overdueCount + " dari " + totalLoans);
+        System.out.println("  - Rasio Keterlambatan: " + String.format("%.2f%%", overdueRatio));
+        System.out.println("  - Total Denda Terkumpul: Rp" + formatCurrency(totalOverdueFees));
 
-        System.out.println("\n📈 DATA INVESTASI LENDER:");
-        System.out.println("  • Total Saldo Lender Terkumpul: Rp" + formatCurrency(totalLenderBalance));
-        System.out.println("  • Total Dana yang Sudah Diinvestasikan: Rp" + formatCurrency(totalInvestedAmount));
+        System.out.println("\n[INVESTASI] DATA INVESTASI LENDER:");
+        System.out.println("  - Total Saldo Lender Terkumpul: Rp" + formatCurrency(totalLenderBalance));
+        System.out.println("  - Total Dana yang Sudah Diinvestasikan: Rp" + formatCurrency(totalInvestedAmount));
 
-        System.out.println("\n🏦 SALDO PLATFORM:");
+        System.out.println("\n[PLATFORM] SALDO PLATFORM:");
         Money adminSaldo = ctx.getAdminSaldo();
-        System.out.println("  • Saldo Platform (Admin Fee 1%): Rp" + formatCurrency(adminSaldo.getAmount()));
+        System.out.println("  - Saldo Platform (Admin Fee 1%): Rp" + formatCurrency(adminSaldo.getAmount()));
 
         System.out.println("\n" + "=".repeat(80));
     }
@@ -347,18 +347,18 @@ public class AdminMenu {
         System.out.println("                        SALDO PLATFORM SAAT INI");
         System.out.println("=".repeat(80));
         
-        System.out.println("\n💳 INFORMASI SALDO PLATFORM:");
-        System.out.println("  • Saldo Saat Ini: Rp" + formatCurrency(adminSaldo.getAmount()));
-        System.out.println("  • Mata Uang: " + adminSaldo.getCurrency());
+        System.out.println("\n[INFO] INFORMASI SALDO PLATFORM:");
+        System.out.println("  - Saldo Saat Ini: Rp" + formatCurrency(adminSaldo.getAmount()));
+        System.out.println("  - Mata Uang: " + adminSaldo.getCurrency());
         
-        System.out.println("\n📊 STATISTIK ADMIN FEE:");
-        System.out.println("  • Total Pinjaman Dicairkan: " + totalLoansDisbursed);
-        System.out.println("  • Total Admin Fee Terkumpul (1%): Rp" + formatCurrency(totalAdminFees));
+        System.out.println("\n[STATISTIK] STATISTIK ADMIN FEE:");
+        System.out.println("  - Total Pinjaman Dicairkan: " + totalLoansDisbursed);
+        System.out.println("  - Total Admin Fee Terkumpul (1%): Rp" + formatCurrency(totalAdminFees));
         
         // Calculate average fee per loan
         if (totalLoansDisbursed > 0) {
             BigDecimal avgFee = totalAdminFees.divide(new BigDecimal(totalLoansDisbursed), 2, java.math.RoundingMode.HALF_UP);
-            System.out.println("  • Rata-rata Fee per Pinjaman: Rp" + formatCurrency(avgFee));
+            System.out.println("  - Rata-rata Fee per Pinjaman: Rp" + formatCurrency(avgFee));
         }
         
         System.out.println("\n" + "=".repeat(80));

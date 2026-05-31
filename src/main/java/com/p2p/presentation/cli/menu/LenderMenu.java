@@ -128,9 +128,9 @@ public class LenderMenu {
             BigDecimal target = loan.getTargetNominal().getAmount();
             BigDecimal terkumpul = loan.getTotalTerkumpul().getAmount();
             BigDecimal sisa = target.subtract(terkumpul);
-            BigDecimal progres = terkumpul
-                    .multiply(BigDecimal.valueOf(100))
-                    .divide(target, 2, RoundingMode.HALF_UP);
+            BigDecimal progres = target.compareTo(BigDecimal.ZERO) > 0
+                    ? terkumpul.multiply(BigDecimal.valueOf(100)).divide(target, 2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
 
             System.out.println("------------------------------------------");
             System.out.println("ID Pinjaman      : " + loan.getId().getValue());
@@ -199,37 +199,53 @@ public class LenderMenu {
         System.out.println("\n--- Portofolio Investasi Saya ---");
 
         String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
-        LenderId lenderId = new LenderId(lenderIdStr);
-
-        List<Loan> portofolio = ctx.getRepos().getLoanRepository().findByLenderId(lenderId);
-
-        if (portofolio.isEmpty()) {
-            System.out.println("Anda belum memiliki investasi aktif.");
+        if (lenderIdStr == null) {
+            System.out.println("Gagal, Profil Lender tidak ditemukan.");
             return;
         }
 
-        for (Loan loan : portofolio) {
-            BigDecimal investasi = loan.getDaftarPendana().get(lenderId).getAmount();
-            BigDecimal target = loan.getTargetNominal().getAmount();
-            BigDecimal proporsi = investasi
-                    .multiply(BigDecimal.valueOf(100))
-                    .divide(target, 2, RoundingMode.HALF_UP);
+        try {
+            LenderId lenderId = new LenderId(lenderIdStr);
 
-            System.out.println("------------------------------------------");
-            System.out.println("ID Pinjaman   : " + loan.getId().getValue());
-            System.out.println("Status        : " + loan.getStatus());
-            System.out.println("Investasi     : Rp " + investasi + " (" + proporsi + "%)");
+            List<Loan> portofolio = ctx.getRepos().getLoanRepository().findByLenderId(lenderId);
 
-            BigDecimal tagihan = loan.getTagihanBulanIni() != null
-                    ? loan.getTagihanBulanIni().getAmount()
-                    : BigDecimal.ZERO;
-            if (tagihan.compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal bagianTagihan = tagihan.multiply(proporsi).divide(BigDecimal.valueOf(100), 0,
-                        RoundingMode.HALF_UP);
-                System.out.println("Tagihan Bulan : Rp " + bagianTagihan + " (estimasi)");
+            if (portofolio.isEmpty()) {
+                System.out.println("Anda belum memiliki investasi aktif.");
+                return;
             }
+
+            for (Loan loan : portofolio) {
+                Money investasiPendana = loan.getDaftarPendana().get(lenderId);
+                if (investasiPendana == null) {
+                    continue;
+                }
+                BigDecimal investasi = investasiPendana.getAmount();
+                BigDecimal target = loan.getTargetNominal().getAmount();
+                if (target.compareTo(BigDecimal.ZERO) <= 0) {
+                    continue;
+                }
+                BigDecimal proporsi = investasi
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(target, 2, RoundingMode.HALF_UP);
+
+                System.out.println("------------------------------------------");
+                System.out.println("ID Pinjaman   : " + loan.getId().getValue());
+                System.out.println("Status        : " + loan.getStatus());
+                System.out.println("Investasi     : Rp " + investasi + " (" + proporsi + "%)");
+
+                BigDecimal tagihan = loan.getTagihanBulanIni() != null
+                        ? loan.getTagihanBulanIni().getAmount()
+                        : BigDecimal.ZERO;
+                if (tagihan.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal bagianTagihan = tagihan.multiply(proporsi).divide(BigDecimal.valueOf(100), 0,
+                            RoundingMode.HALF_UP);
+                    System.out.println("Tagihan Bulan : Rp " + bagianTagihan + " (estimasi)");
+                }
+            }
+            System.out.println("------------------------------------------");
+        } catch (Exception e) {
+            System.out.println("Gagal memuat portofolio: " + e.getMessage());
         }
-        System.out.println("------------------------------------------");
     }
 
     private void prosesPencairan() {

@@ -24,7 +24,10 @@ public class FundingService {
         }
 
         Loan loan = loanRepository.findById(loanId);
-        
+        if (loan == null) {
+            throw new IllegalArgumentException("Pinjaman tidak ditemukan");
+        }
+
         if (!"FUNDING".equals(loan.getStatus())) {
             throw new IllegalStateException("Investasi ditolak, status Loan bukan FUNDING");
         }

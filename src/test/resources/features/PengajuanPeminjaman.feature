@@ -48,3 +48,8 @@ Feature: Pengajuan peminjaman borrower
     And Borrower "01" memiliki pinjaman aktif dengan status "DISBURSED"
     When Borrower mengajukan peminjaman sebesar 200000
     Then Sistem akan menolak peminjaman dengan pesan "Lunasi Peminjaman sebelumnya dulu"
+
+  Scenario: [PP-09] Pengajuan peminjaman ditolak karena nominal bukan kelipatan 100.000
+    Given Borrower dengan ID "01" terverifikasi
+    When Borrower mengajukan peminjaman sebesar 150000
+    Then Sistem akan menolak peminjaman dengan pesan "Nominal pinjaman harus kelipatan 100.000"

@@ -87,6 +87,17 @@ class BorrowerTest {
     }
 
     @Test
+    void pengajuan_peminjaman_ditolak_jika_mengajukan_nominal_bukan_kelipatan_100_ribu(){
+        Money nominalpinjaman1 = new Money(new BigDecimal("150000"), "IDR");
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,()-> {
+            borrower.ajukanPinjaman(new LoanId("001"), nominalpinjaman1, 12);
+        });
+
+        assertEquals("Nominal pinjaman harus kelipatan 100.000", exception.getMessage());
+    }
+
+    @Test
     void pengajuan_peminjaman_ditolak_jika_kyc_belum_terverifikasi(){
         borrower.setKycStatus(false);
         Money nominalpinjaman = new Money(new BigDecimal("2000000"),"IDR");

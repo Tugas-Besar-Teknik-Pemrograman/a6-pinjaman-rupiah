@@ -165,6 +165,11 @@ public class Borrower {
             throw new IllegalArgumentException("Nominal pinjaman harus lebih dari 100.000");
         }
 
+        //validasi nominal harus kelipatan 100.000
+        if (nominal.getAmount().remainder(MINIMAL_PEMINJAMAN).compareTo(BigDecimal.ZERO) != 0) {
+            throw new IllegalArgumentException("Nominal pinjaman harus kelipatan 100.000");
+        }
+
         //validasi nominal <= limit
         if (this.limitPinjaman.isLessThan(nominal)) {
             // Jika sisa limit lebih kecil dari yang mau dipinjam, ditolak

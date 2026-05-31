@@ -27,6 +27,7 @@ public class Loan {
     private Money overdueFeesAccrued; // Denda yang terkumpul
 
     private InterestCalculationStrategy interestStrategy;
+    private String jenisBunga;
     private Money currentMonthBill;
     private Map<LenderId, Money> daftarPendana;
     private Money adminFee;
@@ -311,5 +312,27 @@ public class Loan {
 
     public Money getAdminFee() {
         return adminFee;
+    }
+
+    public String getJenisBunga() {
+        return jenisBunga;
+    }
+
+    public void setJenisBunga(String jenisBunga) {
+        this.jenisBunga = jenisBunga;
+    }
+
+    public int getTenor() {
+        return tenor;
+    }
+
+    /**
+     * Menghitung estimasi cicilan bulan berikutnya dari interest strategy.
+     * Berbeda dari tagihanBulanIni yang hanya terisi setelah simulasiTenorBerikutnya dipanggil,
+     * method ini selalu bisa dihitung selama interestStrategy sudah di-set.
+     */
+    public Money hitungEstimasiCicilan() {
+        if (interestStrategy == null) return new Money(BigDecimal.ZERO, "IDR");
+        return interestStrategy.hitungCicilan(targetNominal, sisaPokok, tenor);
     }
 }

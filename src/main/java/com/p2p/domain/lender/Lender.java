@@ -1,7 +1,9 @@
 package com.p2p.domain.lender;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.valueobject.Money;
 
 public class Lender {
@@ -10,13 +12,14 @@ public class Lender {
     private LenderId id;
     private Money saldoBalance;
     private boolean kycStatus;
+    private List<ReturnRecord> riwayatReturn = new ArrayList<>();
 
     public Lender(LenderId id, Money saldoAwal) {
         this.id = id;
         this.saldoBalance = saldoAwal;
         this.kycStatus = false;
     }
-
+oke
     public void kurangiSaldoUntukInvestasi(Money nominalInvestasi) {
         this.validateInvestmentBalance(nominalInvestasi);
         this.updateBalance(nominalInvestasi.getAmount().negate());
@@ -79,6 +82,14 @@ public class Lender {
 
     public Money getSaldoBalance() {
         return this.saldoBalance;
+    }
+
+    public void tambahReturn(ReturnRecord record) {
+        riwayatReturn.add(record);
+    }
+
+    public List<ReturnRecord> getRiwayatReturn() {
+        return Collections.unmodifiableList(riwayatReturn);
     }
 
     public LenderId getId() {

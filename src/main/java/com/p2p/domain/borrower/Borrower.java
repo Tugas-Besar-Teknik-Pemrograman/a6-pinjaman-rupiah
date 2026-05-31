@@ -144,6 +144,7 @@ public class Borrower {
             loan.setInterestStrategy(new com.p2p.domain.loan.strategy.SyariahInterestStrategy(margin));
         }
 
+        loan.setJenisBunga(interestType.toLowerCase());
         LoanStateFactory.pendingToFunding().ubahStatus(loan);
         return loan;
     }

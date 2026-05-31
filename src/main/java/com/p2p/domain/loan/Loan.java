@@ -27,6 +27,7 @@ public class Loan {
     private Money overdueFeesAccrued; // Denda yang terkumpul
 
     private InterestCalculationStrategy interestStrategy;
+    private String jenisBunga;
     private Money currentMonthBill;
     private Map<LenderId, Money> daftarPendana;
     private Money adminFee;
@@ -311,6 +312,14 @@ public class Loan {
 
     public Money getAdminFee() {
         return adminFee;
+    }
+
+    public String getJenisBunga() {
+        return jenisBunga;
+    }
+
+    public void setJenisBunga(String jenisBunga) {
+        this.jenisBunga = jenisBunga;
     }
 
     public int getTenor() {

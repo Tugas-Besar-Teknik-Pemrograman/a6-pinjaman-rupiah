@@ -23,6 +23,7 @@ public class LenderMenu {
     }
 
     public void tampil() {
+        tampilDashboard();
         boolean kembali = false;
         while (!kembali) {
             System.out.println("\n=== MENU LENDER ===");
@@ -50,6 +51,56 @@ public class LenderMenu {
                 }
                 default -> System.out.println("Pilihan tidak valid.");
             }
+        }
+    }
+
+    private void tampilDashboard() {
+        String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
+        if (lenderIdStr == null) return;
+
+        try {
+            LenderId lenderId = new LenderId(lenderIdStr);
+            Lender lender = ctx.getRepos().getLenderRepository().findById(lenderId);
+            com.p2p.domain.user.User user = ctx.getRepos().getUserRepository()
+                    .findById(new com.p2p.domain.user.UserId(ctx.getCurrentUserId()));
+            if (lender == null || user == null) return;
+
+            List<Loan> portofolio = ctx.getRepos().getLoanRepository().findByLenderId(lenderId);
+            BigDecimal totalDiinvestasikan = BigDecimal.ZERO;
+            BigDecimal estimasiReturnPerBulan = BigDecimal.ZERO;
+
+            for (Loan loan : portofolio) {
+                Money investasiPendana = loan.getDaftarPendana().get(lenderId);
+                if (investasiPendana == null) continue;
+
+                BigDecimal investasi = investasiPendana.getAmount();
+                totalDiinvestasikan = totalDiinvestasikan.add(investasi);
+
+                BigDecimal target = loan.getTargetNominal().getAmount();
+                if (target.compareTo(BigDecimal.ZERO) > 0 && loan.getTagihanBulanIni() != null) {
+                    BigDecimal tagihan = loan.getTagihanBulanIni().getAmount();
+                    if (tagihan.compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal proporsi = investasi
+                                .multiply(BigDecimal.valueOf(100))
+                                .divide(target, 2, RoundingMode.HALF_UP);
+                        BigDecimal bagianReturn = tagihan.multiply(proporsi)
+                                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+                        estimasiReturnPerBulan = estimasiReturnPerBulan.add(bagianReturn);
+                    }
+                }
+            }
+
+            System.out.println("\n=== DASHBOARD LENDER ===");
+            System.out.println("Selamat datang, " + user.getNama() + "!");
+            System.out.println();
+            System.out.printf("Saldo Anda           : Rp %,.0f%n", lender.getSaldoBalance().getAmount());
+            System.out.printf("Total Diinvestasikan : Rp %,.0f%n", totalDiinvestasikan);
+            System.out.printf("Estimasi Return/Bulan: Rp %,.0f%n", estimasiReturnPerBulan);
+            System.out.println();
+            System.out.print("[Tekan Enter untuk lanjut ke menu] ");
+            scanner.nextLine();
+        } catch (Exception e) {
+            // Dashboard gagal dimuat, lanjut ke menu
         }
     }
 

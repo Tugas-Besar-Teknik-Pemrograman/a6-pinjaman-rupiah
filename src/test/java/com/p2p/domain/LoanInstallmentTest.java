@@ -185,6 +185,7 @@ class LoanInstallmentTest {
         }
 
         assertEquals("CLOSED", loan.getStatus());
+        assertEquals(0, BigDecimal.ZERO.compareTo(loan.getSisaTagihanKeseluruhan().getAmount().setScale(0)));
     }
 
     @Test

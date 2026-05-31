@@ -154,6 +154,9 @@ public class Loan {
         }
 
         if (isLunas()) {
+            this.sisaPokok = new Money(BigDecimal.ZERO, this.sisaPokok.getCurrency());
+            this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
+            this.tenorSisa = 0;
             LoanStateFactory.closed().ubahStatus(this);
         }
     }
@@ -161,6 +164,9 @@ public class Loan {
     public Money getSisaTagihanKeseluruhan() {
         if (this.sisaPokok == null) {
             return this.targetNominal;
+        }
+        if (isLunas()) {
+            return new Money(BigDecimal.ZERO, this.sisaPokok.getCurrency());
         }
         return this.sisaPokok;
     }

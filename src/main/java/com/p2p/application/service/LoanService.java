@@ -91,6 +91,10 @@ public class LoanService {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) throw new Exception("Loan tidak ditemukan");
 
+        if ("REJECTED".equals(loan.getStatus()) || "CANCELED".equals(loan.getStatus())) {
+            throw new IllegalStateException("Loan yang ditolak tidak bisa dibayar cicilannya");
+        }
+
         Borrower borrower = borrowerRepository.findById(loan.getBorrowerId());
         if (borrower == null) throw new Exception("Borrower tidak ditemukan");
 
@@ -228,7 +232,7 @@ public class LoanService {
             }
         }
 
-        LoanStateFactory.cancelled().ubahStatus(loan);
+        LoanStateFactory.rejected().ubahStatus(loan);
         loanRepository.save(loan);
 
         if (notificationService != null) {

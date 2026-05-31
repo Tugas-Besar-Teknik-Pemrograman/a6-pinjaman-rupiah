@@ -168,10 +168,8 @@ public class LoanService {
 
             borrower.tambahSaldo(loan.getTargetNominal());
 
-            BigDecimal feeAmount = loan.getTargetNominal().getAmount()
-                    .multiply(new BigDecimal("0.01"))
-                    .setScale(2, RoundingMode.HALF_UP);
-            Money adminFee = new Money(feeAmount, "IDR");
+            // Menggunakan admin fee yang sudah dihitung dan disimpan di objek Loan
+            Money adminFee = loan.getAdminFee();
 
             if (adminFeeCallback != null) adminFeeCallback.accept(adminFee);
 

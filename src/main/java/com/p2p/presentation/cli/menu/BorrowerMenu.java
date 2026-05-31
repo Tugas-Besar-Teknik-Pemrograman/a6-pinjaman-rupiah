@@ -235,6 +235,14 @@ public class BorrowerMenu {
 
             Loan loan = ctx.getLoanService().ajukanPinjaman(new BorrowerId(borrowerIdStr), requestedAmount, tenor, interestType);
             System.out.println("Berhasil! ID: " + loan.getId().getValue());
+            
+            System.out.println("\n=================================================");
+            System.out.println("            RINCIAN BIAYA ADMINISTRASI           ");
+            System.out.println("=================================================");
+            System.out.printf("Nominal Pinjaman : Rp %,.0f%n", nominalBigDecimal);
+            System.out.printf("Biaya Admin (1%%) : Rp %,.0f (dipotong saat pencairan)%n", loan.getAdminFee().getAmount());
+            System.out.printf("Estimasi Bersih  : Rp %,.0f%n", nominalBigDecimal.subtract(loan.getAdminFee().getAmount()));
+            System.out.println("=================================================");
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -292,12 +300,12 @@ public class BorrowerMenu {
         } else {
             System.out.println("Pinjaman berikut sudah siap dan menunggu persetujuan pencairan dari Admin:");
             for (Loan l : readyLoans) {
-                System.out.printf("  • Loan ID : %s%n", l.getId().getValue());
+                System.out.printf("  - Loan ID : %s%n", l.getId().getValue());
                 System.out.printf("    Nominal : Rp %s%n", l.getTargetNominal().getAmount());
                 System.out.printf("    Status  : %s%n", l.getStatus());
             }
             System.out.println();
-            System.out.println("⚠️  Pencairan hanya dapat dilakukan oleh Admin.");
+            System.out.println("[INFO] Pencairan hanya dapat dilakukan oleh Admin.");
             System.out.println("    Silakan hubungi Admin untuk memproses pencairan dana Anda.");
         }
     }

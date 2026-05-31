@@ -35,7 +35,11 @@ public class BorrowerMenu {
             System.out.println("7. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
-
+            String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
+            if (borrowerIdStr == null) {
+                System.out.println("Gagal, Profil Borrower tidak ditemukan.");
+                return;
+            }
             switch (pilihan) {
                 case "1" -> menuProfil();
                 case "2" -> menuTopUp();
@@ -245,20 +249,48 @@ public class BorrowerMenu {
     }
 
     private void menuLihatStatusPinjaman() {
-        System.out.print("Masukkan Loan ID: ");
-        String id = scanner.nextLine().trim();
-        try {
-            Loan loan = ctx.getLoanService().getLoan(new LoanId(id));
-            if (loan == null) {
-                throw new Exception("Loan tidak ditemukan.");
+        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
+        if (borrowerIdStr == null) {
+            System.out.println("Gagal, Profil Borrower tidak ditemukan.");
+            return;
+        }
+
+        List<Loan> allLoans = ctx.getRepos().getLoanRepository().findAll();
+        List<Loan> borrowerLoans = allLoans.stream()
+                .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
+                .toList();
+
+        System.out.println("\n--- Status Pinjaman Anda ---");
+        if (borrowerLoans.isEmpty()) {
+            System.out.println("Anda belum memiliki pinjaman.");
+            return;
+        }
+
+        for (Loan loan : borrowerLoans) {
+            String status = loan.getStatus();
+            if ("REJECTED".equals(status) || "CANCELED".equals(status)) {
+                status = "REJECTED";
             }
-            System.out.println("Status: " + loan.getStatus() + " | Sisa: Rp " + loan.getSisaTagihanKeseluruhan().getAmount());
-        } catch (Exception e) {
-            System.out.println("Gagal: " + e.getMessage());
+
+            System.out.printf("Loan ID : %s%n", loan.getId().getValue());
+            System.out.printf("Status  : %s%n", status);
+            System.out.printf("Nominal : Rp %s%n", loan.getTargetNominal().getAmount());
+            System.out.printf("Sisa    : Rp %s%n", loan.getSisaTagihanKeseluruhan().getAmount());
+            System.out.printf("Tenor   : %d bulan tersisa%n", loan.getTenorSisa());
+            if (loan.getTagihanBulanIni() != null) {
+                System.out.printf("Tagihan : Rp %s%n", loan.getTagihanBulanIni().getAmount());
+            }
+            System.out.println("------------------------------");
         }
     }
 
     private void menuBayarCicilan() {
+        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
+        if (borrowerIdStr == null) {
+            System.out.println("Gagal, Profil Borrower tidak ditemukan.");
+            return;
+        }
+
         System.out.print("Masukkan Loan ID: ");
         String id = scanner.nextLine().trim();
         try {
@@ -266,6 +298,14 @@ public class BorrowerMenu {
             if (loan == null) {
                 throw new Exception("Loan tidak ditemukan.");
             }
+            if (loan.getBorrowerId() == null || !borrowerIdStr.equals(loan.getBorrowerId().getValue())) {
+                throw new Exception("Loan bukan milik akun Anda.");
+            }
+
+            if ("REJECTED".equals(loan.getStatus()) || "CANCELED".equals(loan.getStatus())) {
+                throw new Exception("Loan yang ditolak tidak bisa dibayar cicilannya.");
+            }
+
             System.out.println("Tagihan bulan ini: Rp " + (loan.getTagihanBulanIni() != null ? loan.getTagihanBulanIni().getAmount() : "0"));
             System.out.print("Nominal Bayar: ");
             long bayar = Long.parseLong(scanner.nextLine().trim());

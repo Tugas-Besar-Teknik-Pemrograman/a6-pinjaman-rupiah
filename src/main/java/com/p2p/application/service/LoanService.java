@@ -135,6 +135,7 @@ public class LoanService {
         // PERBAIKAN: semua cicilan (termasuk denda) masuk ke lender, bukan admin
         if (lenderRepository != null) {
             for (Map.Entry<LenderId, Money> entry : distribusiCicilan.entrySet()) {
+                if (entry.getValue().getAmount().compareTo(BigDecimal.ZERO) <= 0) continue;
                 Lender lender = lenderRepository.findById(entry.getKey());
                 if (lender != null) {
                     lender.tambahSaldo(entry.getValue());

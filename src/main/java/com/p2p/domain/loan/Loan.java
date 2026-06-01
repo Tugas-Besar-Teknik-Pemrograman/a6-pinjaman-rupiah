@@ -351,4 +351,22 @@ public class Loan {
         if (interestStrategy == null) return new Money(BigDecimal.ZERO, Money.IDR);
         return interestStrategy.hitungCicilan(targetNominal, sisaPokok, tenor);
     }
+
+    public Money hitungEstimasiReturnLender(LenderId lenderId) {
+        if (!"DISBURSED".equals(status) && !"REPAYMENT".equals(status) && !"OVERDUE".equals(status)) {
+            return new Money(BigDecimal.ZERO, Money.IDR);
+        }
+        Money investasi = daftarPendana.get(lenderId);
+        if (investasi == null || targetNominal.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            return new Money(BigDecimal.ZERO, Money.IDR);
+        }
+        Money cicilan = hitungEstimasiCicilan();
+        if (cicilan.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            return new Money(BigDecimal.ZERO, Money.IDR);
+        }
+        BigDecimal proporsi = investasi.getAmount()
+                .multiply(BigDecimal.valueOf(100))
+                .divide(targetNominal.getAmount(), 2, RoundingMode.HALF_UP);
+        return cicilan.multiply(proporsi).divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
+    }
 }

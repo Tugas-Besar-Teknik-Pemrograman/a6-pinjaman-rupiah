@@ -76,21 +76,7 @@ public class LenderMenu {
                 if (investasiPendana == null) continue;
 
                 totalDiinvestasikan = totalDiinvestasikan.add(investasiPendana);
-
-                if (!isMenghasilkanReturn(loan)) continue;
-
-                Money target = loan.getTargetNominal();
-                if (target.getAmount().compareTo(BigDecimal.ZERO) > 0) {
-                    Money cicilanEstimasi = loan.hitungEstimasiCicilan();
-                    if (cicilanEstimasi.getAmount().compareTo(BigDecimal.ZERO) > 0) {
-                        BigDecimal proporsi = investasiPendana.getAmount()
-                                .multiply(BigDecimal.valueOf(100))
-                                .divide(target.getAmount(), 2, RoundingMode.HALF_UP);
-                        Money bagianReturn = cicilanEstimasi.multiply(proporsi)
-                                .divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
-                        estimasiReturnPerBulan = estimasiReturnPerBulan.add(bagianReturn);
-                    }
-                }
+                estimasiReturnPerBulan = estimasiReturnPerBulan.add(loan.hitungEstimasiReturnLender(lenderId));
             }
 
             System.out.println("\n=== DASHBOARD LENDER ===");
@@ -352,12 +338,6 @@ public class LenderMenu {
         return !"CLOSED".equals(s) && !"REJECTED".equals(s) && !"CANCELED".equals(s);
     }
 
-    /** Loan menghasilkan cicilan bulanan hanya setelah dicairkan dan sedang berjalan. */
-    private boolean isMenghasilkanReturn(Loan loan) {
-        String s = loan.getStatus();
-        return "DISBURSED".equals(s) || "REPAYMENT".equals(s) || "OVERDUE".equals(s);
-    }
-
     private void menuInvestasiAktif() {
         System.out.println("\n--- Investasi Aktif ---");
 
@@ -394,12 +374,7 @@ public class LenderMenu {
                         .multiply(BigDecimal.valueOf(100))
                         .divide(target, 2, RoundingMode.HALF_UP);
 
-                BigDecimal bagianReturn = BigDecimal.ZERO;
-                if (isMenghasilkanReturn(loan)) {
-                    BigDecimal cicilan = loan.hitungEstimasiCicilan().getAmount();
-                    bagianReturn = cicilan.multiply(proporsi)
-                            .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
-                }
+                BigDecimal bagianReturn = loan.hitungEstimasiReturnLender(lenderId).getAmount();
 
                 System.out.printf("%-20s %-14s %,14.0f %7.1f%% %,18.0f%n",
                         loan.getId().getValue(), loan.getStatus(),

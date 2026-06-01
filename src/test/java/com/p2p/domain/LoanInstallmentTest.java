@@ -233,6 +233,38 @@ class LoanInstallmentTest {
     }
 
     @Test
+    void hitungEstimasiReturnLender_proporsi_setengah_dari_cicilan() {
+        LenderId lenderId = new LenderId("LND-RET-01");
+        Loan loan = new Loan(new LoanId("LN-RET-01"), new BorrowerId("BR-RET-01"),
+                             new Money(new BigDecimal("1000000"), "IDR"), 5);
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.tambahPendanaan(lenderId, new Money(new BigDecimal("500000"), "IDR")); // 50% dari target
+        loan.ubahStatus("DISBURSED");
+
+        // cicilan = 1jt/5 + 1jt*5% = 200rb + 50rb = 250rb
+        // return lender = 250rb * 50% = 125rb
+        Money result = loan.hitungEstimasiReturnLender(lenderId);
+
+        assertEquals(0, new BigDecimal("125000").compareTo(result.getAmount().setScale(0, RoundingMode.HALF_UP)),
+            "Return lender harus proporsional terhadap bagian investasinya");
+    }
+
+    @Test
+    void hitungEstimasiReturnLender_status_funding_return_nol() {
+        LenderId lenderId = new LenderId("LND-RET-02");
+        Loan loan = new Loan(new LoanId("LN-RET-02"), new BorrowerId("BR-RET-02"),
+                             new Money(new BigDecimal("1000000"), "IDR"), 5);
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.tambahPendanaan(lenderId, new Money(new BigDecimal("500000"), "IDR"));
+        loan.ubahStatus("FUNDING"); // belum cair, belum ada return
+
+        Money result = loan.hitungEstimasiReturnLender(lenderId);
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(result.getAmount()),
+            "Return harus nol jika loan belum dicairkan");
+    }
+
+    @Test
     void findByLenderId_lenderTidakAdaDiLoan_mengembalikanListKosong() {
         LenderId lenderAda = new LenderId("LND-P02");
         LenderId lenderTidakAda = new LenderId("LND-P03");

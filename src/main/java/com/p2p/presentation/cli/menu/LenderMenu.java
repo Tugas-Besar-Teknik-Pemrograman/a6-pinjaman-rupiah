@@ -32,7 +32,8 @@ public class LenderMenu {
             System.out.println("3. Pasar Pinjaman (Lihat & Invest)");
             System.out.println("4. Lihat Portofolio Investasi");
             System.out.println("5. Tarik Saldo");
-            System.out.println("6. Logout");
+            System.out.println("6. Kotak Notifikasi");
+            System.out.println("7. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
 
@@ -42,7 +43,8 @@ public class LenderMenu {
                 case "3" -> menuPasarPinjaman();
                 case "4" -> menuPortofolioSaya();
                 case "5" -> menuTarikSaldo();
-                case "6" -> {
+                case "6" -> menuKotakNotifikasi();
+                case "7" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
                     kembali = true;
@@ -426,4 +428,24 @@ public class LenderMenu {
             System.out.println("Gagal memuat riwayat return: " + e.getMessage());
         }
     }
+
+    private void menuKotakNotifikasi() {
+    String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
+    if (lenderIdStr == null) {
+        System.out.println("Gagal, Profil Lender tidak ditemukan.");
+        return;
+    }
+
+    System.out.println("\n=== KOTAK NOTIFIKASI ===");
+    List<String> notifs = ctx.getNotificationService().getNotifikasi(lenderIdStr);
+    if (notifs.isEmpty()) {
+        System.out.println("Belum ada notifikasi.");
+    } else {
+        System.out.println("Notifikasi terbaru:");
+        for (int i = 0; i < notifs.size(); i++) {
+            System.out.println("  [" + (i + 1) + "] " + notifs.get(i));
+        }
+    }
+    System.out.println("========================");
+}
 }

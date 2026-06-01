@@ -14,6 +14,10 @@ import com.p2p.domain.state.LoanStateFactory;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.application.observer.LoanEventPublisher;
 import com.p2p.domain.event.PencairanBerhasilEvent;
+import com.p2p.domain.event.CicilanBerhasilEvent;
+import com.p2p.domain.event.PinjamanLunasEvent;
+import com.p2p.domain.event.PinjamanJatuhTempoEvent;
+import com.p2p.domain.event.RefundLenderEvent;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
@@ -57,6 +61,8 @@ public class LoanService {
         Loan loan = borrower.ajukanPinjaman(new LoanId(), amount, tenor);
         borrowerRepository.save(borrower);
         loanRepository.save(loan);
+        if (loanEventPublisher != null)
+            loanEventPublisher.publishPengajuanDiterima(new com.p2p.domain.event.PengajuanDiterimaEvent(loan.getId(), borrowerId));
         return loan;
     }
 
@@ -70,6 +76,8 @@ public class LoanService {
         Loan loan = borrower.ajukanPinjaman(new LoanId(), amount, tenor, interestType, customRateOrMargin);
         borrowerRepository.save(borrower);
         loanRepository.save(loan);
+        if (loanEventPublisher != null)
+            loanEventPublisher.publishPengajuanDiterima(new com.p2p.domain.event.PengajuanDiterimaEvent(loan.getId(), borrowerId));
         return loan;
     }
 
@@ -77,13 +85,7 @@ public class LoanService {
         return loanRepository.findById(loanId);
     }
 
-    /**
-     * Bayar cicilan.
-     * - Nominal bayar HARUS SAMA PERSIS dengan tagihan (tidak boleh lebih/kurang)
-     * - Denda OVERDUE (sisaPokok * 2%) masuk ke lender, bukan admin
-     * - Auto-generate bill bulan berikutnya setelah bayar agar loan tidak hilang
-     */
-    public void bayarCicilan(LoanId loanId, Money amount) throws Exception {
+    public BayarCicilanResult bayarCicilan(LoanId loanId, Money amount) throws Exception {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) throw new Exception("Loan tidak ditemukan");
 
@@ -133,6 +135,16 @@ public class LoanService {
                 }
             }
         }
+
+        // Fire event cicilan & lunas ke borrower
+        if (loanEventPublisher != null) {
+            loanEventPublisher.publishCicilanBerhasil(new CicilanBerhasilEvent(loanId, loan.getBorrowerId(), tagihanSnapshot));
+            if ("CLOSED".equals(loan.getStatus())) {
+                loanEventPublisher.publishPinjamanLunas(new PinjamanLunasEvent(loanId, loan.getBorrowerId()));
+            }
+        }
+
+        return new BayarCicilanResult(tagihanSnapshot, amount, loan.getTenorSisa(), loan.getStatus());
     }
 
     public void prosesPencairan(LoanId loanId) {
@@ -145,6 +157,7 @@ public class LoanService {
             if (borrower == null) throw new IllegalStateException("Borrower tidak ditemukan untuk pencairan");
 
             borrower.tambahSaldo(loan.getTargetNominal());
+
             Money adminFee = loan.getAdminFee();
             if (adminFeeCallback != null) adminFeeCallback.accept(adminFee);
 
@@ -193,6 +206,10 @@ public class LoanService {
                 if (lender != null) {
                     lender.tambahSaldo(entry.getValue());
                     lenderRepository.save(lender);
+                    // Fire event refund per lender
+                    if (loanEventPublisher != null) {
+                        loanEventPublisher.publishRefundLender(new RefundLenderEvent(loanId, entry.getKey(), entry.getValue()));
+                    }
                 }
             }
         }
@@ -215,6 +232,11 @@ public class LoanService {
         LoanStateFactory.overdue().ubahStatus(loan);
         loan.generateMonthlyBill();
         loanRepository.save(loan);
+
+        // Fire event jatuh tempo ke borrower
+        if (loanEventPublisher != null) {
+            loanEventPublisher.publishPinjamanJatuhTempo(new PinjamanJatuhTempoEvent(loanId, loan.getBorrowerId(), "Pinjaman Anda telah jatuh tempo."));
+        }
     }
 
     public void simulasiMajukanJatuhTempo(LoanId loanId) {

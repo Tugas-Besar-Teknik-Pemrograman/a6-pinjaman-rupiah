@@ -2,6 +2,7 @@ package com.p2p.presentation.cli;
 
 import com.p2p.application.observer.LoanEventPublisher;
 import com.p2p.application.observer.BorrowerNotificationObserver;
+import com.p2p.application.observer.LenderNotificationObserver;
 import com.p2p.application.service.FundingService;
 import com.p2p.application.service.LoanService;
 import com.p2p.application.service.NotificationService;
@@ -40,21 +41,29 @@ public class AppContext {
     private final Map<String, String> userToLenderId   = new HashMap<>();
 
     private AppContext() {
-        repos = RepositoryFactory.getInstance();
+    repos = RepositoryFactory.getInstance();
 
-        BorrowerNotificationObserver notifObserver = new BorrowerNotificationObserver();
-        LoanEventPublisher publisher = new LoanEventPublisher();
+    BorrowerNotificationObserver notifObserver = new BorrowerNotificationObserver();
+    LoanEventPublisher publisher = new LoanEventPublisher();
 
-        notificationService  = new NotificationService(repos.getLoanRepository(), notifObserver);
-        userService          = new UserService(repos.getUserRepository(), repos.getBorrowerRepository(), repos.getLenderRepository());
-        loanService          = new LoanService(repos.getLoanRepository(), repos.getBorrowerRepository(),
-                                               repos.getLenderRepository(), publisher, notificationService);
-        fundingService       = new FundingService(repos.getLoanRepository(), repos.getLenderRepository());
-        withdrawalService    = new WithdrawalService(repos.getLenderRepository());
+    notificationService  = new NotificationService(repos.getLoanRepository(), notifObserver);
 
-        // Daftarkan callback admin fee agar setiap pencairan otomatis menambah adminSaldo
-        loanService.setAdminFeeCallback(this::tambahAdminSaldo);
-    }
+    LenderNotificationObserver lenderNotifObserver = new LenderNotificationObserver();
+    notifObserver.setNotificationService(notificationService);
+    lenderNotifObserver.setNotificationService(notificationService);
+    publisher.registerObserver(notifObserver);
+    publisher.registerObserver(lenderNotifObserver);
+
+
+    userService          = new UserService(repos.getUserRepository(), repos.getBorrowerRepository(), repos.getLenderRepository());
+    loanService          = new LoanService(repos.getLoanRepository(), repos.getBorrowerRepository(),
+                                           repos.getLenderRepository(), publisher, notificationService);
+    fundingService = new FundingService(repos.getLoanRepository(), repos.getLenderRepository(), publisher);
+    withdrawalService    = new WithdrawalService(repos.getLenderRepository());
+
+    // Daftarkan callback admin fee agar setiap pencairan otomatis menambah adminSaldo
+    loanService.setAdminFeeCallback(this::tambahAdminSaldo);
+}
 
     public static AppContext getInstance() {
         if (instance == null) {

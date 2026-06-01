@@ -1,17 +1,31 @@
 package com.p2p.application.observer;
 
+import com.p2p.application.service.NotificationService;
 import com.p2p.domain.event.*;
 
 public class LenderNotificationObserver implements LoanObserver {
 
+    private NotificationService notificationService;
+
+    public void setNotificationService(NotificationService notificationService) {
+        this.notificationService = notificationService;
+    }
+
+    private void simpan(String userId, String pesan) {
+        System.out.println(pesan);
+        if (notificationService != null && userId != null) {
+            notificationService.simpanNotifikasi(userId, pesan);
+        }
+    }
+
     @Override
     public void onPencairanBerhasil(PencairanBerhasilEvent event) {
-        // Lender tidak perlu notifikasi event pencairan borrower
+        // Lender tidak perlu notifikasi pencairan borrower
     }
 
     @Override
     public void onPencairanGagal(PencairanGagalEvent event) {
-        // Lender tidak perlu notifikasi event pencairan borrower
+        // Lender tidak perlu notifikasi pencairan borrower
     }
 
     @Override
@@ -21,31 +35,37 @@ public class LenderNotificationObserver implements LoanObserver {
 
     @Override
     public void onPendanaanTerpenuhi(PendanaanTerpenuhiEvent event) {
-        System.out.println("Notifikasi ke Lender: Pendanaan untuk pinjaman " + event.getLoanId() + " telah terpenuhi!");
+        String pesan = "Pendanaan untuk pinjaman " + event.getLoanId() + " telah terpenuhi 100%!";
+        simpan(null, pesan); // broadcast, tidak per-lender
     }
 
     @Override
     public void onCicilanBerhasil(CicilanBerhasilEvent event) {
-        System.out.println("Notifikasi ke Lender: Cicilan sebesar " + event.getAmount() + " untuk pinjaman " + event.getLoanId() + " berhasil dibayar!");
+        String pesan = "Cicilan sebesar " + event.getAmount() + " untuk pinjaman " + event.getLoanId() + " berhasil dibayar!";
+        simpan(null, pesan); // broadcast, tidak per-lender
     }
 
     @Override
     public void onPinjamanLunas(PinjamanLunasEvent event) {
-        System.out.println("Notifikasi ke Lender: Pinjaman " + event.getLoanId() + " telah lunas!");
+        String pesan = "Pinjaman " + event.getLoanId() + " telah lunas!";
+        simpan(null, pesan);
     }
 
     @Override
     public void onPinjamanJatuhTempo(PinjamanJatuhTempoEvent event) {
-        System.out.println("Notifikasi ke Lender: Pinjaman " + event.getLoanId() + " jatuh tempo. " + event.getReason());
+        String pesan = "Pinjaman " + event.getLoanId() + " jatuh tempo. " + event.getReason();
+        simpan(null, pesan);
     }
 
     @Override
     public void onInvestasiDiterima(InvestasiDiterimaEvent event) {
-        System.out.println("Notifikasi ke Lender " + event.getLenderId() + ": Investasi untuk pinjaman " + event.getLoanId() + " telah diterima!");
+        String pesan = "Investasi untuk pinjaman " + event.getLoanId() + " telah diterima!";
+        simpan(event.getLenderId().getValue(), pesan); // per-lender ✅
     }
 
     @Override
     public void onRefundLender(RefundLenderEvent event) {
-        System.out.println("Notifikasi ke Lender " + event.getLenderId() + ": Refund sebesar " + event.getAmount() + " untuk pinjaman " + event.getLoanId() + " telah diproses!");
+        String pesan = "Refund sebesar " + event.getAmount() + " untuk pinjaman " + event.getLoanId() + " telah diproses!";
+        simpan(event.getLenderId().getValue(), pesan); // per-lender ✅
     }
 }

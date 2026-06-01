@@ -6,6 +6,10 @@ import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.valueobject.Money;
+import com.p2p.domain.loan.strategy.FixedInterestStrategy;
+import com.p2p.domain.loan.strategy.FloatingInterestStrategy;
+import com.p2p.domain.loan.strategy.SyariahInterestStrategy;
+import com.p2p.domain.loan.strategy.InterestCalculationStrategy;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -174,18 +178,8 @@ public class BorrowerMenu {
             };
 
             Money nominalPinjaman = new Money(BigDecimal.valueOf(nominal), Money.IDR);
-            if (!borrowerObj.isKycStatus()) throw new IllegalStateException("Peminjaman ditolak karena Borrower belum terverifikasi (KYC)");
-            if (borrowerObj.getCreditScore() < 600) throw new IllegalStateException("Peminjaman ditolak karena Credit score di bawah ambang batas");
-            Money minPeminjaman = new Money(new BigDecimal("100000"), Money.IDR);
-            if (nominalPinjaman.isLessThan(minPeminjaman)) throw new IllegalArgumentException("Nominal pinjaman harus lebih dari 100.000");
-            if (nominalPinjaman.getAmount().remainder(new BigDecimal("100000")).compareTo(BigDecimal.ZERO) != 0) throw new IllegalArgumentException("Nominal pinjaman harus kelipatan 100.000");
-            if (borrowerObj.hasActiveLoan()) throw new IllegalStateException("Lunasi Peminjaman sebelumnya dulu");
-
-            BigDecimal bungaRate = "syariah".equals(interestType) ? BigDecimal.ZERO : new BigDecimal("0.05");
-            Money limitDinamis = borrowerObj.hitungLimitDenganTenorDanBunga(tenor, bungaRate);
-            if (limitDinamis.isLessThan(nominalPinjaman)) {
-                throw new IllegalStateException("Pengajuan melebihi limit. Limit Anda: Rp " + String.format("%,.0f", limitDinamis.getAmount()));
-            }
+            // B2: Validasi (KYC, credit score, minimal, kelipatan, active loan, limit) diserahkan
+            // sepenuhnya ke Borrower.validasiPinjaman via ajukanPinjaman — tidak diduplikasi di sini.
 
             Money principalPerMonth = nominalPinjaman.divide(BigDecimal.valueOf(tenor), RoundingMode.HALF_UP);
             Money adminFee = nominalPinjaman.multiply(new BigDecimal("0.01"));
@@ -204,20 +198,23 @@ public class BorrowerMenu {
             System.out.println("           Simulasi Cicilan Bulanan              ");
             System.out.println("-------------------------------------------------");
 
+            // B1: Gunakan strategy (sumber kebenaran dari domain) — bukan duplikasi rumus
+            InterestCalculationStrategy strategy;
+            if ("flat".equals(interestType)) {
+                strategy = new FixedInterestStrategy(new BigDecimal("0.05"));
+            } else if ("float".equals(interestType)) {
+                strategy = new FloatingInterestStrategy(new BigDecimal("0.05"));
+            } else { // syariah
+                strategy = new SyariahInterestStrategy(new BigDecimal("150000"));
+            }
             for (int i = 1; i <= tenor; i++) {
-                Money bunga = new Money(BigDecimal.ZERO, Money.IDR);
-                if ("flat".equals(interestType)) {
-                    bunga = nominalPinjaman.multiply(new BigDecimal("0.05"));
-                } else if ("float".equals(interestType)) {
-                    bunga = sisaPokok.multiply(new BigDecimal("0.05"));
-                } else if ("syariah".equals(interestType)) {
-                    bunga = new Money(new BigDecimal("150000"), Money.IDR);
-                }
-                Money cicilan = principalPerMonth.add(bunga);
+                Money cicilan = strategy.hitungCicilan(nominalPinjaman, sisaPokok, tenor);
+                Money bungaBagian = cicilan.subtract(principalPerMonth);
                 totalPengembalian = totalPengembalian.add(cicilan);
-                totalInterest = totalInterest.add(bunga);
+                totalInterest = totalInterest.add(bungaBagian);
                 System.out.printf("Bulan %2d: Pokok Rp %,.0f + %s Rp %,.0f = Cicilan Rp %,.0f%n",
-                        i, principalPerMonth.getAmount(), "syariah".equals(interestType) ? "Margin" : "Bunga", bunga.getAmount(), cicilan.getAmount());
+                        i, principalPerMonth.getAmount(), "syariah".equals(interestType) ? "Margin" : "Bunga",
+                        bungaBagian.getAmount(), cicilan.getAmount());
                 sisaPokok = sisaPokok.subtract(principalPerMonth);
             }
 

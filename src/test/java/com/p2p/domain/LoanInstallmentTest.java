@@ -136,7 +136,7 @@ class LoanInstallmentTest {
         Money tooSmall = new Money(new BigDecimal("1000"), "IDR");
 
         Exception ex = assertThrows(Exception.class, () -> loan.bayarCicilan(tooSmall));
-        assertEquals("Nominal pembayaran kurang dari nominal tagihan", ex.getMessage());
+        assertEquals("Nominal pembayaran harus sesuai dengan tagihan: Rp 2.500.000", ex.getMessage());
     }
 
     @Test
@@ -301,12 +301,12 @@ class LoanInstallmentTest {
         Loan loan = new Loan(new LoanId("LN-O02"), new BorrowerId("BR-001"), target, 5);
         loan.ubahStatus("OVERDUE");
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
-        loan.generateMonthlyBill(); // tagihan = 2.550.000
+        loan.generateMonthlyBill(); // tagihan = 2.500.000 + 200.000 denda = 2.700.000
 
         loan.bayarCicilan(loan.getTagihanBulanIni());
 
-        // Setelah bayar, denda Rp 50.000 harus tercatat di overdueFeesAccrued
-        assertEquals(0, new BigDecimal("50000").compareTo(
+        // Setelah bayar, denda Rp 200.000 harus tercatat di overdueFeesAccrued
+        assertEquals(0, new BigDecimal("200000").compareTo(
             loan.getTotalDendaTerkumpul().getAmount()));
     }
 
@@ -332,7 +332,7 @@ class LoanInstallmentTest {
     // TDD: Denda OVERDUE tidak masuk distribusi lender
 
     @Test
-    void hitungDistribusiCicilan_statusOverdue_dendaTidakMasukKeDistribusiLender() {
+    void hitungDistribusiCicilan_statusOverdue_dendaMasukKeDistribusiLender() {
         Money target = new Money(new BigDecimal("10000000"), "IDR");
         LenderId lenderId = new LenderId("LND-O01");
 
@@ -340,12 +340,12 @@ class LoanInstallmentTest {
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
         loan.tambahPendanaan(lenderId, target); // full funding → FUNDING_READY
         loan.ubahStatus("OVERDUE");
-        loan.generateMonthlyBill(); // tagihan = 2.500.000 + 50.000 denda = 2.550.000
+        loan.generateMonthlyBill(); // tagihan = 2.500.000 + 200.000 denda = 2.700.000
 
         Map<LenderId, Money> distribusi = loan.hitungDistribusiCicilan();
 
-        // Lender hanya dapat cicilan normal 2.500.000, BUKAN 2.550.000
-        assertEquals(0, new BigDecimal("2500000").compareTo(
+        // Lender mendapatkan cicilan normal + denda = 2.700.000
+        assertEquals(0, new BigDecimal("2700000").compareTo(
             distribusi.get(lenderId).getAmount().setScale(0, RoundingMode.HALF_UP)));
     }
 

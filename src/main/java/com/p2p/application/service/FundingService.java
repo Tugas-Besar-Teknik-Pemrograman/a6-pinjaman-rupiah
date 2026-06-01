@@ -51,6 +51,4 @@ public class FundingService {
         loanRepository.save(loan);
         lenderRepository.save(lender);
     }
-
-
 }

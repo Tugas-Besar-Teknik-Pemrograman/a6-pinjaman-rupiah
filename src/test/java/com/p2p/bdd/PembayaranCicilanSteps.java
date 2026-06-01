@@ -38,10 +38,11 @@ public class PembayaranCicilanSteps {
         MockitoAnnotations.openMocks(this);
     }
 
+    // --- GIVEN ---
+
     @Given("loan dengan ID {string} memiliki tagihan yang masih aktif sebesar {long} dan tenor {int} bulan")
     public void setupLoan(String id, long amount, int tenor) {
         Money target = new Money(new BigDecimal(amount), "IDR");
-
         LoanId loanId = new LoanId(id);
         BorrowerId borrowerId = new BorrowerId("BR-001");
 
@@ -52,7 +53,7 @@ public class PembayaranCicilanSteps {
 
         this.loan = new Loan(loanId, borrowerId, target, tenor);
         this.loan.ubahStatus("DISBURSED");
-        
+
         when(loanRepository.findById(loanId)).thenReturn(loan);
         when(borrowerRepository.findById(borrowerId)).thenReturn(borrower);
     }
@@ -83,7 +84,7 @@ public class PembayaranCicilanSteps {
 
     @Given("loan dengan ID {string} memiliki sisa tagihan keseluruhan sebesar {int} dan status {string}")
     public void loan_dengan_id_memiliki_sisa_tagihan_keseluruhan_sebesar_dan_status(String id, Integer amount, String status) {
-        setupLoan(id, amount.longValue(), 1); 
+        setupLoan(id, amount.longValue(), 1);
         this.loan.ubahStatus(status);
         this.loan.setInterestStrategy(new FixedInterestStrategy(BigDecimal.ZERO));
         this.loan.generateMonthlyBill();
@@ -100,6 +101,8 @@ public class PembayaranCicilanSteps {
         this.loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
     }
 
+    // --- WHEN ---
+
     @When("sistem menghitung tagihan bulan ini")
     @When("sistem menghitung tagihan bulan pertama")
     @When("sistem menghitung tagihan bulan kedua")
@@ -109,7 +112,13 @@ public class PembayaranCicilanSteps {
 
     @When("borrower membayar lunas tagihan pertama")
     @When("borrower melakukan pembayaran sesuai tagihan bulan ini")
+
     public void payFull() throws Exception {
+        // bill sudah ada sebelum bayar
+        if (this.loan.getTagihanBulanIni() == null
+                || this.loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            this.loan.generateMonthlyBill();
+        }
         loanService.bayarCicilan(loan.getId(), loan.getTagihanBulanIni());
     }
 
@@ -132,6 +141,8 @@ public class PembayaranCicilanSteps {
             this.exception = e;
         }
     }
+
+    // --- THEN ---
 
     @Then("nominal tagihan mencapai {long}")
     @Then("tagihan bulan kedua harus {long}")
@@ -187,8 +198,7 @@ public class PembayaranCicilanSteps {
     public void nominal_tagihan_harus_lebih_besar_dari_karena_ditambah_denda_keterlambatan(Integer baseAmount) {
         BigDecimal base = new BigDecimal(baseAmount);
         BigDecimal currentBill = loan.getTagihanBulanIni().getAmount();
-        
-        assertTrue(currentBill.compareTo(base) > 0, 
+        assertTrue(currentBill.compareTo(base) > 0,
             "Tagihan saat ini (" + currentBill + ") seharusnya lebih besar dari " + base + " karena ada denda OVERDUE.");
     }
 }

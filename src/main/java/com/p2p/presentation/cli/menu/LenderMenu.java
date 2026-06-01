@@ -70,11 +70,15 @@ public class LenderMenu {
             BigDecimal estimasiReturnPerBulan = BigDecimal.ZERO;
 
             for (Loan loan : portofolio) {
+                if (!isInvestasiAktif(loan)) continue;
+
                 Money investasiPendana = loan.getDaftarPendana().get(lenderId);
                 if (investasiPendana == null) continue;
 
                 BigDecimal investasi = investasiPendana.getAmount();
                 totalDiinvestasikan = totalDiinvestasikan.add(investasi);
+
+                if (!isMenghasilkanReturn(loan)) continue;
 
                 BigDecimal target = loan.getTargetNominal().getAmount();
                 if (target.compareTo(BigDecimal.ZERO) > 0) {
@@ -342,6 +346,18 @@ public class LenderMenu {
         }
     }
 
+    /** Investasi masih aktif selama loan belum berakhir (lunas/ditolak/dibatalkan). */
+    private boolean isInvestasiAktif(Loan loan) {
+        String s = loan.getStatus();
+        return !"CLOSED".equals(s) && !"REJECTED".equals(s) && !"CANCELED".equals(s);
+    }
+
+    /** Loan menghasilkan cicilan bulanan hanya setelah dicairkan dan sedang berjalan. */
+    private boolean isMenghasilkanReturn(Loan loan) {
+        String s = loan.getStatus();
+        return "DISBURSED".equals(s) || "REPAYMENT".equals(s) || "OVERDUE".equals(s);
+    }
+
     private void menuInvestasiAktif() {
         System.out.println("\n--- Investasi Aktif ---");
 
@@ -353,10 +369,12 @@ public class LenderMenu {
 
         try {
             LenderId lenderId = new LenderId(lenderIdStr);
-            List<Loan> portofolio = ctx.getRepos().getLoanRepository().findByLenderId(lenderId);
+            List<Loan> aktif = ctx.getRepos().getLoanRepository().findByLenderId(lenderId).stream()
+                    .filter(this::isInvestasiAktif)
+                    .toList();
 
-            if (portofolio.isEmpty()) {
-                System.out.println("Anda belum memiliki investasi.");
+            if (aktif.isEmpty()) {
+                System.out.println("Anda belum memiliki investasi aktif.");
                 return;
             }
 
@@ -364,7 +382,7 @@ public class LenderMenu {
                     "Loan ID", "Status", "Investasi", "Proporsi", "Est.Return/Bulan");
             System.out.println("-".repeat(78));
 
-            for (Loan loan : portofolio) {
+            for (Loan loan : aktif) {
                 Money investasiPendana = loan.getDaftarPendana().get(lenderId);
                 if (investasiPendana == null) continue;
 
@@ -376,9 +394,12 @@ public class LenderMenu {
                         .multiply(BigDecimal.valueOf(100))
                         .divide(target, 2, RoundingMode.HALF_UP);
 
-                BigDecimal cicilan = loan.hitungEstimasiCicilan().getAmount();
-                BigDecimal bagianReturn = cicilan.multiply(proporsi)
-                        .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+                BigDecimal bagianReturn = BigDecimal.ZERO;
+                if (isMenghasilkanReturn(loan)) {
+                    BigDecimal cicilan = loan.hitungEstimasiCicilan().getAmount();
+                    bagianReturn = cicilan.multiply(proporsi)
+                            .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+                }
 
                 System.out.printf("%-20s %-14s %,14.0f %7.1f%% %,18.0f%n",
                         loan.getId().getValue(), loan.getStatus(),

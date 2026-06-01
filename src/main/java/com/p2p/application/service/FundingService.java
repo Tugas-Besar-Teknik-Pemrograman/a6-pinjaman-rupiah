@@ -43,6 +43,13 @@ public class FundingService {
             throw new IllegalStateException("Investasi ditolak, status Loan bukan FUNDING");
         }
 
+        // Validasi sisa target SEBELUM memotong saldo — agar saldo tidak hilang jika investasi gagal
+        java.math.BigDecimal sisaTarget = loan.getTargetNominal().getAmount()
+                .subtract(loan.getTotalTerkumpul().getAmount());
+        if (amount.getAmount().compareTo(sisaTarget) > 0) {
+            throw new IllegalArgumentException("Nominal investasi melebihi target pendanaan");
+        }
+
         Lender lender = lenderRepository.findById(lenderId);
         if (lender == null) throw new IllegalArgumentException("Lender tidak ditemukan");
 

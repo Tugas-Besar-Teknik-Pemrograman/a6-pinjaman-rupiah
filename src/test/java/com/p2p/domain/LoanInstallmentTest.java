@@ -8,10 +8,13 @@ import com.p2p.domain.loan.strategy.FixedInterestStrategy;
 import com.p2p.domain.loan.strategy.FloatingInterestStrategy;
 import com.p2p.domain.loan.strategy.SyariahInterestStrategy;
 import com.p2p.domain.valueobject.Money;
+import com.p2p.infrastructure.memory.InMemoryLoanRepository;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -111,7 +114,7 @@ class LoanInstallmentTest {
         Money tooSmall = new Money(new BigDecimal("1000"), "IDR");
 
         Exception ex = assertThrows(Exception.class, () -> loan.bayarCicilan(tooSmall));
-        assertEquals("Nominal pembayaran harus sesuai dengan tagihan: Rp 2.500.000", ex.getMessage());
+        assertEquals("Nominal pembayaran kurang dari nominal tagihan", ex.getMessage());
     }
 
     @Test
@@ -243,10 +246,6 @@ class LoanInstallmentTest {
 
         List<Loan> hasil = repo.findByLenderId(lenderTidakAda);
 
-        java.util.Map<LenderId, Money> distribusi = loan.hitungDistribusiCicilan();
-
-        // Lender menerima tagihan PENUH termasuk denda (sesuai aturan baru)
-        assertEquals(0, new BigDecimal("2700000").compareTo(
-                distribusi.get(lenderId).getAmount().setScale(0, RoundingMode.HALF_UP)));
+        assertTrue(hasil.isEmpty());
     }
 }

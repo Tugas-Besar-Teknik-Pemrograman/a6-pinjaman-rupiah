@@ -108,22 +108,22 @@ public class Loan {
      * Denda disimpan terpisah di dendaBulanIni agar bisa dikirim ke lender.
      */
     public void generateMonthlyBill() {
-        if (this.interestStrategy != null) {
-            Money tagihanNormal = this.interestStrategy.hitungCicilan(
-                    this.targetNominal, this.sisaPokok, this.tenor);
+        if (this.interestStrategy == null) {
+            throw new IllegalStateException("Tidak bisa menghitung tagihan: interestStrategy belum di-set pada loan " + this.loanid.getValue());
+        }
+        Money tagihanNormal = this.interestStrategy.hitungCicilan(
+                this.targetNominal, this.sisaPokok, this.tenor);
 
-            if ("OVERDUE".equals(this.status)) {
-                // Denda = sisa pokok * 2% (sesuai gambar)
-                BigDecimal denda = this.sisaPokok.getAmount()
-                        .multiply(RATE_DENDA_OVERDUE)
-                        .setScale(0, RoundingMode.HALF_UP);
-                this.dendaBulanIni = new Money(denda, Money.IDR);
-                this.currentMonthBill = new Money(
-                        tagihanNormal.getAmount().add(denda), Money.IDR);
-            } else {
-                this.dendaBulanIni = new Money(BigDecimal.ZERO, Money.IDR);
-                this.currentMonthBill = new Money(tagihanNormal.getAmount(), Money.IDR);
-            }
+        if ("OVERDUE".equals(this.status)) {
+            BigDecimal denda = this.sisaPokok.getAmount()
+                    .multiply(RATE_DENDA_OVERDUE)
+                    .setScale(0, RoundingMode.HALF_UP);
+            this.dendaBulanIni = new Money(denda, Money.IDR);
+            this.currentMonthBill = new Money(
+                    tagihanNormal.getAmount().add(denda), Money.IDR);
+        } else {
+            this.dendaBulanIni = new Money(BigDecimal.ZERO, Money.IDR);
+            this.currentMonthBill = new Money(tagihanNormal.getAmount(), Money.IDR);
         }
     }
 
@@ -312,10 +312,6 @@ public class Loan {
     }
 
     public Map<LenderId, Money> getDaftarPendana() {
-        return daftarPendana;
-    }
-
-    public Map<LenderId, Money> getListPendana() {
         return daftarPendana;
     }
 

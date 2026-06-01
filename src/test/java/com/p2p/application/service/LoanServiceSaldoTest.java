@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -142,6 +143,45 @@ class LoanServiceSaldoTest {
 
         // Satu-satunya lender → saldo harus bertambah sejumlah tagihan penuh
         assertEquals(0, tagihan.getAmount().compareTo(lender.getSaldoBalance().getAmount()));
+    }
+
+    @Test
+    void simulasiMajukanJatuhTempo_loan_disbursed_menjadi_eligible_overdue() {
+        LoanRepository loanRepository = mock(LoanRepository.class);
+        BorrowerRepository borrowerRepository = mock(BorrowerRepository.class);
+        LoanService loanService = new LoanService(loanRepository, borrowerRepository, null, null);
+
+        Loan loan = new Loan(new LoanId("LN-SIM-01"), new BorrowerId("BR-SIM-01"),
+                             new Money(new BigDecimal("1000000"), "IDR"), 12);
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.ubahStatus("DISBURSED"); // tanggalJatuhTempo = today+28
+
+        when(loanRepository.findById(loan.getId())).thenReturn(loan);
+
+        loanService.simulasiMajukanJatuhTempo(loan.getId());
+
+        assertTrue(loan.getTanggalJatuhTempo().isBefore(LocalDate.now()),
+            "Setelah simulasi, tanggalJatuhTempo harus sebelum hari ini");
+        assertTrue(loan.isPinjamanOverdue(),
+            "Setelah simulasi, pinjaman harus eligible untuk overdue");
+    }
+
+    @Test
+    void simulasiMajukanJatuhTempo_status_invalid_melempar_exception() {
+        LoanRepository loanRepository = mock(LoanRepository.class);
+        BorrowerRepository borrowerRepository = mock(BorrowerRepository.class);
+        LoanService loanService = new LoanService(loanRepository, borrowerRepository, null, null);
+
+        Loan loan = new Loan(new LoanId("LN-SIM-02"), new BorrowerId("BR-SIM-02"),
+                             new Money(new BigDecimal("1000000"), "IDR"), 12);
+        // status default PROPOSED — tidak valid untuk simulasi
+
+        when(loanRepository.findById(loan.getId())).thenReturn(loan);
+
+        assertThrows(IllegalStateException.class, () ->
+            loanService.simulasiMajukanJatuhTempo(loan.getId()),
+            "Harus melempar exception jika status bukan DISBURSED atau REPAYMENT"
+        );
     }
 
     @Test

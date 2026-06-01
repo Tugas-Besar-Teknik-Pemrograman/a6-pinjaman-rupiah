@@ -30,7 +30,7 @@ public class AppContext {
     private final RepositoryFactory repos;
 
     // Saldo platform (admin fee 1% dari setiap pencairan)
-    private Money adminSaldo = new Money(BigDecimal.ZERO, "IDR");
+    private Money adminSaldo = new Money(BigDecimal.ZERO, Money.IDR);
 
     // Session
     private String currentUserId;
@@ -103,7 +103,7 @@ public class AppContext {
     }
 
     public void tambahAdminSaldo(Money fee) {
-        adminSaldo = new Money(adminSaldo.getAmount().add(fee.getAmount()), "IDR");
+        adminSaldo = adminSaldo.add(fee);
     }
 
     // --- Session ---

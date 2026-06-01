@@ -51,16 +51,16 @@ public class Loan {
         this.tenorSisa = tenor;
         this.bulanKe = 0;
         this.sisaPokok = targetNominal;
-        this.totalTerkumpul = new Money(BigDecimal.ZERO, "IDR");
+        this.totalTerkumpul = new Money(BigDecimal.ZERO, Money.IDR);
         this.daftarPendana = new HashMap<>();
         this.status = "PENDING";
-        this.currentMonthBill = new Money(BigDecimal.ZERO, "IDR");
-        this.dendaBulanIni = new Money(BigDecimal.ZERO, "IDR");
+        this.currentMonthBill = new Money(BigDecimal.ZERO, Money.IDR);
+        this.dendaBulanIni = new Money(BigDecimal.ZERO, Money.IDR);
         this.maturityDate = 0;
-        this.overdueFeesAccrued = new Money(BigDecimal.ZERO, "IDR");
+        this.overdueFeesAccrued = new Money(BigDecimal.ZERO, Money.IDR);
         this.adminFee = new Money(
             targetNominal.getAmount().multiply(new BigDecimal("0.01")).setScale(2, RoundingMode.HALF_UP),
-            "IDR");
+            Money.IDR);
     }
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal) {
@@ -117,12 +117,12 @@ public class Loan {
                 BigDecimal denda = this.sisaPokok.getAmount()
                         .multiply(RATE_DENDA_OVERDUE)
                         .setScale(0, RoundingMode.HALF_UP);
-                this.dendaBulanIni = new Money(denda, "IDR");
+                this.dendaBulanIni = new Money(denda, Money.IDR);
                 this.currentMonthBill = new Money(
-                        tagihanNormal.getAmount().add(denda), "IDR");
+                        tagihanNormal.getAmount().add(denda), Money.IDR);
             } else {
-                this.dendaBulanIni = new Money(BigDecimal.ZERO, "IDR");
-                this.currentMonthBill = new Money(tagihanNormal.getAmount(), "IDR");
+                this.dendaBulanIni = new Money(BigDecimal.ZERO, Money.IDR);
+                this.currentMonthBill = new Money(tagihanNormal.getAmount(), Money.IDR);
             }
         }
     }
@@ -155,7 +155,7 @@ public class Loan {
                 this.sisaPokok.getCurrency());
 
         this.currentMonthBill = new Money(BigDecimal.ZERO, this.currentMonthBill.getCurrency());
-        this.dendaBulanIni = new Money(BigDecimal.ZERO, "IDR");
+        this.dendaBulanIni = new Money(BigDecimal.ZERO, Money.IDR);
         this.tenorSisa--;
         this.bulanKe++;
 
@@ -235,7 +235,7 @@ public class Loan {
                 bagian = tagihan.multiply(proporsi).setScale(0, RoundingMode.DOWN);
                 sisa = sisa.subtract(bagian);
             }
-            distribusi.put(id, new Money(bagian, "IDR"));
+            distribusi.put(id, new Money(bagian, Money.IDR));
         }
         return distribusi;
     }
@@ -348,7 +348,7 @@ public class Loan {
     }
 
     public Money hitungEstimasiCicilan() {
-        if (interestStrategy == null) return new Money(BigDecimal.ZERO, "IDR");
+        if (interestStrategy == null) return new Money(BigDecimal.ZERO, Money.IDR);
         return interestStrategy.hitungCicilan(targetNominal, sisaPokok, tenor);
     }
 }

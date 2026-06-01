@@ -66,8 +66,8 @@ public class LenderMenu {
             if (lender == null || user == null) return;
 
             List<Loan> portofolio = ctx.getRepos().getLoanRepository().findByLenderId(lenderId);
-            BigDecimal totalDiinvestasikan = BigDecimal.ZERO;
-            BigDecimal estimasiReturnPerBulan = BigDecimal.ZERO;
+            Money totalDiinvestasikan = new Money(BigDecimal.ZERO, Money.IDR);
+            Money estimasiReturnPerBulan = new Money(BigDecimal.ZERO, Money.IDR);
 
             for (Loan loan : portofolio) {
                 if (!isInvestasiAktif(loan)) continue;
@@ -75,20 +75,19 @@ public class LenderMenu {
                 Money investasiPendana = loan.getDaftarPendana().get(lenderId);
                 if (investasiPendana == null) continue;
 
-                BigDecimal investasi = investasiPendana.getAmount();
-                totalDiinvestasikan = totalDiinvestasikan.add(investasi);
+                totalDiinvestasikan = totalDiinvestasikan.add(investasiPendana);
 
                 if (!isMenghasilkanReturn(loan)) continue;
 
-                BigDecimal target = loan.getTargetNominal().getAmount();
-                if (target.compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal cicilanEstimasi = loan.hitungEstimasiCicilan().getAmount();
-                    if (cicilanEstimasi.compareTo(BigDecimal.ZERO) > 0) {
-                        BigDecimal proporsi = investasi
+                Money target = loan.getTargetNominal();
+                if (target.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+                    Money cicilanEstimasi = loan.hitungEstimasiCicilan();
+                    if (cicilanEstimasi.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal proporsi = investasiPendana.getAmount()
                                 .multiply(BigDecimal.valueOf(100))
-                                .divide(target, 2, RoundingMode.HALF_UP);
-                        BigDecimal bagianReturn = cicilanEstimasi.multiply(proporsi)
-                                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+                                .divide(target.getAmount(), 2, RoundingMode.HALF_UP);
+                        Money bagianReturn = cicilanEstimasi.multiply(proporsi)
+                                .divide(BigDecimal.valueOf(100), RoundingMode.HALF_UP);
                         estimasiReturnPerBulan = estimasiReturnPerBulan.add(bagianReturn);
                     }
                 }
@@ -98,8 +97,8 @@ public class LenderMenu {
             System.out.println("Selamat datang, " + user.getNama() + "!");
             System.out.println();
             System.out.printf("Saldo Anda           : Rp %,.0f%n", lender.getSaldoBalance().getAmount());
-            System.out.printf("Total Diinvestasikan : Rp %,.0f%n", totalDiinvestasikan);
-            System.out.printf("Estimasi Return/Bulan: Rp %,.0f%n", estimasiReturnPerBulan);
+            System.out.printf("Total Diinvestasikan : Rp %,.0f%n", totalDiinvestasikan.getAmount());
+            System.out.printf("Estimasi Return/Bulan: Rp %,.0f%n", estimasiReturnPerBulan.getAmount());
             System.out.println();
             System.out.print("[Tekan Enter untuk lanjut ke menu] ");
             scanner.nextLine();
@@ -154,7 +153,7 @@ public class LenderMenu {
         try {
             long nominal = Long.parseLong(scanner.nextLine().trim());
 
-            Money nominalTambah = new Money(BigDecimal.valueOf(nominal), "IDR");
+            Money nominalTambah = new Money(BigDecimal.valueOf(nominal), Money.IDR);
             lender.tambahSaldo(nominalTambah);
             ctx.getRepos().getLenderRepository().save(lender);
 
@@ -235,19 +234,20 @@ public class LenderMenu {
                 return;
             }
 
-            BigDecimal target = dipilih.getTargetNominal().getAmount();
-            BigDecimal sisa = target.subtract(dipilih.getTotalTerkumpul().getAmount());
-            if (BigDecimal.valueOf(nominal).compareTo(lender.getSaldoBalance().getAmount()) > 0) {
+            Money target = dipilih.getTargetNominal();
+            Money sisa = target.subtract(dipilih.getTotalTerkumpul());
+            Money nominalInvestasi = new Money(BigDecimal.valueOf(nominal), Money.IDR);
+            if (nominalInvestasi.isGreaterThan(lender.getSaldoBalance())) {
                 System.out.println("Gagal investasi: Saldo tidak cukup.");
                 return;
             }
-            if (BigDecimal.valueOf(nominal).compareTo(sisa) > 0) {
+            if (nominalInvestasi.isGreaterThan(sisa)) {
                 System.out.println("Gagal investasi: Nominal melebihi sisa kebutuhan pendanaan (Rp " +
-                        String.format("%,.0f", sisa) + ").");
+                        String.format("%,.0f", sisa.getAmount()) + ").");
                 return;
             }
 
-            ctx.getFundingService().invest(lenderId, dipilih.getId(), new Money(BigDecimal.valueOf(nominal), "IDR"));
+            ctx.getFundingService().invest(lenderId, dipilih.getId(), nominalInvestasi);
 
             Lender updated = ctx.getRepos().getLenderRepository().findById(lenderId);
             System.out.println("Investasi berhasil!");
@@ -314,7 +314,7 @@ public class LenderMenu {
         System.out.print("Masukkan nominal penarikan (Rp, minimal 100000): ");
         try {
             long nominal = Long.parseLong(scanner.nextLine().trim());
-            Money amount = new Money(BigDecimal.valueOf(nominal), "IDR");
+            Money amount = new Money(BigDecimal.valueOf(nominal), Money.IDR);
 
             ctx.getWithdrawalService().withdraw(lenderId, amount);
 

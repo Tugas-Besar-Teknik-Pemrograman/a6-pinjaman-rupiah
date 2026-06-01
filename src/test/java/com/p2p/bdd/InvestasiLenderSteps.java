@@ -130,8 +130,8 @@ public class InvestasiLenderSteps {
         Loan updatedLoan = loanRepository.findById(loanId);
         Lender updatedLender = lenderRepository.findById(lenderId);
 
-        Assertions.assertEquals(new BigDecimal("5000000"), updatedLoan.getTotalTerkumpul().getAmount());
-        Assertions.assertEquals(new BigDecimal("5000000"), updatedLender.getSaldoBalance().getAmount(), "Saldo lender harus berkurang");
+        Assertions.assertEquals(0, new BigDecimal("5000000").compareTo(updatedLoan.getTotalTerkumpul().getAmount()));
+        Assertions.assertEquals(0, new BigDecimal("5000000").compareTo(updatedLender.getSaldoBalance().getAmount()), "Saldo lender harus berkurang");
     }
     
     @Then("Sistem akan menolak dengan pesan error karena status not FUNDING")

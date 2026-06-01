@@ -115,7 +115,7 @@ public class PenarikanSaldoLenderSteps {
     public void sistem_akan_mengurangi_saldo_tersedia_dengan_jumlah_penarikan_yang_di_input() {
         assertNull(caughtException, "Seharusnya penarikan berhasil tanpa error");
         Lender lender = lenderRepository.findById(currentLenderId);
-        assertEquals(new BigDecimal("4500000"), lender.getSaldoBalance().getAmount());
+        assertEquals(0, new BigDecimal("4500000").compareTo(lender.getSaldoBalance().getAmount()));
     }
 
     @Then("Sistem akan menolak karena saldo tidak cukup")

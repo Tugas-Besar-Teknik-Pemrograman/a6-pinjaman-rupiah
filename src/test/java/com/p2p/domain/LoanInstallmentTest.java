@@ -233,6 +233,16 @@ class LoanInstallmentTest {
     }
 
     @Test
+    void generateMonthlyBill_tanpaStrategy_melempar_exception() {
+        Loan loan = new Loan(new LoanId("LN-A3A"), new BorrowerId("BR-A3A"),
+                             new Money(new BigDecimal("1000000"), "IDR"), 5);
+        loan.ubahStatus("DISBURSED"); // interestStrategy tidak di-set
+
+        assertThrows(IllegalStateException.class, loan::generateMonthlyBill,
+            "generateMonthlyBill harus melempar exception jika interestStrategy belum di-set");
+    }
+
+    @Test
     void hitungEstimasiReturnLender_proporsi_setengah_dari_cicilan() {
         LenderId lenderId = new LenderId("LND-RET-01");
         Loan loan = new Loan(new LoanId("LN-RET-01"), new BorrowerId("BR-RET-01"),

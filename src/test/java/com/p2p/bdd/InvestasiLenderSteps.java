@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import org.junit.jupiter.api.Assertions;
 
+import com.p2p.application.observer.LoanEventPublisher;
 import com.p2p.application.service.FundingService;
 import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.lender.Lender;
@@ -38,7 +39,7 @@ public class InvestasiLenderSteps {
     public InvestasiLenderSteps() {
         this.loanRepository = RepositoryFactory.getInstance().getLoanRepository();
         this.lenderRepository = RepositoryFactory.getInstance().getLenderRepository();
-        this.fundingService = new FundingService(loanRepository, lenderRepository);
+        this.fundingService = new FundingService(loanRepository, lenderRepository, new LoanEventPublisher());
     }
     
     @After

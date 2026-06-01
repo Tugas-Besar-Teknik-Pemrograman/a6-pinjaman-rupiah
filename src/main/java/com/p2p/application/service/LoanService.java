@@ -139,13 +139,13 @@ public class LoanService {
 
         // Fire event cicilan & lunas ke borrower
         if (loanEventPublisher != null) {
-            loanEventPublisher.publishCicilanBerhasil(new CicilanBerhasilEvent(loanId, loan.getBorrowerId(), tagihanSnapshot));
+            loanEventPublisher.publishCicilanBerhasil(new CicilanBerhasilEvent(loanId, loan.getBorrowerId(), tagihanBulanIni));
             if ("CLOSED".equals(loan.getStatus())) {
                 loanEventPublisher.publishPinjamanLunas(new PinjamanLunasEvent(loanId, loan.getBorrowerId()));
             }
         }
 
-        return new BayarCicilanResult(tagihanSnapshot, amount, loan.getTenorSisa(), loan.getStatus());
+        return new BayarCicilanResult(tagihanBulanIni, amount, loan.getTenorSisa(), loan.getStatus());
     }
 
     public void prosesPencairan(LoanId loanId) {

@@ -26,6 +26,9 @@ public class FundingService {
     private static final java.math.BigDecimal MINIMAL_INVESTASI = new java.math.BigDecimal("100000");
 
     public void invest(LenderId lenderId, LoanId loanId, Money amount) {
+        if (amount.getAmount().compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Nominal investasi harus lebih dari 0");
+        }
         if (amount.getAmount().compareTo(MINIMAL_INVESTASI) < 0) {
             throw new IllegalArgumentException("Nominal investasi minimal Rp 100.000");
         }

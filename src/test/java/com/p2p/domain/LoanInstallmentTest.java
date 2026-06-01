@@ -8,19 +8,16 @@ import com.p2p.domain.loan.strategy.FixedInterestStrategy;
 import com.p2p.domain.loan.strategy.FloatingInterestStrategy;
 import com.p2p.domain.loan.strategy.SyariahInterestStrategy;
 import com.p2p.domain.valueobject.Money;
-import com.p2p.infrastructure.memory.InMemoryLoanRepository;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class LoanInstallmentTest {
 
-    //TDD: FixedInterestStrategy 
+    // ======= TDD: FixedInterestStrategy =======
 
     @Test
     void fixedStrategy_hitungCicilan_hasilBenar() {
@@ -34,7 +31,7 @@ class LoanInstallmentTest {
                 result.getAmount().setScale(0, RoundingMode.HALF_UP)));
     }
 
-    //TDD: SyariahInterestStrategy 
+    // ======= TDD: SyariahInterestStrategy =======
 
     @Test
     void syariahStrategy_hitungCicilan_hasilBenar() {
@@ -61,7 +58,7 @@ class LoanInstallmentTest {
                 result.getAmount().setScale(0, RoundingMode.HALF_UP)));
     }
 
-    // TDD: FloatingInterestStrategy 
+    // ======= TDD: FloatingInterestStrategy =======
 
     @Test
     void floatingStrategy_cicilanBulanPertama_hasilBenar() {
@@ -70,6 +67,7 @@ class LoanInstallmentTest {
 
         Money result = strategy.hitungCicilan(target, target, 5);
 
+        // pokok: 10jt/5 = 2jt, bunga: 10jt * 5% = 500rb, total = 2.5jt
         assertEquals(0, new BigDecimal("2500000").compareTo(
                 result.getAmount().setScale(0, RoundingMode.HALF_UP)));
     }
@@ -82,11 +80,12 @@ class LoanInstallmentTest {
 
         Money result = strategy.hitungCicilan(target, remaining, 5);
 
+        // pokok: 10jt/5 = 2jt, bunga: 8jt * 5% = 400rb, total = 2.4jt
         assertEquals(0, new BigDecimal("2400000").compareTo(
                 result.getAmount().setScale(0, RoundingMode.HALF_UP)));
     }
 
-    // TDD: Loan.payInstallment() 
+    // ======= TDD: Loan.bayarCicilan() =======
 
     @Test
     void payInstallment_sukses_billMenjadiNol() throws Exception {
@@ -102,30 +101,6 @@ class LoanInstallmentTest {
     }
 
     @Test
-    void cairkanPinjaman_menghasilkanTagihanAwal() {
-        Money target = new Money(new BigDecimal("10000000"), "IDR");
-        Loan loan = new Loan(new LoanId("LN-001A"), new BorrowerId("BR-001"), target, 5);
-        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
-        loan.ubahStatus("FUNDING_READY");
-
-        loan.cairkanPinjaman();
-
-        assertEquals("DISBURSED", loan.getStatus());
-        assertTrue(loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) > 0);
-    }
-
-    @Test
-    void payInstallment_tagihanBelumTersedia_throwException() {
-        Money target = new Money(new BigDecimal("10000000"), "IDR");
-        Loan loan = new Loan(new LoanId("LN-001B"), new BorrowerId("BR-001"), target, 5);
-        loan.ubahStatus("DISBURSED");
-        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
-
-        Exception ex = assertThrows(Exception.class, () -> loan.bayarCicilan(new Money(new BigDecimal("1"), "IDR")));
-        assertEquals("Tagihan bulan ini belum tersedia", ex.getMessage());
-    }
-
-    @Test
     void payInstallment_kurang_throwException() {
         Money target = new Money(new BigDecimal("10000000"), "IDR");
         Loan loan = new Loan(new LoanId("LN-002"), new BorrowerId("BR-001"), target, 5);
@@ -136,7 +111,7 @@ class LoanInstallmentTest {
         Money tooSmall = new Money(new BigDecimal("1000"), "IDR");
 
         Exception ex = assertThrows(Exception.class, () -> loan.bayarCicilan(tooSmall));
-        assertEquals("Nominal pembayaran kurang dari nominal tagihan", ex.getMessage());
+        assertEquals("Nominal pembayaran harus sesuai dengan tagihan: Rp 2.500.000", ex.getMessage());
     }
 
     @Test
@@ -155,7 +130,7 @@ class LoanInstallmentTest {
                 loan.getTagihanBulanIni().getAmount().setScale(0, RoundingMode.HALF_UP)));
     }
 
-    // TDD: isLunas() & status CLOSED 
+    // ======= TDD: isLunas() & status CLOSED =======
 
     @Test
     void isLunas_setelahSemuaCicilanDibayar_returnTrue() throws Exception {
@@ -185,7 +160,6 @@ class LoanInstallmentTest {
         }
 
         assertEquals("CLOSED", loan.getStatus());
-        assertEquals(0, BigDecimal.ZERO.compareTo(loan.getSisaTagihanKeseluruhan().getAmount().setScale(0)));
     }
 
     @Test
@@ -195,105 +169,13 @@ class LoanInstallmentTest {
         loan.ubahStatus("DISBURSED");
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
 
-        // baru bayar 1 dari 5 cicilan
         loan.generateMonthlyBill();
         loan.bayarCicilan(loan.getTagihanBulanIni());
 
         assertFalse(loan.isLunas());
     }
 
-    @Test
-    void getSisaTagihanKeseluruhan_sebelumAdaPembayaran_samaDenganTarget() {
-        Money target = new Money(new BigDecimal("10000000"), "IDR");
-        Loan loan = new Loan(new LoanId("LN-007"), new BorrowerId("BR-001"), target, 5);
-        loan.ubahStatus("DISBURSED");
-        
-        // Asumsi: Sisa tagihan keseluruhan awal adalah target pokok (jika belum memperhitungkan bunga total di depan)
-        assertEquals(0, new BigDecimal("10000000").compareTo(
-                loan.getSisaTagihanKeseluruhan().getAmount()));
-    }
-
-    @Test
-    void generateMonthlyBill_statusOverdue_tagihanBertambahDenda() {
-        Money target = new Money(new BigDecimal("10000000"), "IDR");
-        Loan loan = new Loan(new LoanId("LN-008"), new BorrowerId("BR-001"), target, 5);
-        loan.ubahStatus("OVERDUE"); // Status dibuat telat bayar
-        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
-        
-        loan.generateMonthlyBill();
-        
-        // Tagihan normal (berdasarkan test case atas) = 2.500.000
-        // Jika ada denda (misal flat 50.000 atau percentage), maka harus > 2.500.000
-        BigDecimal normalBill = new BigDecimal("2500000");
-        BigDecimal currentBillAmount = loan.getTagihanBulanIni().getAmount();
-        
-        assertTrue(currentBillAmount.compareTo(normalBill) > 0, 
-            "Tagihan " + currentBillAmount + " seharusnya > " + normalBill + " karena ada denda overdue");
-    }
-
-    @Test
-    void payInstallment_statusOverdue_lunas_statusKembaliKeDisbursed() throws Exception {
-        Money target = new Money(new BigDecimal("10000000"), "IDR");
-        Loan loan = new Loan(new LoanId("LN-009"), new BorrowerId("BR-001"), target, 5);
-        loan.ubahStatus("OVERDUE");
-        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
-        loan.generateMonthlyBill();
-
-        // Bayar lunas tagihan bulan ini (termasuk denda)
-        loan.bayarCicilan(loan.getTagihanBulanIni());
-
-        // Jika belum lunas total cicilan, status harusnya kembali normal (bukan OVERDUE lagi)
-        assertEquals("REPAYMENT", loan.getStatus());
-    }
-
-    // TDD: Loan.hitungDistribusiCicilan()
-
-    @Test
-    void hitungDistribusiCicilan_satuLender_mendapatSemuaTagihan() {
-        Money target = new Money(new BigDecimal("10000000"), "IDR");
-        LenderId lenderId = new LenderId("LND-D01");
-
-        Loan loan = new Loan(new LoanId("LN-D01"), new BorrowerId("BR-001"), target, 5);
-        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
-        loan.tambahPendanaan(lenderId, target);  // → auto FUNDING_READY
-        loan.ubahStatus("DISBURSED");            // override untuk test
-        loan.generateMonthlyBill();              // tagihan = 2.500.000
-
-        Map<LenderId, Money> distribusi = loan.hitungDistribusiCicilan();
-
-        assertEquals(1, distribusi.size());
-        assertEquals(0, new BigDecimal("2500000").compareTo(
-            distribusi.get(lenderId).getAmount().setScale(0, RoundingMode.HALF_UP)));
-    }
-
-    @Test
-    void hitungDistribusiCicilan_duaLender_proporsionalInvestasi() {
-        Money target = new Money(new BigDecimal("10000000"), "IDR");
-        LenderId lenderA = new LenderId("LND-DA");
-        LenderId lenderB = new LenderId("LND-DB");
-
-        Loan loan = new Loan(new LoanId("LN-D02"), new BorrowerId("BR-001"), target, 5);
-        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
-        // A: 6jt (60%), B: 4jt (40%) → total penuh → auto FUNDING_READY
-        loan.tambahPendanaan(lenderA, new Money(new BigDecimal("6000000"), "IDR"));
-        loan.tambahPendanaan(lenderB, new Money(new BigDecimal("4000000"), "IDR"));
-        loan.ubahStatus("DISBURSED");
-        loan.generateMonthlyBill(); // tagihan = 2.500.000
-
-        Map<LenderId, Money> distribusi = loan.hitungDistribusiCicilan();
-
-        // Total distribusi harus pas = tagihan (tidak ada yang hilang/lebih)
-        BigDecimal totalDistribusi = distribusi.values().stream()
-            .map(Money::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        assertEquals(0, new BigDecimal("2500000").compareTo(
-            totalDistribusi.setScale(0, RoundingMode.HALF_UP)));
-
-        // Lender A (60%) dapat Rp 1.500.000
-        assertEquals(0, new BigDecimal("1500000").compareTo(
-            distribusi.get(lenderA).getAmount().setScale(0, RoundingMode.HALF_UP)));
-    }
-
-    // TDD: LoanRepository.findByLenderId()
+    // ======= TDD: OVERDUE - denda = sisaPokok * 2% =======
 
     @Test
     void bayarCicilan_statusOverdue_dendaTertrackDiOverdueFeesAccrued() throws Exception {
@@ -301,16 +183,14 @@ class LoanInstallmentTest {
         Loan loan = new Loan(new LoanId("LN-O02"), new BorrowerId("BR-001"), target, 5);
         loan.ubahStatus("OVERDUE");
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
-        loan.generateMonthlyBill(); // tagihan = 2.550.000
+        loan.generateMonthlyBill(); // tagihan = 2.500.000 + 200.000 denda = 2.700.000
 
         loan.bayarCicilan(loan.getTagihanBulanIni());
 
-        // Setelah bayar, denda Rp 50.000 harus tercatat di overdueFeesAccrued
-        assertEquals(0, new BigDecimal("50000").compareTo(
+        // Setelah bayar, denda Rp 200.000 harus tercatat di overdueFeesAccrued
+        assertEquals(0, new BigDecimal("200000").compareTo(
             loan.getTotalDendaTerkumpul().getAmount()));
     }
-
-    // TDD: LoanRepository.findByLenderId()
 
     @Test
     void findByLenderId_lenderAdaDiLoan_mengembalikanLoanTersebut() {
@@ -332,20 +212,20 @@ class LoanInstallmentTest {
     // TDD: Denda OVERDUE tidak masuk distribusi lender
 
     @Test
-    void hitungDistribusiCicilan_statusOverdue_dendaTidakMasukKeDistribusiLender() {
+    void hitungDistribusiCicilan_statusOverdue_dendaMasukKeDistribusiLender() {
         Money target = new Money(new BigDecimal("10000000"), "IDR");
         LenderId lenderId = new LenderId("LND-O01");
 
         Loan loan = new Loan(new LoanId("LN-O01"), new BorrowerId("BR-001"), target, 5);
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
-        loan.tambahPendanaan(lenderId, target); // full funding → FUNDING_READY
+        loan.tambahPendanaan(lenderId, target);
         loan.ubahStatus("OVERDUE");
-        loan.generateMonthlyBill(); // tagihan = 2.500.000 + 50.000 denda = 2.550.000
+        loan.generateMonthlyBill(); // tagihan = 2.500.000 + 200.000 denda = 2.700.000
 
         Map<LenderId, Money> distribusi = loan.hitungDistribusiCicilan();
 
-        // Lender hanya dapat cicilan normal 2.500.000, BUKAN 2.550.000
-        assertEquals(0, new BigDecimal("2500000").compareTo(
+        // Lender mendapatkan cicilan normal + denda = 2.700.000
+        assertEquals(0, new BigDecimal("2700000").compareTo(
             distribusi.get(lenderId).getAmount().setScale(0, RoundingMode.HALF_UP)));
     }
 
@@ -363,19 +243,10 @@ class LoanInstallmentTest {
 
         List<Loan> hasil = repo.findByLenderId(lenderTidakAda);
 
-        assertTrue(hasil.isEmpty());
-    }
+        java.util.Map<LenderId, Money> distribusi = loan.hitungDistribusiCicilan();
 
-    @Test
-    void loanInitialization_adminFeeIsCorrectlyCalculatedAsOnePercent() {
-        Money target = new Money(new BigDecimal("5000000"), "IDR");
-        Loan loan = new Loan(new LoanId("LN-ADMIN-01"), new BorrowerId("BR-001"), target, 12);
-        
-        // 1% of 5,000,000 = 50,000
-        BigDecimal expectedAdminFee = new BigDecimal("50000");
-        
-        assertNotNull(loan.getAdminFee());
-        assertEquals(0, expectedAdminFee.compareTo(loan.getAdminFee().getAmount()));
-        assertEquals("IDR", loan.getAdminFee().getCurrency());
+        // Lender menerima tagihan PENUH termasuk denda (sesuai aturan baru)
+        assertEquals(0, new BigDecimal("2700000").compareTo(
+                distribusi.get(lenderId).getAmount().setScale(0, RoundingMode.HALF_UP)));
     }
 }

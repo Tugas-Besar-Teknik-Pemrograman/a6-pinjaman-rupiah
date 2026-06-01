@@ -155,4 +155,36 @@ public class InvestasiLenderSteps {
         Assertions.assertNotNull(caughtException, "Seharusnya investasi ditolak karena melebihi target!");
         Assertions.assertEquals("Nominal investasi melebihi target pendanaan", caughtException.getMessage());
     }
+
+    @When("Lender input dana investasi kurang dari minimal")
+    public void lender_input_dana_investasi_kurang_dari_minimal() {
+        investmentAmount = new Money(new BigDecimal("50000"), "IDR"); // 50rb < minimal 100rb
+        try {
+            fundingService.invest(lenderId, loanId, investmentAmount);
+        } catch (Exception e) {
+            caughtException = e;
+        }
+    }
+
+    @When("Lender input dana investasi bukan kelipatan 100rb")
+    public void lender_input_dana_investasi_bukan_kelipatan_100rb() {
+        investmentAmount = new Money(new BigDecimal("150000"), "IDR"); // 150rb bukan kelipatan 100rb
+        try {
+            fundingService.invest(lenderId, loanId, investmentAmount);
+        } catch (Exception e) {
+            caughtException = e;
+        }
+    }
+
+    @Then("Sistem menolak karena nominal di bawah minimal investasi")
+    public void sistem_menolak_karena_nominal_di_bawah_minimal_investasi() {
+        Assertions.assertNotNull(caughtException, "Seharusnya investasi ditolak karena di bawah minimal Rp 100.000!");
+        Assertions.assertEquals("Nominal investasi minimal Rp 100.000", caughtException.getMessage());
+    }
+
+    @Then("Sistem menolak karena nominal bukan kelipatan 100rb")
+    public void sistem_menolak_karena_nominal_bukan_kelipatan_100rb() {
+        Assertions.assertNotNull(caughtException, "Seharusnya investasi ditolak karena bukan kelipatan Rp 100.000!");
+        Assertions.assertEquals("Nominal investasi harus kelipatan Rp 100.000", caughtException.getMessage());
+    }
 }

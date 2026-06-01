@@ -157,9 +157,8 @@ public class LoanService {
             Borrower borrower = borrowerRepository.findById(loan.getBorrowerId());
             if (borrower == null) throw new IllegalStateException("Borrower tidak ditemukan untuk pencairan");
 
-            borrower.tambahSaldo(loan.getTargetNominal());
-
             Money adminFee = loan.getAdminFee();
+            borrower.tambahSaldo(loan.getTargetNominal().subtract(adminFee));
             if (adminFeeCallback != null) adminFeeCallback.accept(adminFee);
 
             borrowerRepository.save(borrower);

@@ -41,7 +41,11 @@ class LoanServiceSaldoTest {
 
         loanService.prosesPencairan(loan.getId());
 
-        assertEquals(0, new BigDecimal("1000000").compareTo(borrower.getSaldoBalance().getAmount()));
+        // Borrower harus menerima nominal BERSIH (target dikurangi admin fee 1%)
+        // 1.000.000 - 10.000 (1%) = 990.000
+        BigDecimal expectedNet = new BigDecimal("990000");
+        assertEquals(0, expectedNet.compareTo(borrower.getSaldoBalance().getAmount()),
+            "Borrower seharusnya menerima nominal bersih (target - admin fee 1%)");
         assertEquals("DISBURSED", loan.getStatus());
     }
 

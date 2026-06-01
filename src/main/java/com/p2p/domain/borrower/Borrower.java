@@ -108,6 +108,8 @@ public class Borrower {
         validasiPinjaman(nominal);
         this.hasActiveLoan = true;
         Loan loan = new Loan(loanid, this.id, nominal, tenor);
+        loan.setInterestStrategy(new com.p2p.domain.loan.strategy.FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.setJenisBunga("flat");
         LoanStateFactory.pendingToFunding().ubahStatus(loan);
         return loan;
     }

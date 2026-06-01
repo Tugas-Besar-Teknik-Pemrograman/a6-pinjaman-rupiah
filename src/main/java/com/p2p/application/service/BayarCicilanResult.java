@@ -18,7 +18,7 @@ public class BayarCicilanResult {
         this.tagihan = tagihan;
         this.dibayar = dibayar;
         BigDecimal selisih = dibayar.getAmount().subtract(tagihan.getAmount());
-        this.kembalian = new Money(selisih.max(BigDecimal.ZERO), "IDR");
+        this.kembalian = new Money(selisih.max(BigDecimal.ZERO), Money.IDR);
         this.tenorSisa = tenorSisa;
         this.statusPinjaman = statusPinjaman;
     }

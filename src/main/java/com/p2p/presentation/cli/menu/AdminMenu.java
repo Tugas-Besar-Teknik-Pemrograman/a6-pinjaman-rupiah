@@ -223,14 +223,12 @@ public class AdminMenu {
                 long maturityDate = System.currentTimeMillis() + (28L * 24 * 60 * 60 * 1000); // +28 hari
                 selectedLoan.setTanggalJatuhTempoTimestemp(maturityDate);
 
-                BigDecimal feePreview = selectedLoan.getTargetNominal().getAmount()
-                        .multiply(new BigDecimal("0.01"))
-                        .setScale(2, java.math.RoundingMode.HALF_UP);
+                Money feePreview = selectedLoan.getTargetNominal().multiply(new BigDecimal("0.01"));
 
                 loanService.prosesPencairan(selectedLoan.getId());
                 System.out.println("Pencairan pinjaman " + selectedLoan.getId() + " berhasil disetujui!");
                 System.out.println("Tanggal jatuh tempo: " + new java.util.Date(maturityDate));
-                System.out.println("Admin fee 1% dipotong: Rp" + formatCurrency(feePreview));
+                System.out.println("Admin fee 1% dipotong: Rp" + formatCurrency(feePreview.getAmount()));
                 System.out.println("Saldo Platform saat ini: Rp" + formatCurrency(ctx.getAdminSaldo().getAmount()));
             } else if ("2".equals(aksi)) {
                 // Decline pencairan
@@ -339,10 +337,8 @@ public class AdminMenu {
         for (Loan loan : allLoans) {
             if ("DISBURSED".equals(loan.getStatus()) || "REPAYMENT".equals(loan.getStatus()) || "CLOSED".equals(loan.getStatus())) {
                 totalLoansDisbursed++;
-                BigDecimal adminFee = loan.getTargetNominal().getAmount()
-                        .multiply(new BigDecimal("0.01"))
-                        .setScale(2, java.math.RoundingMode.HALF_UP);
-                totalAdminFees = totalAdminFees.add(adminFee);
+                Money adminFee = loan.getTargetNominal().multiply(new BigDecimal("0.01"));
+                totalAdminFees = totalAdminFees.add(adminFee.getAmount());
             }
         }
         

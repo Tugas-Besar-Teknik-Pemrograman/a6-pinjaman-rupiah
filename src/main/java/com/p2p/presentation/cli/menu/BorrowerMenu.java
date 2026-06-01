@@ -141,7 +141,7 @@ public class BorrowerMenu {
             System.out.print("Masukkan nominal top up (Rp, 0 untuk batal): ");
             long nominal = Long.parseLong(scanner.nextLine().trim());
             if (nominal <= 0) return;
-            borrower.tambahSaldo(new Money(BigDecimal.valueOf(nominal), "IDR"));
+            borrower.tambahSaldo(new Money(BigDecimal.valueOf(nominal), Money.IDR));
             ctx.getRepos().getBorrowerRepository().save(borrower);
             System.out.println("Top up berhasil! Saldo terbaru: Rp " + borrower.getSaldoBalance().getAmount());
         } catch (NumberFormatException e) {
@@ -173,56 +173,57 @@ public class BorrowerMenu {
                 default -> throw new IllegalArgumentException("Pilihan bunga tidak valid!");
             };
 
-            BigDecimal nominalBD = BigDecimal.valueOf(nominal);
+            Money nominalPinjaman = new Money(BigDecimal.valueOf(nominal), Money.IDR);
             if (!borrowerObj.isKycStatus()) throw new IllegalStateException("Peminjaman ditolak karena Borrower belum terverifikasi (KYC)");
             if (borrowerObj.getCreditScore() < 600) throw new IllegalStateException("Peminjaman ditolak karena Credit score di bawah ambang batas");
-            if (nominalBD.compareTo(new BigDecimal("100000")) < 0) throw new IllegalArgumentException("Nominal pinjaman harus lebih dari 100.000");
-            if (nominalBD.remainder(new BigDecimal("100000")).compareTo(BigDecimal.ZERO) != 0) throw new IllegalArgumentException("Nominal pinjaman harus kelipatan 100.000");
+            Money minPeminjaman = new Money(new BigDecimal("100000"), Money.IDR);
+            if (nominalPinjaman.isLessThan(minPeminjaman)) throw new IllegalArgumentException("Nominal pinjaman harus lebih dari 100.000");
+            if (nominalPinjaman.getAmount().remainder(new BigDecimal("100000")).compareTo(BigDecimal.ZERO) != 0) throw new IllegalArgumentException("Nominal pinjaman harus kelipatan 100.000");
             if (borrowerObj.hasActiveLoan()) throw new IllegalStateException("Lunasi Peminjaman sebelumnya dulu");
 
             BigDecimal bungaRate = "syariah".equals(interestType) ? BigDecimal.ZERO : new BigDecimal("0.05");
             Money limitDinamis = borrowerObj.hitungLimitDenganTenorDanBunga(tenor, bungaRate);
-            if (limitDinamis.isLessThan(new Money(nominalBD, "IDR"))) {
+            if (limitDinamis.isLessThan(nominalPinjaman)) {
                 throw new IllegalStateException("Pengajuan melebihi limit. Limit Anda: Rp " + String.format("%,.0f", limitDinamis.getAmount()));
             }
 
-            BigDecimal principalPerMonth = nominalBD.divide(BigDecimal.valueOf(tenor), 2, RoundingMode.HALF_UP);
-            BigDecimal adminFee = nominalBD.multiply(new BigDecimal("0.01")).setScale(0, RoundingMode.HALF_UP);
-            BigDecimal sisaPokok = nominalBD;
-            BigDecimal totalInterest = BigDecimal.ZERO;
-            BigDecimal totalPengembalian = BigDecimal.ZERO;
+            Money principalPerMonth = nominalPinjaman.divide(BigDecimal.valueOf(tenor), RoundingMode.HALF_UP);
+            Money adminFee = nominalPinjaman.multiply(new BigDecimal("0.01"));
+            Money sisaPokok = nominalPinjaman;
+            Money totalInterest = new Money(BigDecimal.ZERO, Money.IDR);
+            Money totalPengembalian = new Money(BigDecimal.ZERO, Money.IDR);
 
             System.out.println("\n=================================================");
             System.out.println("            PREVIEW PENGAJUAN PINJAMAN           ");
             System.out.println("=================================================");
-            System.out.printf("Nominal Pinjaman : Rp %,.0f%n", nominalBD);
+            System.out.printf("Nominal Pinjaman : Rp %,.0f%n", nominalPinjaman.getAmount());
             System.out.printf("Tenor            : %d Bulan%n", tenor);
             System.out.printf("Jenis Bunga      : %s%n", interestType.toUpperCase());
-            System.out.printf("Biaya Admin (1%%) : Rp %,.0f (dipotong saat pencairan)%n", adminFee);
+            System.out.printf("Biaya Admin (1%%) : Rp %,.0f (dipotong saat pencairan)%n", adminFee.getAmount());
             System.out.println("-------------------------------------------------");
             System.out.println("           Simulasi Cicilan Bulanan              ");
             System.out.println("-------------------------------------------------");
 
             for (int i = 1; i <= tenor; i++) {
-                BigDecimal bunga = BigDecimal.ZERO;
+                Money bunga = new Money(BigDecimal.ZERO, Money.IDR);
                 if ("flat".equals(interestType)) {
-                    bunga = nominalBD.multiply(new BigDecimal("0.05")).setScale(0, RoundingMode.HALF_UP);
+                    bunga = nominalPinjaman.multiply(new BigDecimal("0.05"));
                 } else if ("float".equals(interestType)) {
-                    bunga = sisaPokok.multiply(new BigDecimal("0.05")).setScale(0, RoundingMode.HALF_UP);
+                    bunga = sisaPokok.multiply(new BigDecimal("0.05"));
                 } else if ("syariah".equals(interestType)) {
-                    bunga = new BigDecimal("150000");
+                    bunga = new Money(new BigDecimal("150000"), Money.IDR);
                 }
-                BigDecimal cicilan = principalPerMonth.add(bunga);
+                Money cicilan = principalPerMonth.add(bunga);
                 totalPengembalian = totalPengembalian.add(cicilan);
                 totalInterest = totalInterest.add(bunga);
                 System.out.printf("Bulan %2d: Pokok Rp %,.0f + %s Rp %,.0f = Cicilan Rp %,.0f%n",
-                        i, principalPerMonth, "syariah".equals(interestType) ? "Margin" : "Bunga", bunga, cicilan);
+                        i, principalPerMonth.getAmount(), "syariah".equals(interestType) ? "Margin" : "Bunga", bunga.getAmount(), cicilan.getAmount());
                 sisaPokok = sisaPokok.subtract(principalPerMonth);
             }
 
             System.out.println("-------------------------------------------------");
-            System.out.printf("Total Bunga/Margin : Rp %,.0f%n", totalInterest);
-            System.out.printf("Total Pengembalian : Rp %,.0f%n", totalPengembalian);
+            System.out.printf("Total Bunga/Margin : Rp %,.0f%n", totalInterest.getAmount());
+            System.out.printf("Total Pengembalian : Rp %,.0f%n", totalPengembalian.getAmount());
             System.out.println("=================================================");
             System.out.print("Apakah Anda setuju? (y/n): ");
             if (!"y".equalsIgnoreCase(scanner.nextLine().trim())) {
@@ -230,10 +231,10 @@ public class BorrowerMenu {
                 return;
             }
 
-            Loan loan = ctx.getLoanService().ajukanPinjaman(new BorrowerId(borrowerIdStr), new Money(nominalBD, "IDR"), tenor, interestType);
+            Loan loan = ctx.getLoanService().ajukanPinjaman(new BorrowerId(borrowerIdStr), nominalPinjaman, tenor, interestType);
             System.out.println("Berhasil! ID: " + loan.getId().getValue());
             System.out.printf("Biaya Admin (1%%): Rp %,.0f (dipotong saat pencairan)%n", loan.getAdminFee().getAmount());
-            System.out.printf("Estimasi Bersih : Rp %,.0f%n", nominalBD.subtract(loan.getAdminFee().getAmount()));
+            System.out.printf("Estimasi Bersih : Rp %,.0f%n", nominalPinjaman.subtract(loan.getAdminFee()).getAmount());
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -294,9 +295,8 @@ public class BorrowerMenu {
             System.out.println("------------------------------");
 
             // Detail per cicilan
-            BigDecimal sisaPokok = loan.getTargetNominal().getAmount();
-            BigDecimal principalPerMonth = loan.getTargetNominal().getAmount()
-                    .divide(BigDecimal.valueOf(totalTenor), 0, RoundingMode.HALF_UP);
+            Money sisaPokok = loan.getTargetNominal();
+            Money principalPerMonth = loan.getTargetNominal().divide(BigDecimal.valueOf(totalTenor), RoundingMode.HALF_UP);
 
             for (int i = 1; i <= totalTenor; i++) {
                 String statusCicilan;
@@ -310,7 +310,7 @@ public class BorrowerMenu {
                 // Estimasi cicilan (tanpa denda, hanya pokok+bunga normal)
                 Money estimasi = loan.hitungEstimasiCicilan();
                 System.out.printf("Cicilan ke-%2d: %s  | Est. Rp %,.0f | Sisa Pokok: Rp %,.0f%n",
-                        i, statusCicilan, estimasi.getAmount(), sisaPokok);
+                        i, statusCicilan, estimasi.getAmount(), sisaPokok.getAmount());
                 sisaPokok = sisaPokok.subtract(principalPerMonth);
             }
             System.out.println("==============================");
@@ -342,7 +342,7 @@ public class BorrowerMenu {
             int bulanSekarang = sudahDibayar + 1;
 
             Money tagihan = loan.getTagihanBulanIni();
-            if (tagihan == null || tagihan.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            if (tagihan == null || !tagihan.isGreaterThan(new Money(BigDecimal.ZERO, tagihan.getCurrency()))) {
                 System.out.println("Tagihan bulan ini belum tersedia. Silakan simulasi tenor berikutnya terlebih dahulu.");
                 return;
             }
@@ -357,9 +357,8 @@ public class BorrowerMenu {
 
             if ("OVERDUE".equals(loan.getStatus())) {
                 Money denda = loan.getDendaBulanIni();
-                BigDecimal cicilanNormal = tagihan.getAmount().subtract(
-                        denda != null ? denda.getAmount() : BigDecimal.ZERO);
-                System.out.printf("Cicilan Normal    : Rp %,.0f%n", cicilanNormal);
+                Money cicilanNormal = tagihan.subtract(denda != null ? denda : new Money(BigDecimal.ZERO, tagihan.getCurrency()));
+                System.out.printf("Cicilan Normal    : Rp %,.0f%n", cicilanNormal.getAmount());
                 System.out.printf("Denda Overdue (2%%): Rp %,.0f%n", denda != null ? denda.getAmount() : BigDecimal.ZERO);
             }
 

@@ -27,13 +27,13 @@ public class LenderTest {
         BigDecimal sisaSaldoExpected = new BigDecimal("4500000");
 
         // Assert saldo awal
-        assertEquals(saldoAwalExpected, lender.getSaldoBalance().getAmount());
+        assertEquals(0, saldoAwalExpected.compareTo(lender.getSaldoBalance().getAmount()));
 
         // Act
         assertDoesNotThrow(() -> lender.tarikSaldo(nominalTarik));
 
         // Assert saldo berkurang
-        assertEquals(sisaSaldoExpected, lender.getSaldoBalance().getAmount());
+        assertEquals(0, sisaSaldoExpected.compareTo(lender.getSaldoBalance().getAmount()));
     }
 
     @Test
@@ -44,13 +44,13 @@ public class LenderTest {
         BigDecimal saldoBaruExpected = new BigDecimal("7000000");
 
         // Assert saldo awal
-        assertEquals(saldoAwalExpected, lender.getSaldoBalance().getAmount());
+        assertEquals(0, saldoAwalExpected.compareTo(lender.getSaldoBalance().getAmount()));
 
         // Act
         assertDoesNotThrow(() -> lender.tambahSaldo(nominalTambah));
 
         // Assert saldo bertambah
-        assertEquals(saldoBaruExpected, lender.getSaldoBalance().getAmount());
+        assertEquals(0, saldoBaruExpected.compareTo(lender.getSaldoBalance().getAmount()));
     }
 
     @Test
@@ -117,7 +117,7 @@ public class LenderTest {
         Money saldo = lender.getSaldoBalance();
 
         // Assert
-        assertEquals(expectedAmount, saldo.getAmount());
+        assertEquals(0, expectedAmount.compareTo(saldo.getAmount()));
         assertEquals("IDR", saldo.getCurrency());
     }
 

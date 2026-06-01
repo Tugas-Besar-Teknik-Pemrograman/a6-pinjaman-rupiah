@@ -53,7 +53,7 @@ public class UserService {
         //role borrower
         if (role == 1) {
             BorrowerId bId = new BorrowerId(generatedId);
-            Money uangPenghasilan = new Money(penghasilan, "IDR");
+            Money uangPenghasilan = new Money(penghasilan, Money.IDR);
 
             // Limit akan otomatis dihitung 30% dari penghasilan oleh constructor
             Borrower profilBorrower = new Borrower(bId, uangPenghasilan);
@@ -63,7 +63,7 @@ public class UserService {
         //role lender
         else if (role == 2) {
             LenderId lId = new LenderId(generatedId);
-            Money saldoAwal = new Money(BigDecimal.ZERO, "IDR");
+            Money saldoAwal = new Money(BigDecimal.ZERO, Money.IDR);
 
             Lender profilLender = new Lender(lId, saldoAwal);
             lenderRepository.save(profilLender);

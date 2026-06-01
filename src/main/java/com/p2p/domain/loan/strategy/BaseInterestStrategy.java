@@ -12,7 +12,7 @@ public abstract class BaseInterestStrategy implements InterestCalculationStrateg
     @Override
     public Money hitungBagianPokok(Money initialPrincipal, int tenor) {
         BigDecimal principal = initialPrincipal.getAmount()
-                .divide(BigDecimal.valueOf(tenor), RoundingMode.HALF_UP);
+                .divide(BigDecimal.valueOf(tenor), 0, RoundingMode.HALF_UP);
         return new Money(principal, initialPrincipal.getCurrency());
     }
 }

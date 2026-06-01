@@ -145,6 +145,52 @@ class LoanServiceSaldoTest {
     }
 
     @Test
+    void menolakPencairan_mengembalikan_saldo_ke_lender() {
+        LoanRepository loanRepository = mock(LoanRepository.class);
+        BorrowerRepository borrowerRepository = mock(BorrowerRepository.class);
+        LenderRepository lenderRepository = mock(LenderRepository.class);
+        LoanService loanService = new LoanService(loanRepository, borrowerRepository, lenderRepository, null, null);
+
+        LenderId lenderId = new LenderId("LND-REFUND-01");
+        Money investasi = new Money(new BigDecimal("500000"), "IDR");
+
+        Loan loan = new Loan(new LoanId("LN-REFUND-01"), new BorrowerId("BR-REFUND-01"),
+                             new Money(new BigDecimal("1000000"), "IDR"), 12);
+        loan.tambahPendanaan(lenderId, investasi);
+        loan.ubahStatus("FUNDING_READY");
+
+        Lender lender = new Lender(lenderId, new Money(BigDecimal.ZERO, "IDR"));
+
+        when(loanRepository.findById(loan.getId())).thenReturn(loan);
+        when(lenderRepository.findById(lenderId)).thenReturn(lender);
+
+        loanService.menolakPencairan(loan.getId(), "Tidak memenuhi syarat");
+
+        assertEquals(0, investasi.getAmount().compareTo(lender.getSaldoBalance().getAmount()),
+            "Saldo lender harus dikembalikan penuh saat pencairan ditolak");
+        assertEquals("REJECTED", loan.getStatus());
+    }
+
+    @Test
+    void menolakPencairan_status_bukan_fundingReady_melempar_exception() {
+        LoanRepository loanRepository = mock(LoanRepository.class);
+        BorrowerRepository borrowerRepository = mock(BorrowerRepository.class);
+        LenderRepository lenderRepository = mock(LenderRepository.class);
+        LoanService loanService = new LoanService(loanRepository, borrowerRepository, lenderRepository, null, null);
+
+        Loan loan = new Loan(new LoanId("LN-REFUND-02"), new BorrowerId("BR-REFUND-02"),
+                             new Money(new BigDecimal("1000000"), "IDR"), 12);
+        loan.ubahStatus("FUNDING");
+
+        when(loanRepository.findById(loan.getId())).thenReturn(loan);
+
+        assertThrows(IllegalStateException.class, () ->
+            loanService.menolakPencairan(loan.getId(), "Tidak memenuhi syarat"),
+            "Harus melempar exception jika status bukan FUNDING_READY"
+        );
+    }
+
+    @Test
     void bayarCicilan_statusOverdue_dendaMasukKeLender() throws Exception {
         LoanRepository loanRepository = mock(LoanRepository.class);
         BorrowerRepository borrowerRepository = mock(BorrowerRepository.class);

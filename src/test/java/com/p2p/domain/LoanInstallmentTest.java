@@ -111,7 +111,7 @@ class LoanInstallmentTest {
         Money tooSmall = new Money(new BigDecimal("1000"), "IDR");
 
         Exception ex = assertThrows(Exception.class, () -> loan.bayarCicilan(tooSmall));
-        assertEquals("Nominal pembayaran kurang dari nominal tagihan", ex.getMessage());
+        assertEquals("Nominal pembayaran harus sesuai dengan tagihan: Rp 2.500.000", ex.getMessage());
     }
 
     @Test
@@ -183,16 +183,33 @@ class LoanInstallmentTest {
         Loan loan = new Loan(new LoanId("LN-O02"), new BorrowerId("BR-001"), target, 5);
         loan.ubahStatus("OVERDUE");
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
-        loan.generateMonthlyBill();
-        // Denda = sisaPokok(10jt) * 2% = 200.000
-        // Tagihan = 2.500.000 + 200.000 = 2.700.000
+        loan.generateMonthlyBill(); // tagihan = 2.500.000 + 200.000 denda = 2.700.000
 
         loan.bayarCicilan(loan.getTagihanBulanIni());
 
-        // Denda 200.000 harus tercatat di overdueFeesAccrued
+        // Setelah bayar, denda Rp 200.000 harus tercatat di overdueFeesAccrued
         assertEquals(0, new BigDecimal("200000").compareTo(
-                loan.getTotalDendaTerkumpul().getAmount()));
+            loan.getTotalDendaTerkumpul().getAmount()));
     }
+
+    @Test
+    void findByLenderId_lenderAdaDiLoan_mengembalikanLoanTersebut() {
+        LenderId lenderId = new LenderId("LND-P01");
+        Money target = new Money(new BigDecimal("5000000"), "IDR");
+
+        Loan loan = new Loan(new LoanId("LN-P01"), new BorrowerId("BR-001"), target, 6);
+        loan.tambahPendanaan(lenderId, target); // → auto FUNDING_READY
+
+        InMemoryLoanRepository repo = new InMemoryLoanRepository();
+        repo.save(loan);
+
+        List<Loan> hasil = repo.findByLenderId(lenderId);
+
+        assertEquals(1, hasil.size());
+        assertEquals("LN-P01", hasil.get(0).getId().getValue());
+    }
+
+    // TDD: Denda OVERDUE tidak masuk distribusi lender
 
     @Test
     void hitungDistribusiCicilan_statusOverdue_dendaMasukKeDistribusiLender() {
@@ -203,8 +220,28 @@ class LoanInstallmentTest {
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
         loan.tambahPendanaan(lenderId, target);
         loan.ubahStatus("OVERDUE");
-        loan.generateMonthlyBill();
-        // Tagihan = 2.500.000 + denda 200.000 = 2.700.000
+        loan.generateMonthlyBill(); // tagihan = 2.500.000 + 200.000 denda = 2.700.000
+
+        Map<LenderId, Money> distribusi = loan.hitungDistribusiCicilan();
+
+        // Lender mendapatkan cicilan normal + denda = 2.700.000
+        assertEquals(0, new BigDecimal("2700000").compareTo(
+            distribusi.get(lenderId).getAmount().setScale(0, RoundingMode.HALF_UP)));
+    }
+
+    @Test
+    void findByLenderId_lenderTidakAdaDiLoan_mengembalikanListKosong() {
+        LenderId lenderAda = new LenderId("LND-P02");
+        LenderId lenderTidakAda = new LenderId("LND-P03");
+        Money target = new Money(new BigDecimal("5000000"), "IDR");
+
+        Loan loan = new Loan(new LoanId("LN-P02"), new BorrowerId("BR-001"), target, 6);
+        loan.tambahPendanaan(lenderAda, target);
+
+        InMemoryLoanRepository repo = new InMemoryLoanRepository();
+        repo.save(loan);
+
+        List<Loan> hasil = repo.findByLenderId(lenderTidakAda);
 
         java.util.Map<LenderId, Money> distribusi = loan.hitungDistribusiCicilan();
 

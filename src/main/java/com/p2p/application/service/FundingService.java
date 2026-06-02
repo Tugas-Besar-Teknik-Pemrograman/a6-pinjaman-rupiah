@@ -8,6 +8,7 @@ import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.lender.LenderRepository;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanId;
+import com.p2p.domain.loan.LoanStatus;
 import com.p2p.domain.loan.LoanRepository;
 import com.p2p.domain.valueobject.Money;
 
@@ -39,7 +40,7 @@ public class FundingService {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) throw new IllegalArgumentException("Pinjaman tidak ditemukan");
 
-        if (!"FUNDING".equals(loan.getStatus())) {
+        if (loan.getStatusEnum() != LoanStatus.FUNDING) {
             throw new IllegalStateException("Investasi ditolak, status Loan bukan FUNDING");
         }
 
@@ -63,7 +64,7 @@ public class FundingService {
         publisher.publishInvestasiDiterima(new InvestasiDiterimaEvent(loanId, lenderId));
 
         // Jika pendanaan sudah terpenuhi 100% → fire event ke borrower & lender
-        if ("FUNDING_READY".equals(loan.getStatus())) {
+        if (loan.getStatusEnum() == LoanStatus.FUNDING_READY) {
             publisher.publishPendanaanTerpenuhi(new PendanaanTerpenuhiEvent(loanId, loan.getBorrowerId()));
         }
     }

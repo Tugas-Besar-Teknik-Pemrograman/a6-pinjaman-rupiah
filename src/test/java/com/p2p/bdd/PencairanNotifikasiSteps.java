@@ -113,16 +113,20 @@ public void sistem_mengirimkan_notifikasi_pencairan_untuk_loan(String loanId) {
     //Then
    @Then("status Loan {string} harus berubah menjadi {string}")
 public void status_loan_harus_berubah_menjadi(String loanId, String expectedStatus) {
-    Loan loan = loanRepository.findById(new LoanId(loanId));
+    Loan loan = verifyLoanAndGet(loanId, expectedStatus);
     assertNotEquals(loanStatusBeforeAction, loan.getStatus(), "Status should have changed");
-    assertEquals(expectedStatus, loan.getStatus());
 }
 
 @Then("status Loan {string} tetap {string}")
 public void status_loan_tetap(String loanId, String expectedStatus) {
-    Loan loan = loanRepository.findById(new LoanId(loanId));
+    Loan loan = verifyLoanAndGet(loanId, expectedStatus);
     assertEquals(loanStatusBeforeAction, loan.getStatus(), "Status should not have changed");
+}
+
+private Loan verifyLoanAndGet(String loanId, String expectedStatus) {
+    Loan loan = loanRepository.findById(new LoanId(loanId));
     assertEquals(expectedStatus, loan.getStatus());
+    return loan;
 }
 
 @Then("Borrower dengan ID {string} harus menerima notifikasi berhasil")

@@ -23,28 +23,24 @@ class NotifikasiTest {
 
     @Test
     void loan_berstatus_DISBURSED_layak_notifikasi_berhasil() {
-        Loan loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("10000000"), "IDR"));
         loan.ubahStatus("DISBURSED");
         assertTrue(loan.isLayakNotifikasiPencairan());
     }
 
     @Test
     void loan_berstatus_FUNDING_tidak_layak_notifikasi_berhasil() {
-        Loan loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("10000000"), "IDR"));
         loan.ubahStatus("FUNDING");
         assertFalse(loan.isLayakNotifikasiPencairan());
     }
 
     @Test
     void loan_berstatus_FUNDING_READY_tidak_layak_notifikasi_berhasil() {
-        Loan loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("10000000"), "IDR"));
         loan.ubahStatus("FUNDING_READY");
         assertFalse(loan.isLayakNotifikasiPencairan());
     }
 
     @Test
     void loan_berstatus_REJECTED_tidak_layak_notifikasi_berhasil(){
-        Loan loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("10000000"), "IDR"));
         loan.ubahStatus("REJECTED");
         assertFalse(loan.isLayakNotifikasiPencairan());
     }

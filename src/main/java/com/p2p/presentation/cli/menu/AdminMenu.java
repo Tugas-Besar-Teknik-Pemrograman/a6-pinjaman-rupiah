@@ -15,10 +15,12 @@ import com.p2p.application.service.LoanService;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 public class AdminMenu {
+
+    private static final String INVALID_CHOICE_MSG = "Pilihan tidak valid.";
+    private static final String PENDING_STATUS = "PENDING";
 
     private final AppContext ctx;
     private final RepositoryFactory repos;
@@ -62,7 +64,7 @@ public class AdminMenu {
                     System.out.println("Logout berhasil.");
                     kembali = true;
                 }
-                default -> System.out.println("Pilihan tidak valid.");
+                default -> System.out.println(INVALID_CHOICE_MSG);
             }
         }
     }
@@ -90,17 +92,17 @@ public class AdminMenu {
         if (u.getRole() == 1) {
             Borrower borrower = repos.getBorrowerRepository().findById(new BorrowerId(userId));
             if (borrower != null) {
-                return borrower.isKycStatus() ? "APPROVED" : "PENDING";
+                return borrower.isKycStatus() ? "APPROVED" : PENDING_STATUS;
             }
-            return "PENDING";
+            return PENDING_STATUS;
         }
         // Role 2 = Lender
         else if (u.getRole() == 2) {
             Lender lender = repos.getLenderRepository().findById(new LenderId(userId));
             if (lender != null) {
-                return lender.isKycVerified() ? "APPROVED" : "PENDING";
+                return lender.isKycVerified() ? "APPROVED" : PENDING_STATUS;
             }
-            return "PENDING";
+            return PENDING_STATUS;
         }
         // Role 3 = Admin (tidak ada status KYC)
         else if (u.getRole() == 3) {
@@ -207,7 +209,7 @@ public class AdminMenu {
         try {
             int index = Integer.parseInt(choice) - 1;
             if (index < 0 || index >= fundingReadyLoans.size()) {
-                System.out.println("Pilihan tidak valid.");
+                System.out.println(INVALID_CHOICE_MSG);
                 return;
             }
             Loan selectedLoan = fundingReadyLoans.get(index);
@@ -245,7 +247,7 @@ public class AdminMenu {
                 System.out.println("Pencairan pinjaman " + selectedLoan.getId() + " berhasil ditolak.");
                 System.out.println("Dana sudah dikembalikan ke lender.");
             } else {
-                System.out.println("Pilihan tidak valid.");
+                System.out.println(INVALID_CHOICE_MSG);
             }
         } catch (NumberFormatException e) {
             System.out.println("Input tidak valid.");
@@ -261,24 +263,24 @@ public class AdminMenu {
         System.out.println("=".repeat(80));
 
         System.out.println("\n[STATISTIK] DATA PENGGUNA:");
-        System.out.println("  - Total Pengguna Terdaftar: " + stats.totalUsers);
-        System.out.println("  - Total Borrower: " + stats.borrowerCount);
-        System.out.println("  - Total Lender: " + stats.lenderCount);
-        System.out.println("  - Total Admin: " + stats.adminCount);
+        System.out.println("  - Total Pengguna Terdaftar: " + stats.userStats.totalUsers);
+        System.out.println("  - Total Borrower: " + stats.userStats.borrowerCount);
+        System.out.println("  - Total Lender: " + stats.userStats.lenderCount);
+        System.out.println("  - Total Admin: " + stats.userStats.adminCount);
 
         System.out.println("\n[FINANSIAL] DATA DANA & PINJAMAN:");
-        System.out.println("  - Total Pinjaman Disalurkan: Rp" + formatCurrency(stats.totalDisbursed));
-        System.out.println("  - Outstanding Principal (Dana Aktif Dipinjam): Rp" + formatCurrency(stats.outstandingPrincipal));
-        System.out.println("  - Dana dalam Proses Funding: Rp" + formatCurrency(stats.fundingInProgress));
+        System.out.println("  - Total Pinjaman Disalurkan: Rp" + formatCurrency(stats.financialStats.totalDisbursed));
+        System.out.println("  - Outstanding Principal (Dana Aktif Dipinjam): Rp" + formatCurrency(stats.financialStats.outstandingPrincipal));
+        System.out.println("  - Dana dalam Proses Funding: Rp" + formatCurrency(stats.financialStats.fundingInProgress));
 
         System.out.println("\n[PERINGATAN] INDIKATOR KESEHATAN KREDIT:");
-        System.out.println("  - Jumlah Pinjaman OVERDUE: " + stats.overdueCount + " dari " + stats.totalLoans);
-        System.out.println("  - Rasio Keterlambatan: " + String.format("%.2f%%", stats.overdueRatio));
-        System.out.println("  - Total Denda Terkumpul: Rp" + formatCurrency(stats.totalOverdueFees));
+        System.out.println("  - Jumlah Pinjaman OVERDUE: " + stats.overdueStats.overdueCount + " dari " + stats.overdueStats.totalLoans);
+        System.out.println("  - Rasio Keterlambatan: " + String.format("%.2f%%", stats.overdueStats.overdueRatio));
+        System.out.println("  - Total Denda Terkumpul: Rp" + formatCurrency(stats.overdueStats.totalOverdueFees));
 
         System.out.println("\n[INVESTASI] DATA INVESTASI LENDER:");
-        System.out.println("  - Total Saldo Lender Terkumpul: Rp" + formatCurrency(stats.totalLenderBalance));
-        System.out.println("  - Total Dana yang Sudah Diinvestasikan: Rp" + formatCurrency(stats.totalInvestedAmount));
+        System.out.println("  - Total Saldo Lender Terkumpul: Rp" + formatCurrency(stats.financialStats.totalLenderBalance));
+        System.out.println("  - Total Dana yang Sudah Diinvestasikan: Rp" + formatCurrency(stats.financialStats.totalInvestedAmount));
 
         System.out.println("\n[PLATFORM] SALDO PLATFORM:");
         Money adminSaldo = ctx.getAdminSaldo();
@@ -301,12 +303,12 @@ public class AdminMenu {
         System.out.println("  - Mata Uang: " + adminSaldo.getCurrency());
         
         System.out.println("\n[STATISTIK] STATISTIK ADMIN FEE:");
-        System.out.println("  - Total Pinjaman Dicairkan: " + stats.totalLoansDisbursed);
-        System.out.println("  - Total Admin Fee Terkumpul (1%): Rp" + formatCurrency(stats.totalAdminFees));
+        System.out.println("  - Total Pinjaman Dicairkan: " + stats.feeStats.totalLoansDisbursed);
+        System.out.println("  - Total Admin Fee Terkumpul (1%): Rp" + formatCurrency(stats.feeStats.totalAdminFees));
         
         // Calculate average fee per loan
-        if (stats.totalLoansDisbursed > 0) {
-            System.out.println("  - Rata-rata Fee per Pinjaman: Rp" + formatCurrency(stats.avgFee));
+        if (stats.feeStats.totalLoansDisbursed > 0) {
+            System.out.println("  - Rata-rata Fee per Pinjaman: Rp" + formatCurrency(stats.feeStats.avgFee));
         }
         
         System.out.println("\n" + "=".repeat(80));
@@ -331,53 +333,76 @@ public class AdminMenu {
 }
 
 private void menuSimulasiTenorSelanjutnya() {
-    List<Loan> allLoans = repos.getLoanRepository().findAll();
-    List<Loan> activeLoans = allLoans.stream()
-            .filter(l -> {
-                var s = l.getStatusEnum();
-                return s == LoanStatus.DISBURSED || s == LoanStatus.REPAYMENT || s == LoanStatus.OVERDUE;
-            })
-            .toList();
+    List<Loan> activeLoans = getActiveLoans();
 
     if (activeLoans.isEmpty()) {
         System.out.println("Tidak ada pinjaman aktif yang sedang berjalan.");
         return;
     }
 
-    Loan selectedLoan;
-    if (activeLoans.size() == 1) {
-        selectedLoan = activeLoans.get(0);
-        System.out.println("Menemukan 1 pinjaman aktif: " + selectedLoan.getId().getValue() + ". Memproses simulasi tenor berikutnya...");
-    } else {
-        System.out.println("\n--- Pinjaman Aktif ---");
-        for (int i = 0; i < activeLoans.size(); i++) {
-            Loan l = activeLoans.get(i);
-            System.out.printf("%d) %s - Tagihan Bulan Ini: Rp %s - Sisa Tenor: %d bulan%n",
-                    i + 1, l.getId().getValue(),
-                    (l.getTagihanBulanIni() != null ? l.getTagihanBulanIni().getAmount() : "0"),
-                    l.getTenorSisa());
-        }
-        System.out.print("Pilih nomor pinjaman (atau '0' untuk batal): ");
-        String choice = scanner.nextLine().trim();
-        if ("0".equals(choice)) return;
-        try {
-            int idx = Integer.parseInt(choice) - 1;
-            if (idx < 0 || idx >= activeLoans.size()) {
-                System.out.println("Pilihan tidak valid.");
-                return;
-            }
-            selectedLoan = activeLoans.get(idx);
-        } catch (NumberFormatException e) {
-            System.out.println("Input tidak valid.");
-            return;
-        }
+    Loan selectedLoan = pilihPinjamanAktif(activeLoans);
+    if (selectedLoan == null) {
+        return;
     }
 
+    jalankanSimulasiTenorBerikutnya(selectedLoan);
+}
+
+private List<Loan> getActiveLoans() {
+    return repos.getLoanRepository().findAll().stream()
+            .filter(l -> {
+                var s = l.getStatusEnum();
+                return s == LoanStatus.DISBURSED || s == LoanStatus.REPAYMENT || s == LoanStatus.OVERDUE;
+            })
+            .toList();
+}
+
+private Loan pilihPinjamanAktif(List<Loan> activeLoans) {
+    if (activeLoans.size() == 1) {
+        Loan selected = activeLoans.get(0);
+        System.out.println("Menemukan 1 pinjaman aktif: " + selected.getId().getValue() + ". Memproses simulasi tenor berikutnya...");
+        return selected;
+    }
+
+    tampilkanDaftarPinjamanAktif(activeLoans);
+    System.out.print("Pilih nomor pinjaman (atau '0' untuk batal): ");
+    String choice = scanner.nextLine().trim();
+    if ("0".equals(choice)) {
+        return null;
+    }
+
+    try {
+        int idx = Integer.parseInt(choice) - 1;
+        if (idx < 0 || idx >= activeLoans.size()) {
+            System.out.println(INVALID_CHOICE_MSG);
+            return null;
+        }
+        return activeLoans.get(idx);
+    } catch (NumberFormatException e) {
+        System.out.println("Input tidak valid.");
+        return null;
+    }
+}
+
+private void tampilkanDaftarPinjamanAktif(List<Loan> activeLoans) {
+    System.out.println("\n--- Pinjaman Aktif ---");
+    for (int i = 0; i < activeLoans.size(); i++) {
+        Loan l = activeLoans.get(i);
+        String tagihanStr = l.getTagihanBulanIni() != null ? l.getTagihanBulanIni().getAmount().toString() : "0";
+        System.out.printf("%d) %s - Tagihan Bulan Ini: Rp %s - Sisa Tenor: %d bulan%n",
+                i + 1, l.getId().getValue(),
+                tagihanStr,
+                l.getTenorSisa());
+    }
+}
+
+private void jalankanSimulasiTenorBerikutnya(Loan selectedLoan) {
     try {
         ctx.getLoanService().simulasiTenorBerikutnya(selectedLoan.getId());
         Loan updated = repos.getLoanRepository().findById(selectedLoan.getId());
         System.out.println("Simulasi sukses! Tagihan baru untuk bulan selanjutnya telah dibuat.");
-        System.out.println("Tagihan Bulan Ini  : Rp " + (updated.getTagihanBulanIni() != null ? updated.getTagihanBulanIni().getAmount() : "0"));
+        String tagihanStr = updated.getTagihanBulanIni() != null ? updated.getTagihanBulanIni().getAmount().toString() : "0";
+        System.out.println("Tagihan Bulan Ini  : Rp " + tagihanStr);
         System.out.println("Sisa Tenor         : " + updated.getTenorSisa() + " bulan");
         System.out.println("Tanggal Jatuh Tempo: " + updated.getTanggalJatuhTempo());
     } catch (Exception e) {
@@ -393,7 +418,6 @@ private void menuSimulasiTenorSelanjutnya() {
     private AdminStatistics calculateAdminStatistics() {
         List<User> allUsers = repos.getUserRepository().findAll();
         List<Loan> allLoans = repos.getLoanRepository().findAll();
-        List<Borrower> allBorrowers = repos.getBorrowerRepository().findAll();
         List<Lender> allLenders = repos.getLenderRepository().findAll();
 
         // User statistics
@@ -458,13 +482,12 @@ private void menuSimulasiTenorSelanjutnya() {
             ? totalAdminFees.divide(new BigDecimal(totalLoansDisbursed), 2, java.math.RoundingMode.HALF_UP)
             : BigDecimal.ZERO;
 
-        return new AdminStatistics(
-            totalUsers, borrowerCount, lenderCount, adminCount,
-            totalDisbursed, outstandingPrincipal, fundingInProgress,
-            overdueCount, totalLoans, overdueRatio, totalOverdueFees,
-            totalLenderBalance, totalInvestedAmount,
-            totalAdminFees, totalLoansDisbursed, avgFee
-        );
+        AdminStatistics stats = new AdminStatistics();
+        stats.userStats = new AdminStatistics.UserStats(totalUsers, borrowerCount, lenderCount, adminCount);
+        stats.financialStats = new AdminStatistics.FinancialStats(totalDisbursed, outstandingPrincipal, fundingInProgress, totalLenderBalance, totalInvestedAmount);
+        stats.overdueStats = new AdminStatistics.OverdueStats(overdueCount, totalLoans, overdueRatio, totalOverdueFees);
+        stats.feeStats = new AdminStatistics.FeeStats(totalAdminFees, totalLoansDisbursed, avgFee);
+        return stats;
     }
 
     /**
@@ -472,50 +495,68 @@ private void menuSimulasiTenorSelanjutnya() {
      * Memisahkan logika kalkulasi dari presentasi, memudahkan testing.
      */
     private static class AdminStatistics {
-        final long totalUsers;
-        final long borrowerCount;
-        final long lenderCount;
-        final long adminCount;
-        
-        final BigDecimal totalDisbursed;
-        final BigDecimal outstandingPrincipal;
-        final BigDecimal fundingInProgress;
-        
-        final long overdueCount;
-        final long totalLoans;
-        final double overdueRatio;
-        final BigDecimal totalOverdueFees;
-        
-        final BigDecimal totalLenderBalance;
-        final BigDecimal totalInvestedAmount;
-        
-        final BigDecimal totalAdminFees;
-        final long totalLoansDisbursed;
-        final BigDecimal avgFee;
+        UserStats userStats;
+        FinancialStats financialStats;
+        OverdueStats overdueStats;
+        FeeStats feeStats;
 
-        AdminStatistics(
-            long totalUsers, long borrowerCount, long lenderCount, long adminCount,
-            BigDecimal totalDisbursed, BigDecimal outstandingPrincipal, BigDecimal fundingInProgress,
-            long overdueCount, long totalLoans, double overdueRatio, BigDecimal totalOverdueFees,
-            BigDecimal totalLenderBalance, BigDecimal totalInvestedAmount,
-            BigDecimal totalAdminFees, long totalLoansDisbursed, BigDecimal avgFee
-        ) {
-            this.totalUsers = totalUsers;
-            this.borrowerCount = borrowerCount;
-            this.lenderCount = lenderCount;
-            this.adminCount = adminCount;
-            this.totalDisbursed = totalDisbursed;
-            this.outstandingPrincipal = outstandingPrincipal;
-            this.fundingInProgress = fundingInProgress;
-            this.overdueCount = overdueCount;
-            this.totalLoans = totalLoans;
-            this.overdueRatio = overdueRatio;
-            this.totalOverdueFees = totalOverdueFees;
-            this.totalLenderBalance = totalLenderBalance;
-            this.totalInvestedAmount = totalInvestedAmount;
-            this.totalAdminFees = totalAdminFees;
-            this.totalLoansDisbursed = totalLoansDisbursed;
-            this.avgFee = avgFee;
+        AdminStatistics() {}
+
+        static class UserStats {
+            final long totalUsers;
+            final long borrowerCount;
+            final long lenderCount;
+            final long adminCount;
+
+            UserStats(long totalUsers, long borrowerCount, long lenderCount, long adminCount) {
+                this.totalUsers = totalUsers;
+                this.borrowerCount = borrowerCount;
+                this.lenderCount = lenderCount;
+                this.adminCount = adminCount;
+            }
+        }
+
+        static class FinancialStats {
+            final BigDecimal totalDisbursed;
+            final BigDecimal outstandingPrincipal;
+            final BigDecimal fundingInProgress;
+            final BigDecimal totalLenderBalance;
+            final BigDecimal totalInvestedAmount;
+
+            FinancialStats(BigDecimal totalDisbursed, BigDecimal outstandingPrincipal, BigDecimal fundingInProgress,
+                           BigDecimal totalLenderBalance, BigDecimal totalInvestedAmount) {
+                this.totalDisbursed = totalDisbursed;
+                this.outstandingPrincipal = outstandingPrincipal;
+                this.fundingInProgress = fundingInProgress;
+                this.totalLenderBalance = totalLenderBalance;
+                this.totalInvestedAmount = totalInvestedAmount;
+            }
+        }
+
+        static class OverdueStats {
+            final long overdueCount;
+            final long totalLoans;
+            final double overdueRatio;
+            final BigDecimal totalOverdueFees;
+
+            OverdueStats(long overdueCount, long totalLoans, double overdueRatio, BigDecimal totalOverdueFees) {
+                this.overdueCount = overdueCount;
+                this.totalLoans = totalLoans;
+                this.overdueRatio = overdueRatio;
+                this.totalOverdueFees = totalOverdueFees;
+            }
+        }
+
+        static class FeeStats {
+            final BigDecimal totalAdminFees;
+            final long totalLoansDisbursed;
+            final BigDecimal avgFee;
+
+            FeeStats(BigDecimal totalAdminFees, long totalLoansDisbursed, BigDecimal avgFee) {
+                this.totalAdminFees = totalAdminFees;
+                this.totalLoansDisbursed = totalLoansDisbursed;
+                this.avgFee = avgFee;
+            }
         }
     }
 

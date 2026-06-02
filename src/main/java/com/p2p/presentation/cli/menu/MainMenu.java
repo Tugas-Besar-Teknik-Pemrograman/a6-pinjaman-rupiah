@@ -142,10 +142,7 @@ public class MainMenu {
             logger.info("Password : ");
             String password = scanner.nextLine().trim();
 
-            if (AppContext.ADMIN_EMAIL.equals(email) && AppContext.ADMIN_PASSWORD.equals(password)) {
-                ctx.setCurrentUserId("admin");
-                ctx.setCurrentRole("ADMIN");
-                logger.info("Login berhasil sebagai Admin.");
+            if (checkAdminLogin(email, password)) {
                 loginSukses = true;
                 break;
             }
@@ -155,33 +152,50 @@ public class MainMenu {
                 String userIdStr = user.getId().getValue();
                 ctx.setCurrentUserId(userIdStr);
 
-                // Dynamic role resolution by checking repositories
-                var borrower = ctx.getRepos().getBorrowerRepository().findById(new com.p2p.domain.borrower.BorrowerId(userIdStr));
-                if (borrower != null) {
-                    ctx.linkBorrower(userIdStr, userIdStr);
-                    ctx.setCurrentRole("BORROWER");
-                } else {
-                    var lender = ctx.getRepos().getLenderRepository().findById(new com.p2p.domain.lender.LenderId(userIdStr));
-                    if (lender != null) {
-                        ctx.linkLender(userIdStr, userIdStr);
-                        ctx.setCurrentRole("LENDER");
-                    } else {
-                        ctx.setCurrentRole("USER");
-                    }
-                }
+                setRoleUntukUser(userIdStr);
+
                 logger.log(java.util.logging.Level.INFO, "Login berhasil sebagai {0}.", ctx.getCurrentRole());
                 loginSukses = true;
             } catch (Exception e) {
                 attempt++;
-                final int finalAttempt = attempt;
-                logger.warning(() -> "Login gagal: " + e.getMessage());
-                if (finalAttempt < 3) {
-                    logger.warning(() -> "Kesempatan mencoba: " + (3 - finalAttempt) + " kali lagi.");
-                } else {
-                    logger.warning("Anda telah salah memasukkan email/password sebanyak 3 kali. Kembali ke menu utama.");
-                }
+                tanganiLoginGagal(attempt, e.getMessage());
             }
         }
         return false;
+    }
+
+    private boolean checkAdminLogin(String email, String password) {
+        if (AppContext.ADMIN_EMAIL.equals(email) && AppContext.ADMIN_PASSWORD.equals(password)) {
+            ctx.setCurrentUserId("admin");
+            ctx.setCurrentRole("ADMIN");
+            logger.info("Login berhasil sebagai Admin.");
+            return true;
+        }
+        return false;
+    }
+
+    private void setRoleUntukUser(String userIdStr) {
+        var borrower = ctx.getRepos().getBorrowerRepository().findById(new com.p2p.domain.borrower.BorrowerId(userIdStr));
+        if (borrower != null) {
+            ctx.linkBorrower(userIdStr, userIdStr);
+            ctx.setCurrentRole("BORROWER");
+            return;
+        }
+        var lender = ctx.getRepos().getLenderRepository().findById(new com.p2p.domain.lender.LenderId(userIdStr));
+        if (lender != null) {
+            ctx.linkLender(userIdStr, userIdStr);
+            ctx.setCurrentRole("LENDER");
+            return;
+        }
+        ctx.setCurrentRole("USER");
+    }
+
+    private void tanganiLoginGagal(int attempt, String errMsg) {
+        logger.warning(() -> "Login gagal: " + errMsg);
+        if (attempt < 3) {
+            logger.warning(() -> "Kesempatan mencoba: " + (3 - attempt) + " kali lagi.");
+        } else {
+            logger.warning("Anda telah salah memasukkan email/password sebanyak 3 kali. Kembali ke menu utama.");
+        }
     }
 }

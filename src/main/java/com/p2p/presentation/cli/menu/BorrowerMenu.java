@@ -20,6 +20,7 @@ import java.util.logging.Logger;
 
 public class BorrowerMenu {
 
+    private static final String PROFILE_NOT_FOUND = "Gagal, Profil Borrower tidak ditemukan.";
     private final Logger logger = Logger.getLogger(getClass().getName());
     private final AppContext ctx;
     private final Scanner scanner;
@@ -45,7 +46,7 @@ public class BorrowerMenu {
             String pilihan = scanner.nextLine().trim();
             String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
             if (borrowerIdStr == null) {
-                logger.warning("Gagal, Profil Borrower tidak ditemukan.");
+                logger.warning(PROFILE_NOT_FOUND);
                 return;
             }
             switch (pilihan) {
@@ -104,7 +105,7 @@ public class BorrowerMenu {
 
     private void menuProfil() {
         String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) { logger.warning("Gagal, Profil Borrower tidak ditemukan."); return; }
+        if (borrowerIdStr == null) { logger.warning(PROFILE_NOT_FOUND); return; }
         try {
             Borrower borrower = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
             com.p2p.domain.user.User user = ctx.getRepos().getUserRepository().findById(new com.p2p.domain.user.UserId(ctx.getCurrentUserId()));
@@ -140,7 +141,7 @@ public class BorrowerMenu {
 
     private void menuTopUp() {
         String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) { logger.warning("Gagal, Profil Borrower tidak ditemukan."); return; }
+        if (borrowerIdStr == null) { logger.warning(PROFILE_NOT_FOUND); return; }
         try {
             Borrower borrower = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
             if (borrower == null) { logger.warning("Gagal, data Borrower tidak ditemukan."); return; }
@@ -246,7 +247,7 @@ public class BorrowerMenu {
 
     private void menuLihatStatusPinjaman() {
         String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) { System.out.println("Gagal, Profil Borrower tidak ditemukan."); return; }
+        if (borrowerIdStr == null) { System.out.println(PROFILE_NOT_FOUND); return; }
 
         List<Loan> borrowerLoans = ctx.getRepos().getLoanRepository().findAll().stream()
                 .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
@@ -273,7 +274,7 @@ public class BorrowerMenu {
      */
     private void menuStatusCicilan() {
         String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) { System.out.println("Gagal, Profil Borrower tidak ditemukan."); return; }
+        if (borrowerIdStr == null) { System.out.println(PROFILE_NOT_FOUND); return; }
 
         List<Loan> activeLoans = ctx.getRepos().getLoanRepository().findAll().stream()
                 .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
@@ -329,7 +330,7 @@ public class BorrowerMenu {
      */
     private void menuBayarCicilan() {
         String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) { System.out.println("Gagal, Profil Borrower tidak ditemukan."); return; }
+        if (borrowerIdStr == null) { System.out.println(PROFILE_NOT_FOUND); return; }
 
         try {
             List<Loan> activeLoans = ctx.getRepos().getLoanRepository().findAll().stream()
@@ -368,8 +369,8 @@ public class BorrowerMenu {
             if (loan.getStatusEnum() == LoanStatus.OVERDUE) {
                 Money denda = loan.getDendaBulanIni();
                 Money cicilanNormal = tagihan.subtract(denda != null ? denda : new Money(BigDecimal.ZERO, tagihan.getCurrency()));
-                System.out.printf("Cicilan Normal    : Rp %,.0f%n", cicilanNormal.getAmount());
-                System.out.printf("Denda Overdue (2%%): Rp %,.0f%n", denda != null ? denda.getAmount() : BigDecimal.ZERO);
+                logger.info(() -> String.format("Cicilan Normal    : Rp %,.0f", cicilanNormal.getAmount()));
+                logger.info(() -> String.format("Denda Overdue (2%%): Rp %,.0f", denda != null ? denda.getAmount() : BigDecimal.ZERO));
             }
 
             System.out.printf("Total Tagihan     : Rp %,.0f%n", tagihan.getAmount());
@@ -401,7 +402,7 @@ public class BorrowerMenu {
     private void menuKotakNotifikasi() {
     String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
     if (borrowerIdStr == null) {
-        System.out.println("Gagal, Profil Borrower tidak ditemukan.");
+        System.out.println(PROFILE_NOT_FOUND);
         return;
     }
 

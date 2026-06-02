@@ -94,10 +94,6 @@ public class Loan {
         generateMonthlyBill();
     }
 
-    public void bayarCicilan(String repaymentId, Money jumlahBayar) {
-        bayarCicilan(jumlahBayar);
-    }
-
     public void setInterestStrategy(InterestCalculationStrategy strategy) {
         this.interestStrategy = strategy;
     }

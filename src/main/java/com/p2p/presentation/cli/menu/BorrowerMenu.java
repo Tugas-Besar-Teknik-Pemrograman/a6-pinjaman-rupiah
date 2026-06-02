@@ -16,9 +16,13 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Scanner;
+
 public class BorrowerMenu {
 
     private static final String PROFILE_NOT_FOUND = "Gagal, Profil Borrower tidak ditemukan.";
+    // FIX: Tambahkan konstanta untuk garis pemisah
+    private static final String SEPARATOR_LINE = "------------------------------";
+
     private final AppContext ctx;
     private final Scanner scanner;
 
@@ -249,7 +253,7 @@ public class BorrowerMenu {
             if (loan.getTagihanBulanIni() != null && loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) > 0) {
                 System.out.printf("Tagihan Bulan Ini : Rp %,.0f%n", loan.getTagihanBulanIni().getAmount());
             }
-            System.out.println("------------------------------");
+            System.out.println(SEPARATOR_LINE); // FIX: Memanggil konstanta
         }
     }
 
@@ -277,11 +281,11 @@ public class BorrowerMenu {
             System.out.println("Status     : " + loan.getStatus());
             System.out.printf("Nominal    : Rp %,.0f%n", loan.getTargetNominal().getAmount());
             System.out.printf("Sisa Pokok : Rp %,.0f%n", loan.getSisaTagihanKeseluruhan().getAmount());
-            System.out.println("------------------------------");
+            System.out.println(SEPARATOR_LINE); // FIX: Memanggil konstanta
             System.out.printf("Total Tenor    : %d bulan%n", totalTenor);
             System.out.printf("Sudah Dibayar  : %d cicilan (bulan 1 s/d %d)%n", sudahDibayar, sudahDibayar);
             System.out.printf("Belum Dibayar  : %d cicilan (bulan %d s/d %d)%n", belumDibayar, sudahDibayar + 1, totalTenor);
-            System.out.println("------------------------------");
+            System.out.println(SEPARATOR_LINE); // FIX: Memanggil konstanta
 
             // Detail per cicilan
             Money sisaPokok = loan.getTargetNominal();

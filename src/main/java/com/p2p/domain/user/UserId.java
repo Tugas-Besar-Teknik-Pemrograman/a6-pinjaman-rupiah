@@ -9,7 +9,14 @@ public class UserId {
     private final String value;
 
     public UserId(int role) {
-        String roleCode = (role == 1) ? "BRW" : (role == 2) ? "LND" : "ADM";
+        String roleCode;
+        if (role == 1) {
+            roleCode = "BRW";
+        } else if (role == 2) {
+            roleCode = "LND";
+        } else {
+            roleCode = "ADM";
+        }
         String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
         String uniqueTail = String.format("%04d", RANDOM.nextInt(10000));

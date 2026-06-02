@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("java:S6548")
 public class AppContext {
 
     public static final String ADMIN_EMAIL    = "admin@p2p.com";

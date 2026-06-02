@@ -45,9 +45,10 @@ public class BorrowerMenu {
             System.out.println("2. Top Up Saldo");
             System.out.println("3. Ajukan Pinjaman Baru");
             System.out.println("4. Lihat Status Pinjaman");
-            System.out.println("5. Bayar Cicilan");
-            System.out.println("6. Kotak Notifikasi");
-            System.out.println("7. Logout");
+            System.out.println("5. Lihat Status Cicilan");
+            System.out.println("6. Bayar Cicilan");
+            System.out.println("7. Kotak Notifikasi");
+            System.out.println("8. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
             switch (pilihan) {
@@ -55,9 +56,10 @@ public class BorrowerMenu {
                 case "2" -> menuTopUp(borrowerIdStr);
                 case "3" -> menuAjukanPinjaman(borrowerIdStr);
                 case "4" -> menuLihatStatusPinjaman(borrowerIdStr);
-                case "5" -> menuBayarCicilan(borrowerIdStr);
-                case "6" -> menuKotakNotifikasi(borrowerIdStr);
-                case "7" -> {
+                case "5" -> menuStatusCicilan(borrowerIdStr);
+                case "6" -> menuBayarCicilan(borrowerIdStr);
+                case "7" -> menuKotakNotifikasi(borrowerIdStr);
+                case "8" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
                     kembali = true;
@@ -72,15 +74,18 @@ public class BorrowerMenu {
             Borrower borrower = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
             com.p2p.domain.user.User user = ctx.getRepos().getUserRepository()
                     .findById(new com.p2p.domain.user.UserId(ctx.getCurrentUserId()));
-            if (borrower == null || user == null) return;
+            if (borrower == null || user == null)
+                return;
 
-            final Loan activeLoan = !borrower.hasActiveLoan() ? null : ctx.getRepos().getLoanRepository().findAll().stream()
-                    .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
-                    .filter(l -> {
-                        LoanStatus s = l.getStatusEnum();
-                        return s != LoanStatus.CLOSED && s != LoanStatus.REJECTED && s != LoanStatus.CANCELED;
-                    })
-                    .findFirst().orElse(null);
+            final Loan activeLoan = !borrower.hasActiveLoan() ? null
+                    : ctx.getRepos().getLoanRepository().findAll().stream()
+                            .filter(l -> l.getBorrowerId() != null
+                                    && borrowerIdStr.equals(l.getBorrowerId().getValue()))
+                            .filter(l -> {
+                                LoanStatus s = l.getStatusEnum();
+                                return s != LoanStatus.CLOSED && s != LoanStatus.REJECTED && s != LoanStatus.CANCELED;
+                            })
+                            .findFirst().orElse(null);
 
             System.out.println("\n=== DASHBOARD BORROWER ===");
             System.out.println("Selamat datang, " + user.getNama() + "!");
@@ -91,7 +96,8 @@ public class BorrowerMenu {
                 System.out.println("  - Loan ID          : " + activeLoan.getId().getValue());
                 System.out.println("  - Status Pinjaman  : " + activeLoan.getStatus());
                 System.out.printf("  - Tagihan Bulan Ini: Rp %,.0f%n",
-                        activeLoan.getTagihanBulanIni() != null ? activeLoan.getTagihanBulanIni().getAmount() : BigDecimal.ZERO);
+                        activeLoan.getTagihanBulanIni() != null ? activeLoan.getTagihanBulanIni().getAmount()
+                                : BigDecimal.ZERO);
                 System.out.println("  - Sisa Tenor       : " + activeLoan.getTenorSisa() + " Bulan");
             }
             System.out.print("[Tekan Enter untuk lanjut ke menu] ");
@@ -105,16 +111,22 @@ public class BorrowerMenu {
     private void menuProfil(String borrowerIdStr) {
         try {
             Borrower borrower = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
-            com.p2p.domain.user.User user = ctx.getRepos().getUserRepository().findById(new com.p2p.domain.user.UserId(ctx.getCurrentUserId()));
-            if (borrower == null || user == null) { System.out.println("Gagal, data tidak ditemukan."); return; }
+            com.p2p.domain.user.User user = ctx.getRepos().getUserRepository()
+                    .findById(new com.p2p.domain.user.UserId(ctx.getCurrentUserId()));
+            if (borrower == null || user == null) {
+                System.out.println("Gagal, data tidak ditemukan.");
+                return;
+            }
 
-            final String activeLoanIdStr = !borrower.hasActiveLoan() ? null : ctx.getRepos().getLoanRepository().findAll().stream()
-                    .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
-                    .filter(l -> {
-                        LoanStatus s = l.getStatusEnum();
-                        return s != LoanStatus.CLOSED && s != LoanStatus.REJECTED && s != LoanStatus.CANCELED;
-                    })
-                    .map(l -> l.getId().getValue()).findFirst().orElse(null);
+            final String activeLoanIdStr = !borrower.hasActiveLoan() ? null
+                    : ctx.getRepos().getLoanRepository().findAll().stream()
+                            .filter(l -> l.getBorrowerId() != null
+                                    && borrowerIdStr.equals(l.getBorrowerId().getValue()))
+                            .filter(l -> {
+                                LoanStatus s = l.getStatusEnum();
+                                return s != LoanStatus.CLOSED && s != LoanStatus.REJECTED && s != LoanStatus.CANCELED;
+                            })
+                            .map(l -> l.getId().getValue()).findFirst().orElse(null);
 
             System.out.println("\n=== PROFIL BORROWER ===");
             System.out.println("ID Borrower        : " + borrower.getId().getValue());
@@ -122,8 +134,10 @@ public class BorrowerMenu {
             System.out.println("Email              : " + user.getEmail());
             System.out.println("Usia               : " + user.getUsia() + " tahun");
             System.out.println("Penghasilan Bulanan: Rp " + borrower.getPenghasilan().getAmount());
-            System.out.println("Limit Pinjaman Awal: Rp " + borrower.getLimitPinjaman().getAmount() + " (30% dari Penghasilan)");
-            System.out.println("Status KYC         : " + (borrower.isKycStatus() ? "Terverifikasi" : "Belum Terverifikasi"));
+            System.out.println(
+                    "Limit Pinjaman Awal: Rp " + borrower.getLimitPinjaman().getAmount() + " (30% dari Penghasilan)");
+            System.out.println(
+                    "Status KYC         : " + (borrower.isKycStatus() ? "Terverifikasi" : "Belum Terverifikasi"));
             System.out.println("Credit Score       : " + borrower.getCreditScore());
             System.out.println("Pinjaman Aktif     : " + (borrower.hasActiveLoan() ? "Ada" : "Tidak Ada"));
             if (activeLoanIdStr != null) {
@@ -139,12 +153,16 @@ public class BorrowerMenu {
     private void menuTopUp(String borrowerIdStr) {
         try {
             Borrower borrower = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
-            if (borrower == null) { System.out.println("Gagal, data Borrower tidak ditemukan."); return; }
+            if (borrower == null) {
+                System.out.println("Gagal, data Borrower tidak ditemukan.");
+                return;
+            }
             System.out.println("\n--- Top Up Saldo Borrower ---");
             System.out.println("Saldo saat ini : Rp " + borrower.getSaldoBalance().getAmount());
             System.out.print("Masukkan nominal top up (Rp, 0 untuk batal): ");
             long nominal = Long.parseLong(scanner.nextLine().trim());
-            if (nominal <= 0) return;
+            if (nominal <= 0)
+                return;
             borrower.tambahSaldo(new Money(BigDecimal.valueOf(nominal), Money.IDR));
             ctx.getRepos().getBorrowerRepository().save(borrower);
             System.out.println("Top up berhasil! Saldo terbaru: Rp " + borrower.getSaldoBalance().getAmount());
@@ -159,7 +177,10 @@ public class BorrowerMenu {
         System.out.println("\n=== AJUKAN PINJAMAN BARU ===");
         try {
             var borrowerObj = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
-            if (borrowerObj == null) { System.out.println("Gagal, data Borrower tidak ditemukan."); return; }
+            if (borrowerObj == null) {
+                System.out.println("Gagal, data Borrower tidak ditemukan.");
+                return;
+            }
 
             System.out.print("Masukkan Nominal Pinjaman (Rp): ");
             long nominal = Long.parseLong(scanner.nextLine().trim());
@@ -176,8 +197,10 @@ public class BorrowerMenu {
             };
 
             Money nominalPinjaman = new Money(BigDecimal.valueOf(nominal), Money.IDR);
-            // B2: Validasi (KYC, credit score, minimal, kelipatan, active loan, limit) diserahkan
-            // sepenuhnya ke Borrower.validasiPinjaman via ajukanPinjaman — tidak diduplikasi di sini.
+            // B2: Validasi (KYC, credit score, minimal, kelipatan, active loan, limit)
+            // diserahkan
+            // sepenuhnya ke Borrower.validasiPinjaman via ajukanPinjaman — tidak
+            // diduplikasi di sini.
 
             Money principalPerMonth = nominalPinjaman.divide(BigDecimal.valueOf(tenor), RoundingMode.HALF_UP);
             Money adminFee = nominalPinjaman.multiply(new BigDecimal("0.01"));
@@ -227,9 +250,11 @@ public class BorrowerMenu {
                 return;
             }
 
-            Loan loan = ctx.getLoanService().ajukanPinjaman(new BorrowerId(borrowerIdStr), nominalPinjaman, tenor, interestType);
+            Loan loan = ctx.getLoanService().ajukanPinjaman(new BorrowerId(borrowerIdStr), nominalPinjaman, tenor,
+                    interestType);
             System.out.println("Berhasil! ID: " + loan.getId().getValue());
-            System.out.printf("Biaya Admin (1%%): Rp %,.0f (dipotong saat pencairan)%n", loan.getAdminFee().getAmount());
+            System.out.printf("Biaya Admin (1%%): Rp %,.0f (dipotong saat pencairan)%n",
+                    loan.getAdminFee().getAmount());
             System.out.printf("Estimasi Bersih : Rp %,.0f%n", nominalPinjaman.subtract(loan.getAdminFee()).getAmount());
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -242,7 +267,10 @@ public class BorrowerMenu {
                 .toList();
 
         System.out.println("\n--- Status Pinjaman Anda ---");
-        if (borrowerLoans.isEmpty()) { System.out.println("Anda belum memiliki pinjaman."); return; }
+        if (borrowerLoans.isEmpty()) {
+            System.out.println("Anda belum memiliki pinjaman.");
+            return;
+        }
 
         for (Loan loan : borrowerLoans) {
             System.out.printf("Loan ID : %s%n", loan.getId().getValue());
@@ -250,16 +278,14 @@ public class BorrowerMenu {
             System.out.printf("Nominal : Rp %,.0f%n", loan.getTargetNominal().getAmount());
             System.out.printf("Sisa Pokok : Rp %,.0f%n", loan.getSisaTagihanKeseluruhan().getAmount());
             System.out.printf("Tenor   : %d bulan tersisa dari %d%n", loan.getTenorSisa(), loan.getTenor());
-            if (loan.getTagihanBulanIni() != null && loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) > 0) {
+            if (loan.getTagihanBulanIni() != null
+                    && loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) > 0) {
                 System.out.printf("Tagihan Bulan Ini : Rp %,.0f%n", loan.getTagihanBulanIni().getAmount());
             }
             System.out.println(SEPARATOR_LINE); // FIX: Memanggil konstanta
         }
     }
 
-    /**
-     * POIN 2: Menu status cicilan — tampilkan cicilan yang sudah dan belum dibayar
-     */
     private void menuStatusCicilan(String borrowerIdStr) {
         List<Loan> activeLoans = ctx.getRepos().getLoanRepository().findAll().stream()
                 .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
@@ -310,8 +336,10 @@ public class BorrowerMenu {
         }
     }
 
+
     /**
-     * POIN 3 & 4: Bayar cicilan harus pas sesuai tagihan + tampilkan cicilan ke berapa
+     * POIN 3 & 4: Bayar cicilan harus pas sesuai tagihan + tampilkan cicilan ke
+     * berapa
      */
     private void menuBayarCicilan(String borrowerIdStr) {
         try {
@@ -336,7 +364,8 @@ public class BorrowerMenu {
 
             Money tagihan = loan.getTagihanBulanIni();
             if (tagihan == null || !tagihan.isGreaterThan(new Money(BigDecimal.ZERO, tagihan.getCurrency()))) {
-                System.out.println("Tagihan bulan ini belum tersedia. Silakan simulasi tenor berikutnya terlebih dahulu.");
+                System.out.println(
+                        "Tagihan bulan ini belum tersedia. Silakan simulasi tenor berikutnya terlebih dahulu.");
                 return;
             }
 
@@ -350,14 +379,17 @@ public class BorrowerMenu {
 
             if (loan.getStatusEnum() == LoanStatus.OVERDUE) {
                 Money denda = loan.getDendaBulanIni();
-                Money cicilanNormal = tagihan.subtract(denda != null ? denda : new Money(BigDecimal.ZERO, tagihan.getCurrency()));
+                Money cicilanNormal = tagihan
+                        .subtract(denda != null ? denda : new Money(BigDecimal.ZERO, tagihan.getCurrency()));
                 System.out.printf("Cicilan Normal    : Rp %,.0f%n", cicilanNormal.getAmount());
-                System.out.printf("Denda Overdue (2%%): Rp %,.0f%n", denda != null ? denda.getAmount() : BigDecimal.ZERO);
+                System.out.printf("Denda Overdue (2%%): Rp %,.0f%n",
+                        denda != null ? denda.getAmount() : BigDecimal.ZERO);
             }
 
             System.out.printf("Total Tagihan     : Rp %,.0f%n", tagihan.getAmount());
             System.out.printf("Saldo Anda        : Rp %,.0f%n",
-                    ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr)).getSaldoBalance().getAmount());
+                    ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr)).getSaldoBalance()
+                            .getAmount());
             System.out.println("--------------------------");
             // POIN 3: bayar harus pas, langsung pakai tagihan
             System.out.println("Pembayaran akan dilakukan sebesar tagihan penuh.");
@@ -383,16 +415,16 @@ public class BorrowerMenu {
 
     private void menuKotakNotifikasi(String borrowerIdStr) {
 
-    System.out.println("\n=== KOTAK NOTIFIKASI ===");
-    List<String> notifs = ctx.getNotificationService().getNotifikasi(borrowerIdStr);
-    if (notifs.isEmpty()) {
-        System.out.println("Belum ada notifikasi.");
-    } else {
-        System.out.println("Notifikasi terbaru:");
-        for (int i = 0; i < notifs.size(); i++) {
-            System.out.println("  [" + (i + 1) + "] " + notifs.get(i));
+        System.out.println("\n=== KOTAK NOTIFIKASI ===");
+        List<String> notifs = ctx.getNotificationService().getNotifikasi(borrowerIdStr);
+        if (notifs.isEmpty()) {
+            System.out.println("Belum ada notifikasi.");
+        } else {
+            System.out.println("Notifikasi terbaru:");
+            for (int i = 0; i < notifs.size(); i++) {
+                System.out.println("  [" + (i + 1) + "] " + notifs.get(i));
+            }
         }
+        System.out.println("========================");
     }
-    System.out.println("========================");
-}
 }

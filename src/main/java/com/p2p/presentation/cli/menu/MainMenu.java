@@ -5,6 +5,10 @@ import java.util.Scanner;
 
 public class MainMenu {
 
+    public static final String ROLE_ADMIN = "ADMIN";
+    public static final String ROLE_BORROWER = "BORROWER";
+    public static final String ROLE_LENDER = "LENDER";
+
     private final AppContext ctx;
     private final Scanner scanner;
 
@@ -25,11 +29,11 @@ public class MainMenu {
                 }
             } else {
                 String role = ctx.getCurrentRole();
-                if ("ADMIN".equals(role)) {
+                if (ROLE_ADMIN.equals(role)) {
                     new AdminMenu(scanner).tampil();
-                } else if ("BORROWER".equals(role)) {
+                } else if (ROLE_BORROWER.equals(role)) {
                     new BorrowerMenu(scanner).tampil();
-                } else if ("LENDER".equals(role)) {
+                } else if (ROLE_LENDER.equals(role)) {
                     new LenderMenu(scanner).tampil();
                 }
             }
@@ -112,7 +116,7 @@ public class MainMenu {
             System.out.println("------------------------------------------");
             System.out.println("Registrasi Berhasil!");
             System.out.println("ID User : " + user.getId().getValue());
-            System.out.println("Role    : " + (role == 1 ? "BORROWER" : "LENDER"));
+            System.out.println("Role    : " + (role == 1 ? ROLE_BORROWER : ROLE_LENDER));
             if (role == 1) {
                 var borrower = ctx.getRepos().getBorrowerRepository().findById(new com.p2p.domain.borrower.BorrowerId(user.getId().getValue()));
                 if (borrower != null) {
@@ -165,7 +169,7 @@ public class MainMenu {
     private boolean checkAdminLogin(String email, String password) {
         if (AppContext.ADMIN_EMAIL.equals(email) && AppContext.ADMIN_PASSWORD.equals(password)) {
             ctx.setCurrentUserId("admin");
-            ctx.setCurrentRole("ADMIN");
+            ctx.setCurrentRole(ROLE_ADMIN);
             System.out.println("Login berhasil sebagai Admin.");
             return true;
         }
@@ -176,13 +180,13 @@ public class MainMenu {
         var borrower = ctx.getRepos().getBorrowerRepository().findById(new com.p2p.domain.borrower.BorrowerId(userIdStr));
         if (borrower != null) {
             ctx.linkBorrower(userIdStr, userIdStr);
-            ctx.setCurrentRole("BORROWER");
+            ctx.setCurrentRole(ROLE_BORROWER);
             return;
         }
         var lender = ctx.getRepos().getLenderRepository().findById(new com.p2p.domain.lender.LenderId(userIdStr));
         if (lender != null) {
             ctx.linkLender(userIdStr, userIdStr);
-            ctx.setCurrentRole("LENDER");
+            ctx.setCurrentRole(ROLE_LENDER);
             return;
         }
         ctx.setCurrentRole("USER");

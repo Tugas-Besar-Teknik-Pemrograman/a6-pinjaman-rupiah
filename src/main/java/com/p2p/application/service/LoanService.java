@@ -87,67 +87,85 @@ public class LoanService {
     }
 
     public BayarCicilanResult bayarCicilan(LoanId loanId, Money amount) {
-        Loan loan = loanRepository.findById(loanId);
-        if (loan == null) throw new LoanNotFoundException("Loan tidak ditemukan");
+        Loan loan = getLoanOrThrow(loanId);
+        validasiStatusLoan(loan);
 
-        LoanStatus status = loan.getStatusEnum();
-        if (status == LoanStatus.REJECTED || status == LoanStatus.CANCELED) {
-            throw new IllegalStateException("Loan yang ditolak tidak bisa dibayar cicilannya");
-        }
+        Borrower borrower = getBorrowerOrThrow(loan);
+        Money tagihanBulanIni = validasiTagihanDanSaldo(loan, borrower, amount);
 
-        Borrower borrower = borrowerRepository.findById(loan.getBorrowerId());
-        if (borrower == null) throw new BorrowerNotFoundException("Borrower tidak ditemukan");
-
-        Money tagihanBulanIni = loan.getTagihanBulanIni();
-        if (tagihanBulanIni == null || tagihanBulanIni.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new TagihanBelumTersediaException("Tagihan bulan ini belum tersedia");
-        }
-
-        if (borrower.getSaldoBalance().getAmount().compareTo(tagihanBulanIni.getAmount()) < 0) {
-            throw new IllegalStateException("Saldo borrower tidak mencukupi untuk membayar tagihan bulan ini");
-        }
-
-        // Bayar tidak boleh kurang dari tagihan
-        if (amount.getAmount().compareTo(tagihanBulanIni.getAmount()) < 0) {
-            throw new IllegalStateException("Nominal pembayaran kurang dari nominal tagihan");
-        }
-
-        // Snapshot distribusi sebelum bill di-nolkan
         Map<LenderId, Money> distribusiCicilan = loan.hitungDistribusiCicilan();
 
         borrower.kurangiSaldo(tagihanBulanIni);
         loan.bayarCicilan(amount);
 
         loanRepository.save(loan);
-        borrowerRepository.save(borrower);
+        simpanBorrowerDanUpdateStatus(loan, borrower);
 
-        if (loan.getStatusEnum() == LoanStatus.CLOSED) {
-            borrower.setHasActiveLoan(false);
-            borrowerRepository.save(borrower);
-        }
-
-        // PERBAIKAN: semua cicilan (termasuk denda) masuk ke lender, bukan admin
-        if (lenderRepository != null) {
-            for (Map.Entry<LenderId, Money> entry : distribusiCicilan.entrySet()) {
-                if (entry.getValue().getAmount().compareTo(BigDecimal.ZERO) <= 0) continue;
-                Lender lender = lenderRepository.findById(entry.getKey());
-                if (lender != null) {
-                    lender.tambahSaldo(entry.getValue());
-                    lender.tambahReturn(new ReturnRecord(loan.getId(), LocalDate.now(), entry.getValue()));
-                    lenderRepository.save(lender);
-                }
-            }
-        }
-
-        // Fire event cicilan & lunas ke borrower
-        if (loanEventPublisher != null) {
-            loanEventPublisher.publishCicilanBerhasil(new CicilanBerhasilEvent(loanId, loan.getBorrowerId(), tagihanBulanIni));
-            if (loan.getStatusEnum() == LoanStatus.CLOSED) {
-                loanEventPublisher.publishPinjamanLunas(new PinjamanLunasEvent(loanId, loan.getBorrowerId()));
-            }
-        }
+        distribusikanCicilanKeLender(loan, distribusiCicilan);
+        publishEventCicilan(loanId, loan, tagihanBulanIni);
 
         return new BayarCicilanResult(tagihanBulanIni, amount, loan.getTenorSisa(), loan.getStatus());
+    }
+
+    private Loan getLoanOrThrow(LoanId loanId) {
+        Loan loan = loanRepository.findById(loanId);
+        if (loan == null) throw new LoanNotFoundException("Loan tidak ditemukan");
+        return loan;
+    }
+
+    private void validasiStatusLoan(Loan loan) {
+        LoanStatus status = loan.getStatusEnum();
+        if (status == LoanStatus.REJECTED || status == LoanStatus.CANCELED) {
+            throw new IllegalStateException("Loan yang ditolak tidak bisa dibayar cicilannya");
+        }
+    }
+
+    private Borrower getBorrowerOrThrow(Loan loan) {
+        Borrower borrower = borrowerRepository.findById(loan.getBorrowerId());
+        if (borrower == null) throw new BorrowerNotFoundException("Borrower tidak ditemukan");
+        return borrower;
+    }
+
+    private Money validasiTagihanDanSaldo(Loan loan, Borrower borrower, Money amount) {
+        Money tagihanBulanIni = loan.getTagihanBulanIni();
+        if (tagihanBulanIni == null || tagihanBulanIni.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new TagihanBelumTersediaException("Tagihan bulan ini belum tersedia");
+        }
+        if (borrower.getSaldoBalance().getAmount().compareTo(tagihanBulanIni.getAmount()) < 0) {
+            throw new IllegalStateException("Saldo borrower tidak mencukupi untuk membayar tagihan bulan ini");
+        }
+        if (amount.getAmount().compareTo(tagihanBulanIni.getAmount()) < 0) {
+            throw new IllegalStateException("Nominal pembayaran kurang dari nominal tagihan");
+        }
+        return tagihanBulanIni;
+    }
+
+    private void simpanBorrowerDanUpdateStatus(Loan loan, Borrower borrower) {
+        if (loan.getStatusEnum() == LoanStatus.CLOSED) {
+            borrower.setHasActiveLoan(false);
+        }
+        borrowerRepository.save(borrower);
+    }
+
+    private void distribusikanCicilanKeLender(Loan loan, Map<LenderId, Money> distribusiCicilan) {
+        if (lenderRepository == null) return;
+        for (Map.Entry<LenderId, Money> entry : distribusiCicilan.entrySet()) {
+            if (entry.getValue().getAmount().compareTo(BigDecimal.ZERO) <= 0) continue;
+            Lender lender = lenderRepository.findById(entry.getKey());
+            if (lender != null) {
+                lender.tambahSaldo(entry.getValue());
+                lender.tambahReturn(new ReturnRecord(loan.getId(), LocalDate.now(), entry.getValue()));
+                lenderRepository.save(lender);
+            }
+        }
+    }
+
+    private void publishEventCicilan(LoanId loanId, Loan loan, Money tagihanBulanIni) {
+        if (loanEventPublisher == null) return;
+        loanEventPublisher.publishCicilanBerhasil(new CicilanBerhasilEvent(loanId, loan.getBorrowerId(), tagihanBulanIni));
+        if (loan.getStatusEnum() == LoanStatus.CLOSED) {
+            loanEventPublisher.publishPinjamanLunas(new PinjamanLunasEvent(loanId, loan.getBorrowerId()));
+        }
     }
 
     public void prosesPencairan(LoanId loanId) {

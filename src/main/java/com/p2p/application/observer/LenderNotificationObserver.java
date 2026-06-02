@@ -2,8 +2,11 @@ package com.p2p.application.observer;
 
 import com.p2p.application.service.NotificationService;
 import com.p2p.domain.event.*;
+import java.util.logging.Logger;
 
 public class LenderNotificationObserver implements LoanObserver {
+
+    private static final Logger LOGGER = Logger.getLogger(LenderNotificationObserver.class.getName());
 
     private NotificationService notificationService;
 
@@ -12,7 +15,7 @@ public class LenderNotificationObserver implements LoanObserver {
     }
 
     private void simpan(String userId, String pesan) {
-        System.out.println(pesan);
+        LOGGER.info(pesan);
         if (notificationService != null && userId != null) {
             notificationService.simpanNotifikasi(userId, pesan);
         }

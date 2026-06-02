@@ -5,6 +5,7 @@ import com.p2p.domain.lender.LenderRepository;
 import com.p2p.domain.loan.LoanRepository;
 import com.p2p.domain.user.UserRepository;
 
+@SuppressWarnings("java:S6548")
 public class RepositoryFactory {
 
     private static RepositoryFactory instance;

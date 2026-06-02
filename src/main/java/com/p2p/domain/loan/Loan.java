@@ -35,13 +35,17 @@ public class Loan {
     private Map<LenderId, Money> daftarPendana;
     private Money adminFee;
 
-    private LocalDate tanggalDibuat;
     private LocalDate tanggalKadaluarsaFunding;
     private LocalDate tanggalJatuhTempo;
 
     private static final int BATAS_HARI_FUNDING = 28;
-    // PERBAIKAN: denda = 2% dari sisa pokok (bukan flat 50rb)
     private static final BigDecimal RATE_DENDA_OVERDUE = new BigDecimal("0.02");
+
+    private static final String STATUS_PENDING = "PENDING";
+    private static final String STATUS_FUNDING = "FUNDING";
+    private static final String STATUS_DISBURSED = "DISBURSED";
+    private static final String STATUS_REPAYMENT = "REPAYMENT";
+    private static final String STATUS_OVERDUE = "OVERDUE";
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal, int tenor) {
         this.loanid = loanid;
@@ -53,7 +57,7 @@ public class Loan {
         this.sisaPokok = targetNominal;
         this.totalTerkumpul = new Money(BigDecimal.ZERO, Money.IDR);
         this.daftarPendana = new HashMap<>();
-        this.status = "PENDING";
+        this.status = STATUS_PENDING;
         this.currentMonthBill = new Money(BigDecimal.ZERO, Money.IDR);
         this.dendaBulanIni = new Money(BigDecimal.ZERO, Money.IDR);
         this.maturityDate = 0;
@@ -89,7 +93,7 @@ public class Loan {
     }
 
     public void cairkanPinjaman() {
-        this.tanggalJatuhTempo = LocalDate.now().plusDays(28);
+        this.tanggalJatuhTempo = LocalDate.now().plusDays(BATAS_HARI_FUNDING);
         LoanStateFactory.disbursed().ubahStatus(this);
         generateMonthlyBill();
     }
@@ -110,7 +114,7 @@ public class Loan {
         Money tagihanNormal = this.interestStrategy.hitungCicilan(
                 this.targetNominal, this.sisaPokok, this.tenor);
 
-        if ("OVERDUE".equals(this.status)) {
+        if (STATUS_OVERDUE.equals(this.status)) {
             BigDecimal denda = this.sisaPokok.getAmount()
                     .multiply(RATE_DENDA_OVERDUE)
                     .setScale(0, RoundingMode.HALF_UP);
@@ -124,7 +128,7 @@ public class Loan {
     }
 
     public void bayarCicilan(Money paymentAmount) {
-        if (!"DISBURSED".equals(this.status) && !"REPAYMENT".equals(this.status) && !"OVERDUE".equals(this.status)) {
+        if (!STATUS_DISBURSED.equals(this.status) && !STATUS_REPAYMENT.equals(this.status) && !STATUS_OVERDUE.equals(this.status)) {
             throw new IllegalStateException("Pinjaman belum dicairkan atau tidak aktif untuk pembayaran.");
         }
         if (this.currentMonthBill == null) {
@@ -139,7 +143,7 @@ public class Loan {
         }
 
         // Catat denda ke total denda terkumpul sebelum di-nolkan
-        if ("OVERDUE".equals(this.status) && this.dendaBulanIni != null
+        if (STATUS_OVERDUE.equals(this.status) && this.dendaBulanIni != null
                 && this.dendaBulanIni.getAmount().compareTo(BigDecimal.ZERO) > 0) {
             tambahDenda(this.dendaBulanIni);
         }
@@ -159,7 +163,7 @@ public class Loan {
             this.tanggalJatuhTempo = LocalDate.now().plusDays(30);
         }
 
-        if (this.status.equals("DISBURSED") || this.status.equals("OVERDUE")) {
+        if (STATUS_DISBURSED.equals(this.status) || STATUS_OVERDUE.equals(this.status)) {
             LoanStateFactory.repayment().ubahStatus(this);
         }
 
@@ -183,18 +187,18 @@ public class Loan {
     }
 
     public boolean isPinjamanExpired() {
-        if (!"FUNDING".equals(this.status)) return false;
+        if (!STATUS_FUNDING.equals(this.status)) return false;
         return LocalDate.now().isAfter(this.tanggalKadaluarsaFunding);
     }
 
     public boolean isPinjamanOverdue() {
-        if (!"DISBURSED".equals(this.status) && !"REPAYMENT".equals(this.status)) return false;
+        if (!STATUS_DISBURSED.equals(this.status) && !STATUS_REPAYMENT.equals(this.status)) return false;
         if (this.tanggalJatuhTempo == null) return false;
         return LocalDate.now().isAfter(this.tanggalJatuhTempo);
     }
 
     public boolean apakahOverdueSudahDibayar() {
-        if (!"OVERDUE".equals(this.status)) return false;
+        if (!STATUS_OVERDUE.equals(this.status)) return false;
         if (this.currentMonthBill == null) return false;
         return this.currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) == 0;
     }
@@ -251,7 +255,7 @@ public class Loan {
     }
 
     public boolean isLayakNotifikasiPencairan() {
-        return this.status.equals("DISBURSED");
+        return STATUS_DISBURSED.equals(this.status);
     }
 
     public LoanId getId() {
@@ -353,7 +357,7 @@ public class Loan {
     }
 
     public Money hitungEstimasiReturnLender(LenderId lenderId) {
-        if (!"DISBURSED".equals(status) && !"REPAYMENT".equals(status) && !"OVERDUE".equals(status)) {
+        if (!STATUS_DISBURSED.equals(status) && !STATUS_REPAYMENT.equals(status) && !STATUS_OVERDUE.equals(status)) {
             return new Money(BigDecimal.ZERO, Money.IDR);
         }
         Money investasi = daftarPendana.get(lenderId);

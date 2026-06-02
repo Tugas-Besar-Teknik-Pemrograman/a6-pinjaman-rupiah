@@ -195,13 +195,15 @@ class LoanInstallmentTest {
             loan.getTotalDendaTerkumpul().getAmount()));
     }
 
+    // FIX: tambah ubahStatus("FUNDING") sebelum tambahPendanaan
     @Test
     void findByLenderId_lenderAdaDiLoan_mengembalikanLoanTersebut() {
         LenderId lenderId = new LenderId("LND-P01");
         Money target = new Money(new BigDecimal("5000000"), "IDR");
 
         Loan loan = new Loan(new LoanId("LN-P01"), new BorrowerId("BR-001"), target, 6);
-        loan.tambahPendanaan(lenderId, target); // → auto FUNDING_READY
+        loan.ubahStatus("FUNDING"); // wajib sebelum tambahPendanaan
+        loan.tambahPendanaan(lenderId, target);
 
         InMemoryLoanRepository repo = new InMemoryLoanRepository();
         repo.save(loan);
@@ -212,8 +214,9 @@ class LoanInstallmentTest {
         assertEquals("LN-P01", hasil.get(0).getId().getValue());
     }
 
-    // TDD: Denda OVERDUE tidak masuk distribusi lender
+    // TDD: Denda OVERDUE masuk ke distribusi lender
 
+    // FIX: tambah ubahStatus("FUNDING") sebelum tambahPendanaan
     @Test
     void hitungDistribusiCicilan_statusOverdue_dendaMasukKeDistribusiLender() {
         Money target = new Money(new BigDecimal("10000000"), "IDR");
@@ -221,6 +224,7 @@ class LoanInstallmentTest {
 
         Loan loan = new Loan(new LoanId("LN-O01"), new BorrowerId("BR-001"), target, 5);
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.ubahStatus("FUNDING"); // wajib sebelum tambahPendanaan
         loan.tambahPendanaan(lenderId, target);
         loan.ubahStatus("OVERDUE");
         loan.generateMonthlyBill(); // tagihan = 2.500.000 + 200.000 denda = 2.700.000
@@ -236,18 +240,20 @@ class LoanInstallmentTest {
     void generateMonthlyBill_tanpaStrategy_melempar_exception() {
         Loan loan = new Loan(new LoanId("LN-A3A"), new BorrowerId("BR-A3A"),
                              new Money(new BigDecimal("1000000"), "IDR"), 5);
-        loan.ubahStatus("DISBURSED"); // interestStrategy tidak di-set
+        loan.ubahStatus("DISBURSED");
 
         assertThrows(IllegalStateException.class, loan::generateMonthlyBill,
             "generateMonthlyBill harus melempar exception jika interestStrategy belum di-set");
     }
 
+    // FIX: tambah ubahStatus("FUNDING") sebelum tambahPendanaan
     @Test
     void hitungEstimasiReturnLender_proporsi_setengah_dari_cicilan() {
         LenderId lenderId = new LenderId("LND-RET-01");
         Loan loan = new Loan(new LoanId("LN-RET-01"), new BorrowerId("BR-RET-01"),
                              new Money(new BigDecimal("1000000"), "IDR"), 5);
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.ubahStatus("FUNDING"); // wajib sebelum tambahPendanaan
         loan.tambahPendanaan(lenderId, new Money(new BigDecimal("500000"), "IDR")); // 50% dari target
         loan.ubahStatus("DISBURSED");
 
@@ -259,14 +265,16 @@ class LoanInstallmentTest {
             "Return lender harus proporsional terhadap bagian investasinya");
     }
 
+    // FIX: tambah ubahStatus("FUNDING") sebelum tambahPendanaan
     @Test
     void hitungEstimasiReturnLender_status_funding_return_nol() {
         LenderId lenderId = new LenderId("LND-RET-02");
         Loan loan = new Loan(new LoanId("LN-RET-02"), new BorrowerId("BR-RET-02"),
                              new Money(new BigDecimal("1000000"), "IDR"), 5);
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.ubahStatus("FUNDING"); // wajib sebelum tambahPendanaan
         loan.tambahPendanaan(lenderId, new Money(new BigDecimal("500000"), "IDR"));
-        loan.ubahStatus("FUNDING"); // belum cair, belum ada return
+        loan.ubahStatus("FUNDING"); // kembalikan ke FUNDING untuk test ini
 
         Money result = loan.hitungEstimasiReturnLender(lenderId);
 
@@ -274,6 +282,7 @@ class LoanInstallmentTest {
             "Return harus nol jika loan belum dicairkan");
     }
 
+    // FIX: tambah ubahStatus("FUNDING") sebelum tambahPendanaan
     @Test
     void findByLenderId_lenderTidakAdaDiLoan_mengembalikanListKosong() {
         LenderId lenderAda = new LenderId("LND-P02");
@@ -281,6 +290,7 @@ class LoanInstallmentTest {
         Money target = new Money(new BigDecimal("5000000"), "IDR");
 
         Loan loan = new Loan(new LoanId("LN-P02"), new BorrowerId("BR-001"), target, 6);
+        loan.ubahStatus("FUNDING"); // wajib sebelum tambahPendanaan
         loan.tambahPendanaan(lenderAda, target);
 
         InMemoryLoanRepository repo = new InMemoryLoanRepository();

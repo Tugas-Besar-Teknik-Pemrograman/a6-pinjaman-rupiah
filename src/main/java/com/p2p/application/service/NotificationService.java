@@ -13,11 +13,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public class NotificationService {
-
-    private static final Logger LOGGER = Logger.getLogger(NotificationService.class.getName());
     private final LoanRepository loanRepository;
     private final BorrowerNotificationObserver notificationObserver;
 
@@ -48,7 +45,7 @@ public class NotificationService {
     }
 
     public void kirimNotifikasi(BorrowerId borrowerId, String message) {
-        LOGGER.info("Notifikasi ke Borrower " + borrowerId + ": " + message);
+        System.out.println("Notifikasi ke Borrower " + borrowerId + ": " + message);
         // Simpan ke kotak notifikasi agar dapat diakses borrower di menu
         simpanNotifikasi(borrowerId.getValue(), message);
     }

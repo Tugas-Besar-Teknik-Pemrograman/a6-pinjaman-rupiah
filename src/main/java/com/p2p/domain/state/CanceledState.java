@@ -2,7 +2,7 @@ package com.p2p.domain.state;
 
 import com.p2p.domain.loan.Loan;
 
-public class CancelledState implements State {
+public class CanceledState implements State {
 
 	@Override
 	public void ubahStatus(Loan loan) {

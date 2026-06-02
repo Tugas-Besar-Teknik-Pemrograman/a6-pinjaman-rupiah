@@ -26,7 +26,7 @@ public final class LoanStateFactory {
 	}
 
 	public static State cancelled() {
-		return new CancelledState();
+		return new CanceledState();
 	}
 
 	public static State overdue() {

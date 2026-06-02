@@ -3,10 +3,11 @@ package com.p2p.domain.lender;
 import java.util.Objects;
 
 public class LenderId {
+    private static final java.security.SecureRandom RANDOM = new java.security.SecureRandom();
     private final String value;
 
     public LenderId() {
-        this.value = "LND-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 100);
+        this.value = "LND-" + System.currentTimeMillis() + "-" + RANDOM.nextInt(100);
     }
     
     public LenderId(String value) {

@@ -5,13 +5,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 public class UserId {
+    private static final java.security.SecureRandom RANDOM = new java.security.SecureRandom();
     private final String value;
 
     public UserId(int role) {
         String roleCode = (role == 1) ? "BRW" : (role == 2) ? "LND" : "ADM";
         String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
-        String uniqueTail = String.format("%04d", (int)(Math.random() * 10000));
+        String uniqueTail = String.format("%04d", RANDOM.nextInt(10000));
 
         this.value = "USR-" + roleCode + "-" + datePart + "-" + uniqueTail;
     }

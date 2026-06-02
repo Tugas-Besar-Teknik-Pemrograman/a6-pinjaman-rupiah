@@ -46,6 +46,8 @@ public class NotificationService {
 
     public void kirimNotifikasi(BorrowerId borrowerId, String message) {
         System.out.println("Notifikasi ke Borrower " + borrowerId + ": " + message);
+        // Simpan ke kotak notifikasi agar dapat diakses borrower di menu
+        simpanNotifikasi(borrowerId.getValue(), message);
     }
 
     // Simpan notifikasi ke kotak per userId

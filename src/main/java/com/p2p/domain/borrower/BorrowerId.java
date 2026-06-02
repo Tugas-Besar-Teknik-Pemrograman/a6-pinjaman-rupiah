@@ -3,10 +3,11 @@ package com.p2p.domain.borrower;
 import java.util.Objects;
 
 public class BorrowerId {
+    private static final java.security.SecureRandom RANDOM = new java.security.SecureRandom();
     private final String value;
 
     public BorrowerId() {
-        this.value = "BR-" + System.currentTimeMillis() + "-" + (int)(Math.random() * 100);
+        this.value = "BR-" + System.currentTimeMillis() + "-" + RANDOM.nextInt(100);
     }
 
     public BorrowerId(String value) {

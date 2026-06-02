@@ -18,6 +18,8 @@ public class LenderMenu {
     private static final String LABEL_LOAN_ID = "Loan ID";
     private static final String MSG_INPUT_NOMINAL_GAGAL = "Gagal, input nominal harus berupa angka!";
     private static final String FORMAT_RUPIAH = "%,.0f";
+    private static final String FORMAT_BOX_ROW = "| %-20s: %-27s |%n";
+    private static final String FORMAT_BOX_ROW_RP = "| %-20s: Rp %-24s |%n";
 
     private final AppContext ctx;
     private final Scanner scanner;
@@ -215,7 +217,10 @@ public class LenderMenu {
         String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
         LenderId lenderId = new LenderId(lenderIdStr);
         Lender lender = ctx.getRepos().getLenderRepository().findById(lenderId);
+        prosesInvestasi(lenderId, lender, dipilih);
+    }
 
+    private void prosesInvestasi(LenderId lenderId, Lender lender, Loan dipilih) {
         System.out.println("\nSaldo Anda saat ini: Rp " + String.format(FORMAT_RUPIAH, lender.getSaldoBalance().getAmount()));
         System.out.print("Masukkan nominal investasi (Rp, min 100.000, kelipatan 100.000, 0 untuk batal): ");
         try {
@@ -271,22 +276,24 @@ public class LenderMenu {
             var borrower = ctx.getRepos().getBorrowerRepository()
                     .findById(new com.p2p.domain.borrower.BorrowerId(loan.getBorrowerId().getValue()));
             if (borrower != null) creditScore = borrower.getCreditScore();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            // credit score tidak tersedia, gunakan nilai default 0
+        }
 
         String bunga = loan.getJenisBunga() != null ? loan.getJenisBunga().toUpperCase() : "-";
 
         System.out.println("\n+--------------------------------------------------+");
         System.out.printf("| %-48s |%n", "DETAIL PINJAMAN");
         System.out.println("+--------------------------------------------------+");
-        System.out.printf("| %-20s: %-27s |%n", LABEL_LOAN_ID, loan.getId().getValue());
-        System.out.printf("| %-20s: Rp %-24s |%n", "Nominal", String.format(FORMAT_RUPIAH, target));
-        System.out.printf("| %-20s: %-27s |%n", "Tenor", loan.getTenor() + " bulan");
-        System.out.printf("| %-20s: %-27s |%n", "Jenis Bunga", bunga);
-        System.out.printf("| %-20s: %-27s |%n", "Credit Score (anonim)", creditScore > 0 ? String.valueOf(creditScore) : "-");
+        System.out.printf(FORMAT_BOX_ROW, LABEL_LOAN_ID, loan.getId().getValue());
+        System.out.printf(FORMAT_BOX_ROW_RP, "Nominal", String.format(FORMAT_RUPIAH, target));
+        System.out.printf(FORMAT_BOX_ROW, "Tenor", loan.getTenor() + " bulan");
+        System.out.printf(FORMAT_BOX_ROW, "Jenis Bunga", bunga);
+        System.out.printf(FORMAT_BOX_ROW, "Credit Score (anonim)", creditScore > 0 ? String.valueOf(creditScore) : "-");
         System.out.printf("| %-20s: Rp %-18s (%s%%) |%n", "Terkumpul",
                 String.format(FORMAT_RUPIAH, terkumpul), progres);
-        System.out.printf("| %-20s: Rp %-24s |%n", "Sisa Dibutuhkan", String.format(FORMAT_RUPIAH, sisa));
-        System.out.printf("| %-20s: Rp %-24s |%n", "Est. Return/Rp 1 jt", String.format(FORMAT_RUPIAH, estimasiPerJuta));
+        System.out.printf(FORMAT_BOX_ROW_RP, "Sisa Dibutuhkan", String.format(FORMAT_RUPIAH, sisa));
+        System.out.printf(FORMAT_BOX_ROW_RP, "Est. Return/Rp 1 jt", String.format(FORMAT_RUPIAH, estimasiPerJuta));
         System.out.println("+--------------------------------------------------+");
     }
 

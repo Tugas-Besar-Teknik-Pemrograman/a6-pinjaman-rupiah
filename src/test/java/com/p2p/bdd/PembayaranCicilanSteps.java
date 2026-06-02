@@ -113,7 +113,7 @@ public class PembayaranCicilanSteps {
     @When("borrower membayar lunas tagihan pertama")
     @When("borrower melakukan pembayaran sesuai tagihan bulan ini")
 
-    public void payFull() throws Exception {
+    public void payFull() {
         // bill sudah ada sebelum bayar
         if (this.loan.getTagihanBulanIni() == null
                 || this.loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) <= 0) {

@@ -17,6 +17,7 @@ public class LenderMenu {
 
     private static final String LABEL_LOAN_ID = "Loan ID";
     private static final String MSG_INPUT_NOMINAL_GAGAL = "Gagal, input nominal harus berupa angka!";
+    private static final String MSG_PROFIL_LENDER_TIDAK_DITEMUKAN = "Gagal, Profil Lender tidak ditemukan.";
     private static final String FORMAT_RUPIAH = "%,.0f";
     private static final String FORMAT_BOX_ROW = "| %-20s: %-27s |%n";
     private static final String FORMAT_BOX_ROW_RP = "| %-20s: Rp %-24s |%n";
@@ -77,10 +78,8 @@ public class LenderMenu {
             Money estimasiReturnPerBulan = new Money(BigDecimal.ZERO, Money.IDR);
 
             for (Loan loan : portofolio) {
-                if (!isInvestasiAktif(loan)) continue;
-
                 Money investasiPendana = loan.getDaftarPendana().get(lenderId);
-                if (investasiPendana == null) continue;
+                if (!isInvestasiAktif(loan) || investasiPendana == null) continue;
 
                 totalDiinvestasikan = totalDiinvestasikan.add(investasiPendana);
                 estimasiReturnPerBulan = estimasiReturnPerBulan.add(loan.hitungEstimasiReturnLender(lenderId));
@@ -103,7 +102,7 @@ public class LenderMenu {
     private void menuProfil() {
         String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
         if (lenderIdStr == null) {
-            System.out.println("Gagal, Profil Lender tidak ditemukan.");
+            System.out.println(MSG_PROFIL_LENDER_TIDAK_DITEMUKAN);
             return;
         }
 
@@ -355,7 +354,7 @@ public class LenderMenu {
 
         String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
         if (lenderIdStr == null) {
-            System.out.println("Gagal, Profil Lender tidak ditemukan.");
+            System.out.println(MSG_PROFIL_LENDER_TIDAK_DITEMUKAN);
             return;
         }
 
@@ -376,11 +375,10 @@ public class LenderMenu {
 
             for (Loan loan : aktif) {
                 Money investasiPendana = loan.getDaftarPendana().get(lenderId);
-                if (investasiPendana == null) continue;
+                BigDecimal target = loan.getTargetNominal().getAmount();
+                if (investasiPendana == null || target.compareTo(BigDecimal.ZERO) <= 0) continue;
 
                 BigDecimal investasi = investasiPendana.getAmount();
-                BigDecimal target = loan.getTargetNominal().getAmount();
-                if (target.compareTo(BigDecimal.ZERO) <= 0) continue;
 
                 BigDecimal proporsi = investasi
                         .multiply(BigDecimal.valueOf(100))
@@ -403,7 +401,7 @@ public class LenderMenu {
 
         String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
         if (lenderIdStr == null) {
-            System.out.println("Gagal, Profil Lender tidak ditemukan.");
+            System.out.println(MSG_PROFIL_LENDER_TIDAK_DITEMUKAN);
             return;
         }
 
@@ -440,7 +438,7 @@ public class LenderMenu {
     private void menuKotakNotifikasi() {
     String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
     if (lenderIdStr == null) {
-        System.out.println("Gagal, Profil Lender tidak ditemukan.");
+        System.out.println(MSG_PROFIL_LENDER_TIDAK_DITEMUKAN);
         return;
     }
 

@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 
 public class BorrowerMenu {
 
-    private static final Logger logger = Logger.getLogger(BorrowerMenu.class.getName());
+    private final Logger logger = Logger.getLogger(getClass().getName());
     private final AppContext ctx;
     private final Scanner scanner;
 
@@ -137,22 +137,22 @@ public class BorrowerMenu {
 
     private void menuTopUp() {
         String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) { System.out.println("Gagal, Profil Borrower tidak ditemukan."); return; }
+        if (borrowerIdStr == null) { logger.warning("Gagal, Profil Borrower tidak ditemukan."); return; }
         try {
             Borrower borrower = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
-            if (borrower == null) { System.out.println("Gagal, data Borrower tidak ditemukan."); return; }
-            System.out.println("\n--- Top Up Saldo Borrower ---");
-            System.out.println("Saldo saat ini : Rp " + borrower.getSaldoBalance().getAmount());
-            System.out.print("Masukkan nominal top up (Rp, 0 untuk batal): ");
+            if (borrower == null) { logger.warning("Gagal, data Borrower tidak ditemukan."); return; }
+            logger.info("--- Top Up Saldo Borrower ---");
+            logger.info("Saldo saat ini : Rp " + borrower.getSaldoBalance().getAmount());
+            logger.info("Masukkan nominal top up (Rp, 0 untuk batal): ");
             long nominal = Long.parseLong(scanner.nextLine().trim());
             if (nominal <= 0) return;
             borrower.tambahSaldo(new Money(BigDecimal.valueOf(nominal), Money.IDR));
             ctx.getRepos().getBorrowerRepository().save(borrower);
-            System.out.println("Top up berhasil! Saldo terbaru: Rp " + borrower.getSaldoBalance().getAmount());
+            logger.info("Top up berhasil! Saldo terbaru: Rp " + borrower.getSaldoBalance().getAmount());
         } catch (NumberFormatException e) {
-            System.out.println("Gagal, input nominal harus berupa angka!");
+            logger.warning("Gagal, input nominal harus berupa angka!");
         } catch (Exception e) {
-            System.out.println("Gagal top up saldo: " + e.getMessage());
+            logger.warning("Gagal top up saldo: " + e.getMessage());
         }
     }
 

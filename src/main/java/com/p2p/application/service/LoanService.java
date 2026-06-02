@@ -55,7 +55,7 @@ public class LoanService {
         this.notificationService = notificationService;
     }
 
-    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor) throws BorrowerNotFoundException {
+    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor) {
         Borrower borrower = borrowerRepository.findById(borrowerId);
         if (borrower == null) throw new BorrowerNotFoundException("Borrower tidak ditemukan");
         Loan loan = borrower.ajukanPinjaman(new LoanId(), amount, tenor);
@@ -66,11 +66,11 @@ public class LoanService {
         return loan;
     }
 
-    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor, String interestType) throws BorrowerNotFoundException {
+    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor, String interestType) {
         return ajukanPinjaman(borrowerId, amount, tenor, interestType, null);
     }
 
-    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor, String interestType, BigDecimal customRateOrMargin) throws BorrowerNotFoundException {
+    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor, String interestType, BigDecimal customRateOrMargin) {
         Borrower borrower = borrowerRepository.findById(borrowerId);
         if (borrower == null) throw new BorrowerNotFoundException("Borrower tidak ditemukan");
         Loan loan = borrower.ajukanPinjaman(new LoanId(), amount, tenor, interestType, customRateOrMargin);
@@ -81,11 +81,11 @@ public class LoanService {
         return loan;
     }
 
-    public Loan getLoan(LoanId loanId) {
+    public Loan findLoanById(LoanId loanId) {
         return loanRepository.findById(loanId);
     }
 
-    public BayarCicilanResult bayarCicilan(LoanId loanId, Money amount) throws LoanNotFoundException, BorrowerNotFoundException, TagihanBelumTersediaException {
+    public BayarCicilanResult bayarCicilan(LoanId loanId, Money amount) {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) throw new LoanNotFoundException("Loan tidak ditemukan");
 

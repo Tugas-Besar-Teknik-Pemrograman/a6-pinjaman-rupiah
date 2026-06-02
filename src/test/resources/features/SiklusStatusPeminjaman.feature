@@ -36,7 +36,7 @@ Feature: Siklus Status Peminjaman
         
         Examples: Alasan(Akun Tidak Terverifikasi,Akun Credit Score nya Rendah, Pinjaman melebihi limit)
 
-    Scenario: [SSP-07] Borrower mengajukan pinjaman namun tidak ada yang mendanai lalu status menjadi "CANCELLED"
+    Scenario: [SSP-07] Borrower mengajukan pinjaman namun tidak ada yang mendanai lalu status menjadi "CANCELED"
         Given borrower mengajukan pinjaman
         When tidak ada lender yang mendanai dalam waktu tertentu
         Then status pengajuan berubah menjadi "CANCELED"

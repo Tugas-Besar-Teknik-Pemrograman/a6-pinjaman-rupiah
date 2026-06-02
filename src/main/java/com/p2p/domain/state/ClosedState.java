@@ -6,7 +6,9 @@ public class ClosedState implements State {
 
     @Override
     public void ubahStatus(Loan loan) {
-        if (loan == null) return;
+        if (loan == null) {
+            throw new IllegalStateException("Loan tidak boleh null");
+        }
         String status = loan.getStatus();
         
         // Melunasi pinjaman dari REPAYMENT atau OVERDUE (ketika isLunas() true)

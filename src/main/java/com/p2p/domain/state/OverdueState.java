@@ -6,7 +6,9 @@ public class OverdueState implements State {
 
 	@Override
 	public void ubahStatus(Loan loan) {
-		if (loan == null) return;
+		if (loan == null) {
+			throw new IllegalStateException("Loan tidak boleh null");
+		}
 		String status = loan.getStatus();
 		// OVERDUE bisa terjadi dari DISBURSED (belum bayar sama sekali)
 		// atau dari REPAYMENT (sudah pernah bayar tapi telat lagi)

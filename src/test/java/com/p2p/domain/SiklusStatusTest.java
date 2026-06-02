@@ -132,7 +132,7 @@ public class SiklusStatusTest {
     
             // CancelledState akan validasi isPinjamanExpired() sebelum ubah status
             assertDoesNotThrow(() -> {
-                new com.p2p.domain.state.CancelledState().ubahStatus(loan);
+                new com.p2p.domain.state.CanceledState().ubahStatus(loan);
             });
             assertEquals("CANCELED", loan.getStatus());
         }

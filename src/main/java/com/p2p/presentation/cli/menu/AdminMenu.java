@@ -6,6 +6,7 @@ import com.p2p.domain.lender.Lender;
 import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanId;
+import com.p2p.domain.loan.LoanStatus;
 import com.p2p.domain.user.User;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.infrastructure.memory.RepositoryFactory;
@@ -180,8 +181,8 @@ public class AdminMenu {
     private void validasiPencairan() {
         List<Loan> allLoans = repos.getLoanRepository().findAll();
         List<Loan> fundingReadyLoans = allLoans.stream()
-                .filter(l -> "FUNDING_READY".equals(l.getStatus()))
-                .toList();
+            .filter(l -> l.getStatusEnum() == LoanStatus.FUNDING_READY)
+            .toList();
 
         if (fundingReadyLoans.isEmpty()) {
             System.out.println("Tidak ada pinjaman dengan status FUNDING_READY.");
@@ -332,7 +333,10 @@ public class AdminMenu {
 private void menuSimulasiTenorSelanjutnya() {
     List<Loan> allLoans = repos.getLoanRepository().findAll();
     List<Loan> activeLoans = allLoans.stream()
-            .filter(l -> "DISBURSED".equals(l.getStatus()) || "REPAYMENT".equals(l.getStatus()) || "OVERDUE".equals(l.getStatus()))
+            .filter(l -> {
+                var s = l.getStatusEnum();
+                return s == LoanStatus.DISBURSED || s == LoanStatus.REPAYMENT || s == LoanStatus.OVERDUE;
+            })
             .toList();
 
     if (activeLoans.isEmpty()) {
@@ -400,28 +404,34 @@ private void menuSimulasiTenorSelanjutnya() {
 
         // Loan & disbursement statistics
         BigDecimal totalDisbursed = allLoans.stream()
-                .filter(l -> "DISBURSED".equals(l.getStatus()) || "REPAYMENT".equals(l.getStatus()) || "CLOSED".equals(l.getStatus()))
-                .map(l -> l.getTargetNominal().getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .filter(l -> {
+                var s = l.getStatusEnum();
+                return s == LoanStatus.DISBURSED || s == LoanStatus.REPAYMENT || s == LoanStatus.CLOSED;
+            })
+            .map(l -> l.getTargetNominal().getAmount())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal outstandingPrincipal = allLoans.stream()
-                .filter(l -> "REPAYMENT".equals(l.getStatus()))
-                .map(l -> l.getSisaPokok().getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .filter(l -> l.getStatusEnum() == LoanStatus.REPAYMENT)
+            .map(l -> l.getSisaPokok().getAmount())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal fundingInProgress = allLoans.stream()
-                .filter(l -> "FUNDING".equals(l.getStatus()) || "FUNDING_READY".equals(l.getStatus()))
-                .map(l -> l.getTotalTerkumpul().getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .filter(l -> {
+                var s = l.getStatusEnum();
+                return s == LoanStatus.FUNDING || s == LoanStatus.FUNDING_READY;
+            })
+            .map(l -> l.getTotalTerkumpul().getAmount())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Overdue & credit health indicators
-        long overdueCount = allLoans.stream().filter(l -> "OVERDUE".equals(l.getStatus())).count();
+        long overdueCount = allLoans.stream().filter(l -> l.getStatusEnum() == LoanStatus.OVERDUE).count();
         long totalLoans = allLoans.size();
         double overdueRatio = totalLoans > 0 ? (double) overdueCount / totalLoans * 100 : 0;
 
         BigDecimal totalOverdueFees = allLoans.stream()
-                .map(l -> l.getTotalDendaTerkumpul().getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(l -> l.getTotalDendaTerkumpul().getAmount())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Investor & investment statistics
         BigDecimal totalLenderBalance = allLenders.stream()
@@ -429,15 +439,15 @@ private void menuSimulasiTenorSelanjutnya() {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalInvestedAmount = allLoans.stream()
-                .map(l -> l.getTotalTerkumpul().getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            .map(l -> l.getTotalTerkumpul().getAmount())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Admin fee statistics
         BigDecimal totalAdminFees = BigDecimal.ZERO;
         long totalLoansDisbursed = 0;
         
         for (Loan loan : allLoans) {
-            if ("DISBURSED".equals(loan.getStatus()) || "REPAYMENT".equals(loan.getStatus()) || "CLOSED".equals(loan.getStatus())) {
+            if (loan.getStatusEnum() == LoanStatus.DISBURSED || loan.getStatusEnum() == LoanStatus.REPAYMENT || loan.getStatusEnum() == LoanStatus.CLOSED) {
                 totalLoansDisbursed++;
                 Money adminFee = loan.getAdminFee();
                 totalAdminFees = totalAdminFees.add(adminFee.getAmount());

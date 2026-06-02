@@ -90,8 +90,8 @@ public class LoanService {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) throw new LoanNotFoundException("Loan tidak ditemukan");
 
-        LoanStatus _s = loan.getStatusEnum();
-        if (_s == LoanStatus.REJECTED || _s == LoanStatus.CANCELED) {
+        LoanStatus status = loan.getStatusEnum();
+        if (status == LoanStatus.REJECTED || status == LoanStatus.CANCELED) {
             throw new IllegalStateException("Loan yang ditolak tidak bisa dibayar cicilannya");
         }
 

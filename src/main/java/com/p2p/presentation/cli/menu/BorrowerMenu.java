@@ -31,7 +31,12 @@ public class BorrowerMenu {
     }
 
     public void tampil() {
-        tampilDashboard();
+        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
+        if (borrowerIdStr == null) {
+            logger.warning(PROFILE_NOT_FOUND);
+            return;
+        }
+        tampilDashboard(borrowerIdStr);
         boolean kembali = false;
         while (!kembali) {
             logger.info("=== MENU BORROWER ===");
@@ -44,18 +49,13 @@ public class BorrowerMenu {
             logger.info("7. Logout");
             logger.info("Pilih: ");
             String pilihan = scanner.nextLine().trim();
-            String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-            if (borrowerIdStr == null) {
-                logger.warning(PROFILE_NOT_FOUND);
-                return;
-            }
             switch (pilihan) {
-                case "1" -> menuProfil();
-                case "2" -> menuTopUp();
-                case "3" -> menuAjukanPinjaman();
-                case "4" -> menuLihatStatusPinjaman();
-                case "5" -> menuBayarCicilan();
-                case "6" -> menuKotakNotifikasi();
+                case "1" -> menuProfil(borrowerIdStr);
+                case "2" -> menuTopUp(borrowerIdStr);
+                case "3" -> menuAjukanPinjaman(borrowerIdStr);
+                case "4" -> menuLihatStatusPinjaman(borrowerIdStr);
+                case "5" -> menuBayarCicilan(borrowerIdStr);
+                case "6" -> menuKotakNotifikasi(borrowerIdStr);
                 case "7" -> {
                     ctx.logout();
                     logger.info("Logout berhasil.");
@@ -66,9 +66,7 @@ public class BorrowerMenu {
         }
     }
 
-    private void tampilDashboard() {
-        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) return;
+    private void tampilDashboard(String borrowerIdStr) {
         try {
             Borrower borrower = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
             com.p2p.domain.user.User user = ctx.getRepos().getUserRepository()
@@ -103,9 +101,7 @@ public class BorrowerMenu {
         }
     }
 
-    private void menuProfil() {
-        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) { logger.warning(PROFILE_NOT_FOUND); return; }
+    private void menuProfil(String borrowerIdStr) {
         try {
             Borrower borrower = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
             com.p2p.domain.user.User user = ctx.getRepos().getUserRepository().findById(new com.p2p.domain.user.UserId(ctx.getCurrentUserId()));
@@ -139,9 +135,7 @@ public class BorrowerMenu {
         }
     }
 
-    private void menuTopUp() {
-        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) { logger.warning(PROFILE_NOT_FOUND); return; }
+    private void menuTopUp(String borrowerIdStr) {
         try {
             Borrower borrower = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
             if (borrower == null) { logger.warning("Gagal, data Borrower tidak ditemukan."); return; }
@@ -160,10 +154,8 @@ public class BorrowerMenu {
         }
     }
 
-    private void menuAjukanPinjaman() {
+    private void menuAjukanPinjaman(String borrowerIdStr) {
         logger.info("=== AJUKAN PINJAMAN BARU ===");
-        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) return;
         try {
             var borrowerObj = ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr));
             if (borrowerObj == null) { logger.warning("Gagal, data Borrower tidak ditemukan."); return; }
@@ -245,10 +237,7 @@ public class BorrowerMenu {
         }
     }
 
-    private void menuLihatStatusPinjaman() {
-        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) { System.out.println(PROFILE_NOT_FOUND); return; }
-
+    private void menuLihatStatusPinjaman(String borrowerIdStr) {
         List<Loan> borrowerLoans = ctx.getRepos().getLoanRepository().findAll().stream()
                 .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
                 .toList();
@@ -272,10 +261,7 @@ public class BorrowerMenu {
     /**
      * POIN 2: Menu status cicilan — tampilkan cicilan yang sudah dan belum dibayar
      */
-    private void menuStatusCicilan() {
-        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) { System.out.println(PROFILE_NOT_FOUND); return; }
-
+    private void menuStatusCicilan(String borrowerIdStr) {
         List<Loan> activeLoans = ctx.getRepos().getLoanRepository().findAll().stream()
                 .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
                 .filter(l -> {
@@ -328,10 +314,7 @@ public class BorrowerMenu {
     /**
      * POIN 3 & 4: Bayar cicilan harus pas sesuai tagihan + tampilkan cicilan ke berapa
      */
-    private void menuBayarCicilan() {
-        String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-        if (borrowerIdStr == null) { System.out.println(PROFILE_NOT_FOUND); return; }
-
+    private void menuBayarCicilan(String borrowerIdStr) {
         try {
             List<Loan> activeLoans = ctx.getRepos().getLoanRepository().findAll().stream()
                     .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
@@ -399,12 +382,7 @@ public class BorrowerMenu {
         }
     }
 
-    private void menuKotakNotifikasi() {
-    String borrowerIdStr = ctx.getBorrowerId(ctx.getCurrentUserId());
-    if (borrowerIdStr == null) {
-        System.out.println(PROFILE_NOT_FOUND);
-        return;
-    }
+    private void menuKotakNotifikasi(String borrowerIdStr) {
 
     System.out.println("\n=== KOTAK NOTIFIKASI ===");
     List<String> notifs = ctx.getNotificationService().getNotifikasi(borrowerIdStr);

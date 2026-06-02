@@ -15,6 +15,13 @@ import java.util.Scanner;
 
 public class LenderMenu {
 
+    private static final String LABEL_LOAN_ID = "Loan ID";
+    private static final String MSG_INPUT_NOMINAL_GAGAL = "Gagal, input nominal harus berupa angka!";
+    private static final String MSG_PROFIL_LENDER_TIDAK_DITEMUKAN = "Gagal, Profil Lender tidak ditemukan.";
+    private static final String FORMAT_RUPIAH = "%,.0f";
+    private static final String FORMAT_BOX_ROW = "| %-20s: %-27s |%n";
+    private static final String FORMAT_BOX_ROW_RP = "| %-20s: Rp %-24s |%n";
+
     private final AppContext ctx;
     private final Scanner scanner;
 
@@ -71,10 +78,8 @@ public class LenderMenu {
             Money estimasiReturnPerBulan = new Money(BigDecimal.ZERO, Money.IDR);
 
             for (Loan loan : portofolio) {
-                if (!isInvestasiAktif(loan)) continue;
-
                 Money investasiPendana = loan.getDaftarPendana().get(lenderId);
-                if (investasiPendana == null) continue;
+                if (!isInvestasiAktif(loan) || investasiPendana == null) continue;
 
                 totalDiinvestasikan = totalDiinvestasikan.add(investasiPendana);
                 estimasiReturnPerBulan = estimasiReturnPerBulan.add(loan.hitungEstimasiReturnLender(lenderId));
@@ -97,7 +102,7 @@ public class LenderMenu {
     private void menuProfil() {
         String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
         if (lenderIdStr == null) {
-            System.out.println("Gagal, Profil Lender tidak ditemukan.");
+            System.out.println(MSG_PROFIL_LENDER_TIDAK_DITEMUKAN);
             return;
         }
 
@@ -147,7 +152,7 @@ public class LenderMenu {
             System.out.println("Top up berhasil!");
             System.out.println("Saldo terbaru  : Rp " + lender.getSaldoBalance().getAmount());
         } catch (NumberFormatException e) {
-            System.out.println("Gagal, input nominal harus berupa angka!");
+            System.out.println(MSG_INPUT_NOMINAL_GAGAL);
         } catch (Exception e) {
             System.out.println("Gagal top up: " + e.getMessage());
         }
@@ -166,7 +171,7 @@ public class LenderMenu {
         }
 
         System.out.printf("%-20s %12s %8s %14s %6s %8s %18s%n",
-                "Loan ID", "Nominal", "Progress", "Sisa", "Tenor", "Bunga", "Est.Return/Rp1jt");
+                LABEL_LOAN_ID, "Nominal", "Progress", "Sisa", "Tenor", "Bunga", "Est.Return/Rp1jt");
         System.out.println("-".repeat(90));
 
         for (Loan loan : loanFunding) {
@@ -211,8 +216,11 @@ public class LenderMenu {
         String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
         LenderId lenderId = new LenderId(lenderIdStr);
         Lender lender = ctx.getRepos().getLenderRepository().findById(lenderId);
+        prosesInvestasi(lenderId, lender, dipilih);
+    }
 
-        System.out.println("\nSaldo Anda saat ini: Rp " + String.format("%,.0f", lender.getSaldoBalance().getAmount()));
+    private void prosesInvestasi(LenderId lenderId, Lender lender, Loan dipilih) {
+        System.out.println("\nSaldo Anda saat ini: Rp " + String.format(FORMAT_RUPIAH, lender.getSaldoBalance().getAmount()));
         System.out.print("Masukkan nominal investasi (Rp, min 100.000, kelipatan 100.000, 0 untuk batal): ");
         try {
             long nominal = Long.parseLong(scanner.nextLine().trim());
@@ -230,7 +238,7 @@ public class LenderMenu {
             }
             if (nominalInvestasi.isGreaterThan(sisa)) {
                 System.out.println("Gagal investasi: Nominal melebihi sisa kebutuhan pendanaan (Rp " +
-                        String.format("%,.0f", sisa.getAmount()) + ").");
+                        String.format(FORMAT_RUPIAH, sisa.getAmount()) + ").");
                 return;
             }
 
@@ -238,9 +246,9 @@ public class LenderMenu {
 
             Lender updated = ctx.getRepos().getLenderRepository().findById(lenderId);
             System.out.println("Investasi berhasil!");
-            System.out.println("Saldo terbaru: Rp " + String.format("%,.0f", updated.getSaldoBalance().getAmount()));
+            System.out.println("Saldo terbaru: Rp " + String.format(FORMAT_RUPIAH, updated.getSaldoBalance().getAmount()));
         } catch (NumberFormatException e) {
-            System.out.println("Gagal, input nominal harus berupa angka!");
+            System.out.println(MSG_INPUT_NOMINAL_GAGAL);
         } catch (Exception e) {
             System.out.println("Gagal investasi: " + e.getMessage());
         }
@@ -267,22 +275,24 @@ public class LenderMenu {
             var borrower = ctx.getRepos().getBorrowerRepository()
                     .findById(new com.p2p.domain.borrower.BorrowerId(loan.getBorrowerId().getValue()));
             if (borrower != null) creditScore = borrower.getCreditScore();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            // credit score tidak tersedia, gunakan nilai default 0
+        }
 
         String bunga = loan.getJenisBunga() != null ? loan.getJenisBunga().toUpperCase() : "-";
 
         System.out.println("\n+--------------------------------------------------+");
         System.out.printf("| %-48s |%n", "DETAIL PINJAMAN");
         System.out.println("+--------------------------------------------------+");
-        System.out.printf("| %-20s: %-27s |%n", "Loan ID", loan.getId().getValue());
-        System.out.printf("| %-20s: Rp %-24s |%n", "Nominal", String.format("%,.0f", target));
-        System.out.printf("| %-20s: %-27s |%n", "Tenor", loan.getTenor() + " bulan");
-        System.out.printf("| %-20s: %-27s |%n", "Jenis Bunga", bunga);
-        System.out.printf("| %-20s: %-27s |%n", "Credit Score (anonim)", creditScore > 0 ? String.valueOf(creditScore) : "-");
+        System.out.printf(FORMAT_BOX_ROW, LABEL_LOAN_ID, loan.getId().getValue());
+        System.out.printf(FORMAT_BOX_ROW_RP, "Nominal", String.format(FORMAT_RUPIAH, target));
+        System.out.printf(FORMAT_BOX_ROW, "Tenor", loan.getTenor() + " bulan");
+        System.out.printf(FORMAT_BOX_ROW, "Jenis Bunga", bunga);
+        System.out.printf(FORMAT_BOX_ROW, "Credit Score (anonim)", creditScore > 0 ? String.valueOf(creditScore) : "-");
         System.out.printf("| %-20s: Rp %-18s (%s%%) |%n", "Terkumpul",
-                String.format("%,.0f", terkumpul), progres);
-        System.out.printf("| %-20s: Rp %-24s |%n", "Sisa Dibutuhkan", String.format("%,.0f", sisa));
-        System.out.printf("| %-20s: Rp %-24s |%n", "Est. Return/Rp 1 jt", String.format("%,.0f", estimasiPerJuta));
+                String.format(FORMAT_RUPIAH, terkumpul), progres);
+        System.out.printf(FORMAT_BOX_ROW_RP, "Sisa Dibutuhkan", String.format(FORMAT_RUPIAH, sisa));
+        System.out.printf(FORMAT_BOX_ROW_RP, "Est. Return/Rp 1 jt", String.format(FORMAT_RUPIAH, estimasiPerJuta));
         System.out.println("+--------------------------------------------------+");
     }
 
@@ -309,7 +319,7 @@ public class LenderMenu {
             System.out.println("Penarikan berhasil!");
             System.out.println("Saldo terbaru  : Rp " + updated.getSaldoBalance().getAmount());
         } catch (NumberFormatException e) {
-            System.out.println("Gagal, input nominal harus berupa angka!");
+            System.out.println(MSG_INPUT_NOMINAL_GAGAL);
         } catch (Exception e) {
             System.out.println("Gagal tarik saldo: " + e.getMessage());
         }
@@ -344,7 +354,7 @@ public class LenderMenu {
 
         String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
         if (lenderIdStr == null) {
-            System.out.println("Gagal, Profil Lender tidak ditemukan.");
+            System.out.println(MSG_PROFIL_LENDER_TIDAK_DITEMUKAN);
             return;
         }
 
@@ -360,16 +370,15 @@ public class LenderMenu {
             }
 
             System.out.printf("%-20s %-14s %14s %8s %18s%n",
-                    "Loan ID", "Status", "Investasi", "Proporsi", "Est.Return/Bulan");
+                    LABEL_LOAN_ID, "Status", "Investasi", "Proporsi", "Est.Return/Bulan");
             System.out.println("-".repeat(78));
 
             for (Loan loan : aktif) {
                 Money investasiPendana = loan.getDaftarPendana().get(lenderId);
-                if (investasiPendana == null) continue;
+                BigDecimal target = loan.getTargetNominal().getAmount();
+                if (investasiPendana == null || target.compareTo(BigDecimal.ZERO) <= 0) continue;
 
                 BigDecimal investasi = investasiPendana.getAmount();
-                BigDecimal target = loan.getTargetNominal().getAmount();
-                if (target.compareTo(BigDecimal.ZERO) <= 0) continue;
 
                 BigDecimal proporsi = investasi
                         .multiply(BigDecimal.valueOf(100))
@@ -392,7 +401,7 @@ public class LenderMenu {
 
         String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
         if (lenderIdStr == null) {
-            System.out.println("Gagal, Profil Lender tidak ditemukan.");
+            System.out.println(MSG_PROFIL_LENDER_TIDAK_DITEMUKAN);
             return;
         }
 
@@ -410,7 +419,7 @@ public class LenderMenu {
                 return;
             }
 
-            System.out.printf("%-12s %-20s %16s%n", "Tanggal", "Loan ID", "Return Diterima");
+            System.out.printf("%-12s %-20s %16s%n", "Tanggal", LABEL_LOAN_ID, "Return Diterima");
             System.out.println("-".repeat(52));
 
             BigDecimal totalReturn = BigDecimal.ZERO;
@@ -429,7 +438,7 @@ public class LenderMenu {
     private void menuKotakNotifikasi() {
     String lenderIdStr = ctx.getLenderId(ctx.getCurrentUserId());
     if (lenderIdStr == null) {
-        System.out.println("Gagal, Profil Lender tidak ditemukan.");
+        System.out.println(MSG_PROFIL_LENDER_TIDAK_DITEMUKAN);
         return;
     }
 

@@ -84,8 +84,8 @@ public class Lender {
         return this.saldoBalance;
     }
 
-    public void tambahReturn(ReturnRecord record) {
-        riwayatReturn.add(record);
+    public void tambahReturn(ReturnRecord returnRecord) {
+        riwayatReturn.add(returnRecord);
     }
 
     public List<ReturnRecord> getRiwayatReturn() {

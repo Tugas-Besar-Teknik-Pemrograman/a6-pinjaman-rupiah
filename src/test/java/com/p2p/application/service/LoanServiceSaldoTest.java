@@ -42,8 +42,7 @@ class LoanServiceSaldoTest {
 
         loanService.prosesPencairan(loan.getId());
 
-        // Borrower harus menerima nominal BERSIH (target dikurangi admin fee 1%)
-        // 1.000.000 - 10.000 (1%) = 990.000
+        // Borrower menerima nominal bersih = target - admin fee 1% = 1.000.000 - 10.000 = 990.000
         BigDecimal expectedNet = new BigDecimal("990000");
         assertEquals(0, expectedNet.compareTo(borrower.getSaldoBalance().getAmount()),
             "Borrower seharusnya menerima nominal bersih (target - admin fee 1%)");
@@ -60,7 +59,6 @@ class LoanServiceSaldoTest {
         Borrower borrower = new Borrower(new BorrowerId("BR-2"), new Money(new BigDecimal("10000000"), "IDR"));
         borrower.setKycStatus(true);
         borrower.setCreditScore(700);
-        // Tagihan = 1jt/3 + 1jt*5% = 333.334 + 50.000 = 383.334 -> saldo harus cukup
         borrower.tambahSaldo(new Money(new BigDecimal("500000"), "IDR"));
 
         Loan loan = new Loan(new LoanId("LN-2"), borrower.getId(), new Money(new BigDecimal("1000000"), "IDR"), 3);
@@ -74,11 +72,11 @@ class LoanServiceSaldoTest {
         Money tagihan = loan.getTagihanBulanIni();
         BigDecimal saldoSebelum = borrower.getSaldoBalance().getAmount();
 
-        // Bayar HARUS pas sesuai tagihan
         loanService.bayarCicilan(loan.getId(), tagihan);
 
         BigDecimal saldoSesudah = borrower.getSaldoBalance().getAmount();
-        assertEquals(0, tagihan.getAmount().compareTo(saldoSebelum.subtract(saldoSesudah).setScale(0, RoundingMode.HALF_UP)));
+        assertEquals(0, tagihan.getAmount().compareTo(
+            saldoSebelum.subtract(saldoSesudah).setScale(0, RoundingMode.HALF_UP)));
         assertEquals("REPAYMENT", loan.getStatus());
     }
 
@@ -102,14 +100,14 @@ class LoanServiceSaldoTest {
         when(borrowerRepository.findById(borrower.getId())).thenReturn(borrower);
 
         loanService.bayarCicilan(loan.getId(), loan.getTagihanBulanIni());
-
-        // PERBAIKAN: Fungsi simulasi harus dipanggil secara eksplisit untuk membuat tagihan baru
         loanService.simulasiTenorBerikutnya(loan.getId());
 
-        BigDecimal expectedBill = new BigDecimal("250000"); // pokok 200rb + bunga 50rb
-        assertEquals(0, expectedBill.compareTo(loan.getTagihanBulanIni().getAmount().setScale(0, RoundingMode.HALF_UP)));
+        BigDecimal expectedBill = new BigDecimal("250000");
+        assertEquals(0, expectedBill.compareTo(
+            loan.getTagihanBulanIni().getAmount().setScale(0, RoundingMode.HALF_UP)));
     }
 
+    // FIX: tambah ubahStatus("FUNDING") sebelum tambahPendanaan
     @Test
     void bayarCicilan_mendistribusikanCicilan_keSatuLender() throws Exception {
         LoanRepository loanRepository = mock(LoanRepository.class);
@@ -127,9 +125,10 @@ class LoanServiceSaldoTest {
 
         Loan loan = new Loan(new LoanId("LN-S01"), borrower.getId(), investasi, 5);
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.ubahStatus("FUNDING"); // FIX: wajib sebelum tambahPendanaan
         loan.tambahPendanaan(lenderId, investasi);
         loan.ubahStatus("DISBURSED");
-        loan.generateMonthlyBill(); // tagihan = 250.000
+        loan.generateMonthlyBill();
 
         Lender lender = new Lender(lenderId, new Money(BigDecimal.ZERO, "IDR"));
         lender.setKycStatus(true);
@@ -141,7 +140,6 @@ class LoanServiceSaldoTest {
         Money tagihan = loan.getTagihanBulanIni();
         loanService.bayarCicilan(loan.getId(), tagihan);
 
-        // Satu-satunya lender → saldo harus bertambah sejumlah tagihan penuh
         assertEquals(0, tagihan.getAmount().compareTo(lender.getSaldoBalance().getAmount()));
     }
 
@@ -154,7 +152,7 @@ class LoanServiceSaldoTest {
         Loan loan = new Loan(new LoanId("LN-SIM-01"), new BorrowerId("BR-SIM-01"),
                              new Money(new BigDecimal("1000000"), "IDR"), 12);
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
-        loan.ubahStatus("DISBURSED"); // tanggalJatuhTempo = today+28
+        loan.ubahStatus("DISBURSED");
 
         when(loanRepository.findById(loan.getId())).thenReturn(loan);
 
@@ -174,14 +172,11 @@ class LoanServiceSaldoTest {
 
         Loan loan = new Loan(new LoanId("LN-SIM-02"), new BorrowerId("BR-SIM-02"),
                              new Money(new BigDecimal("1000000"), "IDR"), 12);
-        // status default PROPOSED — tidak valid untuk simulasi
 
         when(loanRepository.findById(loan.getId())).thenReturn(loan);
 
         assertThrows(IllegalStateException.class, () ->
-            loanService.simulasiMajukanJatuhTempo(loan.getId()),
-            "Harus melempar exception jika status bukan DISBURSED atau REPAYMENT"
-        );
+            loanService.simulasiMajukanJatuhTempo(loan.getId()));
     }
 
     @Test
@@ -196,6 +191,7 @@ class LoanServiceSaldoTest {
 
         Loan loan = new Loan(new LoanId("LN-REFUND-01"), new BorrowerId("BR-REFUND-01"),
                              new Money(new BigDecimal("1000000"), "IDR"), 12);
+        loan.ubahStatus("FUNDING"); // FIX: wajib sebelum tambahPendanaan
         loan.tambahPendanaan(lenderId, investasi);
         loan.ubahStatus("FUNDING_READY");
 
@@ -225,11 +221,10 @@ class LoanServiceSaldoTest {
         when(loanRepository.findById(loan.getId())).thenReturn(loan);
 
         assertThrows(IllegalStateException.class, () ->
-            loanService.menolakPencairan(loan.getId(), "Tidak memenuhi syarat"),
-            "Harus melempar exception jika status bukan FUNDING_READY"
-        );
+            loanService.menolakPencairan(loan.getId(), "Tidak memenuhi syarat"));
     }
 
+    // FIX: tambah ubahStatus("FUNDING") sebelum tambahPendanaan
     @Test
     void bayarCicilan_statusOverdue_dendaMasukKeLender() throws Exception {
         LoanRepository loanRepository = mock(LoanRepository.class);
@@ -249,6 +244,7 @@ class LoanServiceSaldoTest {
         // Tagihan = cicilan normal + denda = 250.000 + 20.000 = 270.000
         Loan loan = new Loan(new LoanId("LN-OD1"), borrower.getId(), investasi, 5);
         loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.ubahStatus("FUNDING"); // FIX: wajib sebelum tambahPendanaan
         loan.tambahPendanaan(lenderId, investasi);
         loan.ubahStatus("OVERDUE");
         loan.generateMonthlyBill();
@@ -263,9 +259,9 @@ class LoanServiceSaldoTest {
         Money tagihan = loan.getTagihanBulanIni();
         loanService.bayarCicilan(loan.getId(), tagihan);
 
-        // Lender harus menerima tagihan PENUH termasuk denda
+        // Lender harus menerima tagihan penuh termasuk denda
         assertEquals(0, tagihan.getAmount().compareTo(lender.getSaldoBalance().getAmount()));
-        // Admin callback TIDAK menerima denda
+        // Admin tidak menerima denda
         Money[] dendaAdmin = {new Money(BigDecimal.ZERO, "IDR")};
         loanService.setAdminFeeCallback(fee -> dendaAdmin[0] = fee);
         assertEquals(0, BigDecimal.ZERO.compareTo(dendaAdmin[0].getAmount()));

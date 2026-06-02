@@ -270,6 +270,14 @@ public class Loan {
         return status;
     }
 
+    public LoanStatus getStatusEnum() {
+        return LoanStatus.fromString(this.status);
+    }
+
+    public void setStatusEnum(LoanStatus s) {
+        this.status = s == null ? null : s.name();
+    }
+
     public int getTenorSisa() {
         return tenorSisa;
     }

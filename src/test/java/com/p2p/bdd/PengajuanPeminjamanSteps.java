@@ -106,7 +106,7 @@ public class PengajuanPeminjamanSteps {
     public void sistem_membuat_loan_dengan_status_funding() {
         assertNull(exceptionDitolak, "Pengajuan harusnya berhasil, ga error");
         assertNotNull(hasilLoan, "Objek Loan harusnya terbentuk");
-        assertEquals("FUNDING", hasilLoan.getStatus().toString());
+        assertEquals("FUNDING", hasilLoan.getStatus());
 
         verify(borrowerRepository, times(1)).save(any(Borrower.class));
         verify(loanRepository, times(1)).save(any(Loan.class));

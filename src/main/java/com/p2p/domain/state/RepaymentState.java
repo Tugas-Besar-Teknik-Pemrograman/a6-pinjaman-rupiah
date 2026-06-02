@@ -9,7 +9,7 @@ public class RepaymentState implements State {
 	public void ubahStatus(Loan loan) {
 		if (loan != null) {
 			LoanStatus s = loan.getStatusEnum();
-			if (s == LoanStatus.DISBURSED || s == LoanStatus.OVERDUE) {
+			if (s == LoanStatus.DISBURSED || s == LoanStatus.OVERDUE || s == LoanStatus.REPAYMENT) {
 				loan.setStatusEnum(LoanStatus.REPAYMENT);
 				return;
 			}

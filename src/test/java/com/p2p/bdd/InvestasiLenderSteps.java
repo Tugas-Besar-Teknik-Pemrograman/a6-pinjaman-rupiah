@@ -69,8 +69,8 @@ public class InvestasiLenderSteps {
         Money target = new Money(new BigDecimal("10000000"), "IDR");
         loan = new Loan(loanId, borrowerId, target, 12); // Kita pakai LN-001 agar matching dengan fungsi @When
         
-        // 2. TAPI, statusnya kita set selain FUNDING (misal: PROPOSED)
-        loan.ubahStatus("PROPOSED"); 
+        // 2. TAPI, statusnya kita set selain FUNDING (misal: PENDING)
+        loan.ubahStatus("PENDING"); 
         
         // 3. Simpan loan ke repository in-memory
         loanRepository.save(loan);

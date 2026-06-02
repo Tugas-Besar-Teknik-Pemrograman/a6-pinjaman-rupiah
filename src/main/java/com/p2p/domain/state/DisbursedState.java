@@ -11,8 +11,7 @@ public class DisbursedState implements State {
 			loan.setStatusEnum(LoanStatus.DISBURSED);
 		} else {
 			throw new IllegalStateException(
-				"Tidak bisa DISBURSED dari status: " + (loan != null ? loan.getStatus() : "null")
-			);
+					"Tidak bisa DISBURSED dari status: " + (loan != null ? loan.getStatus() : "null"));
 		}
 	}
 }

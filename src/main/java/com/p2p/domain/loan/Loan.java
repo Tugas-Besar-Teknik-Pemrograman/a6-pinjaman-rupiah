@@ -63,8 +63,8 @@ public class Loan {
         this.maturityDate = 0;
         this.overdueFeesAccrued = new Money(BigDecimal.ZERO, Money.IDR);
         this.adminFee = new Money(
-            targetNominal.getAmount().multiply(new BigDecimal("0.01")).setScale(2, RoundingMode.HALF_UP),
-            Money.IDR);
+                targetNominal.getAmount().multiply(new BigDecimal("0.01")).setScale(2, RoundingMode.HALF_UP),
+                Money.IDR);
     }
 
     public Loan(LoanId loanid, BorrowerId borrowerId, Money targetNominal) {
@@ -83,7 +83,8 @@ public class Loan {
         this.totalTerkumpul = new Money(totalBaru, this.totalTerkumpul.getCurrency());
         if (this.daftarPendana.containsKey(lenderId)) {
             BigDecimal uangLama = this.daftarPendana.get(lenderId).getAmount();
-            this.daftarPendana.put(lenderId, new Money(uangLama.add(investasiDiberikan.getAmount()), investasiDiberikan.getCurrency()));
+            this.daftarPendana.put(lenderId,
+                    new Money(uangLama.add(investasiDiberikan.getAmount()), investasiDiberikan.getCurrency()));
         } else {
             this.daftarPendana.put(lenderId, investasiDiberikan);
         }
@@ -109,7 +110,8 @@ public class Loan {
      */
     public void generateMonthlyBill() {
         if (this.interestStrategy == null) {
-            throw new IllegalStateException("Tidak bisa menghitung tagihan: interestStrategy belum di-set pada loan " + this.loanid.getValue());
+            throw new IllegalStateException(
+                    "Tidak bisa menghitung tagihan: interestStrategy belum di-set pada loan " + this.loanid.getValue());
         }
         Money tagihanNormal = this.interestStrategy.hitungCicilan(
                 this.targetNominal, this.sisaPokok, this.tenor);
@@ -128,7 +130,8 @@ public class Loan {
     }
 
     public void bayarCicilan(Money paymentAmount) {
-        if (!STATUS_DISBURSED.equals(this.status) && !STATUS_REPAYMENT.equals(this.status) && !STATUS_OVERDUE.equals(this.status)) {
+        if (!STATUS_DISBURSED.equals(this.status) && !STATUS_REPAYMENT.equals(this.status)
+                && !STATUS_OVERDUE.equals(this.status)) {
             throw new IllegalStateException("Pinjaman belum dicairkan atau tidak aktif untuk pembayaran.");
         }
         if (this.currentMonthBill == null) {
@@ -176,8 +179,10 @@ public class Loan {
     }
 
     public Money getSisaTagihanKeseluruhan() {
-        if (this.sisaPokok == null) return this.targetNominal;
-        if (isLunas()) return new Money(BigDecimal.ZERO, this.sisaPokok.getCurrency());
+        if (this.sisaPokok == null)
+            return this.targetNominal;
+        if (isLunas())
+            return new Money(BigDecimal.ZERO, this.sisaPokok.getCurrency());
         return this.sisaPokok;
     }
 
@@ -187,19 +192,24 @@ public class Loan {
     }
 
     public boolean isPinjamanExpired() {
-        if (!STATUS_FUNDING.equals(this.status)) return false;
+        if (!STATUS_FUNDING.equals(this.status))
+            return false;
         return LocalDate.now().isAfter(this.tanggalKadaluarsaFunding);
     }
 
     public boolean isPinjamanOverdue() {
-        if (!STATUS_DISBURSED.equals(this.status) && !STATUS_REPAYMENT.equals(this.status)) return false;
-        if (this.tanggalJatuhTempo == null) return false;
+        if (!STATUS_DISBURSED.equals(this.status) && !STATUS_REPAYMENT.equals(this.status))
+            return false;
+        if (this.tanggalJatuhTempo == null)
+            return false;
         return LocalDate.now().isAfter(this.tanggalJatuhTempo);
     }
 
     public boolean apakahOverdueSudahDibayar() {
-        if (!STATUS_OVERDUE.equals(this.status)) return false;
-        if (this.currentMonthBill == null) return false;
+        if (!STATUS_OVERDUE.equals(this.status))
+            return false;
+        if (this.currentMonthBill == null)
+            return false;
         return this.currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) == 0;
     }
 
@@ -221,8 +231,8 @@ public class Loan {
         BigDecimal sisa = tagihan;
 
         List<Map.Entry<LenderId, Money>> sorted = daftarPendana.entrySet().stream()
-            .sorted((a, b) -> b.getValue().getAmount().compareTo(a.getValue().getAmount()))
-            .toList();
+                .sorted((a, b) -> b.getValue().getAmount().compareTo(a.getValue().getAmount()))
+                .toList();
 
         for (int i = 0; i < sorted.size(); i++) {
             LenderId id = sorted.get(i).getKey();
@@ -231,7 +241,7 @@ public class Loan {
                 bagian = sisa;
             } else {
                 BigDecimal proporsi = sorted.get(i).getValue().getAmount()
-                    .divide(totalDana, 10, RoundingMode.HALF_UP);
+                        .divide(totalDana, 10, RoundingMode.HALF_UP);
                 bagian = tagihan.multiply(proporsi).setScale(0, RoundingMode.DOWN);
                 sisa = sisa.subtract(bagian);
             }
@@ -352,7 +362,8 @@ public class Loan {
     }
 
     public Money hitungEstimasiCicilan() {
-        if (interestStrategy == null) return new Money(BigDecimal.ZERO, Money.IDR);
+        if (interestStrategy == null)
+            return new Money(BigDecimal.ZERO, Money.IDR);
         return interestStrategy.hitungCicilan(targetNominal, sisaPokok, tenor);
     }
 

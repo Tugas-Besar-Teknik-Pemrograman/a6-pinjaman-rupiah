@@ -11,6 +11,7 @@ public class Borrower {
     private static final int AMBANG_BATAS = 600;
     private static final BigDecimal MINIMAL_PEMINJAMAN = new BigDecimal("100000");
     private static final BigDecimal PERSENTASE_LIMIT = new BigDecimal("0.30");
+    private static final BigDecimal MINIMAL_WITHDRAWAL = new BigDecimal("100000");
     private static final String INTEREST_FLAT = "flat";
     private static final String INTEREST_FIXED = "fixed";
     private static final String INTEREST_FLOAT = "float";
@@ -56,6 +57,31 @@ public class Borrower {
         validatePositiveAmount(nominalKurang);
         validateSufficientSaldo(nominalKurang);
         updateSaldo(nominalKurang.getAmount().negate());
+    }
+
+    public void tarikSaldo(Money nominalTarik) {
+        this.validateKycStatusForWithdrawal();
+        this.validateMinimalWithdrawal(nominalTarik);
+        this.validateSufficientBalanceForWithdrawal(nominalTarik);
+        this.updateSaldo(nominalTarik.getAmount().negate());
+    }
+
+    private void validateKycStatusForWithdrawal() {
+        if (!this.kycStatus) {
+            throw new IllegalStateException("Borrower tidak terverifikasi (KYC = false)");
+        }
+    }
+
+    private void validateMinimalWithdrawal(Money nominalTarik) {
+        if (nominalTarik.getAmount().compareTo(MINIMAL_WITHDRAWAL) < 0) {
+            throw new IllegalArgumentException("Nominal penarikan minimal harus " + MINIMAL_WITHDRAWAL);
+        }
+    }
+
+    private void validateSufficientBalanceForWithdrawal(Money nominalTarik) {
+        if (this.saldoBalance.getAmount().compareTo(nominalTarik.getAmount()) < 0) {
+            throw new IllegalArgumentException("Saldo tidak mencukupi untuk melakukan penarikan");
+        }
     }
 
     public Money getSaldoBalance() {

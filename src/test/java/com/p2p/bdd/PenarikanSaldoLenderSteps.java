@@ -28,7 +28,7 @@ public class PenarikanSaldoLenderSteps {
 
     public PenarikanSaldoLenderSteps() {
         this.lenderRepository = RepositoryFactory.getInstance().getLenderRepository();
-        this.withdrawalService = new WithdrawalService(lenderRepository);
+        this.withdrawalService = new WithdrawalService(lenderRepository, RepositoryFactory.getInstance().getBorrowerRepository());
     }
 
     @After

@@ -60,7 +60,7 @@ public class AppContext {
     loanService          = new LoanService(repos.getLoanRepository(), repos.getBorrowerRepository(),
                                            repos.getLenderRepository(), publisher, notificationService);
     fundingService = new FundingService(repos.getLoanRepository(), repos.getLenderRepository(), publisher);
-    withdrawalService    = new WithdrawalService(repos.getLenderRepository());
+    withdrawalService    = new WithdrawalService(repos.getLenderRepository(), repos.getBorrowerRepository());
 
     // Daftarkan callback admin fee agar setiap pencairan otomatis menambah adminSaldo
     loanService.setAdminFeeCallback(this::tambahAdminSaldo);

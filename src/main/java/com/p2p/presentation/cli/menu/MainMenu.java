@@ -41,6 +41,7 @@ public class MainMenu {
     }
 
     private boolean tampilLogin() {
+        System.out.println();
         System.out.println("=== MENU UTAMA ===");
         System.out.println("1. Registrasi");
         System.out.println("2. Login");

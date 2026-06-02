@@ -11,8 +11,7 @@ public class PendingToFundingState implements State {
 			loan.setStatusEnum(LoanStatus.FUNDING);
 		} else {
 			throw new IllegalStateException(
-				"Tidak bisa FUNDING dari status: " + (loan != null ? loan.getStatus() : "null")
-			);
+					"Tidak bisa FUNDING dari status: " + (loan != null ? loan.getStatus() : "null"));
 		}
 	}
 }

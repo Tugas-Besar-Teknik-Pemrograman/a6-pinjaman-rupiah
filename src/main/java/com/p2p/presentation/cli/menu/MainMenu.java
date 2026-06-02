@@ -2,9 +2,11 @@ package com.p2p.presentation.cli.menu;
 
 import com.p2p.presentation.cli.AppContext;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 public class MainMenu {
 
+    private final Logger logger = Logger.getLogger(getClass().getName());
     private final AppContext ctx;
     private final Scanner scanner;
 
@@ -14,13 +16,13 @@ public class MainMenu {
     }
 
     public void tampil() {
-        System.out.println("=== Selamat Datang di P2P Pinjaman Rupiah ===");
+        logger.info("=== Selamat Datang di P2P Pinjaman Rupiah ===");
 
         while (true) {
             if (!ctx.isLoggedIn()) {
                 boolean keluar = tampilLogin();
                 if (keluar) {
-                    System.out.println("Terima kasih. Sampai jumpa!");
+                    logger.info("Terima kasih. Sampai jumpa!");
                     return;
                 }
             } else {
@@ -37,101 +39,101 @@ public class MainMenu {
     }
 
     private boolean tampilLogin() {
-        System.out.println("\n=== MENU UTAMA ===");
-        System.out.println("1. Registrasi");
-        System.out.println("2. Login");
-        System.out.println("3. Keluar");
-        System.out.print("Pilih: ");
+        logger.info("=== MENU UTAMA ===");
+        logger.info("1. Registrasi");
+        logger.info("2. Login");
+        logger.info("3. Keluar");
+        logger.info("Pilih: ");
         String pilihan = scanner.nextLine().trim();
 
         switch (pilihan) {
             case "1" -> {
-                System.out.println("\nREGISTRASI USER");
-                System.out.print("Nama : ");
+                logger.info("REGISTRASI USER");
+                logger.info("Nama : ");
                 String nama = scanner.nextLine().trim();
 
-                System.out.print("Email : ");
+                logger.info("Email : ");
                 String email = scanner.nextLine().trim();
 
-                System.out.print("Password : ");
+                logger.info("Password : ");
                 String password = scanner.nextLine().trim();
 
-                System.out.print("Konfirmasi Password : ");
+                logger.info("Konfirmasi Password : ");
                 String konfirmasiPassword = scanner.nextLine().trim();
 
                 if (!password.equals(konfirmasiPassword)) {
-                    System.out.println("Registrasi gagal, Password dan konfirmasi password ga cocok");
+                    logger.warning("Registrasi gagal, Password dan konfirmasi password ga cocok");
                     return false;
                 }
 
-                System.out.print("Usia : ");
+                logger.info("Usia : ");
                 int usia;
                 try {
                     usia = Integer.parseInt(scanner.nextLine().trim());
                 } catch (NumberFormatException e) {
-                    System.out.println("Registrasi gagal, Usia harus berupa angka");
+                    logger.warning("Registrasi gagal, Usia harus berupa angka");
                     return false;
                 }
 
-                System.out.println("Pilih Role:");
-                System.out.println("1. Borrower");
-                System.out.println("2. Lender");
-                System.out.print("Pilih Role (1/2): ");
+                logger.info("Pilih Role:");
+                logger.info("1. Borrower");
+                logger.info("2. Lender");
+                logger.info("Pilih Role (1/2): ");
                 String rolePilihan = scanner.nextLine().trim();
                 int role;
                 java.math.BigDecimal penghasilan = java.math.BigDecimal.ZERO;
 
                 if ("1".equals(rolePilihan)) {
                     role = 1;
-                    System.out.print("Penghasilan Bulanan (Rp): ");
+                    logger.info("Penghasilan Bulanan (Rp): ");
                     try {
                         penghasilan = new java.math.BigDecimal(scanner.nextLine().trim());
                     } catch (NumberFormatException e) {
-                        System.out.println("Registrasi gagal: Penghasilan harus berupa angka!");
+                        logger.warning("Registrasi gagal: Penghasilan harus berupa angka!");
                         return false;
                     }
                 } else if ("2".equals(rolePilihan)) {
                     role = 2;
                 } else {
-                    System.out.println("Registrasi gagal: Pilihan role tidak valid!");
+                    logger.warning("Registrasi gagal: Pilihan role tidak valid!");
                     return false;
                 }
 
                 try {
                     var user = ctx.getUserService().registerUser(nama, email, password, usia, role, penghasilan);
-                    System.out.println("------------------------------------------");
-                    System.out.println("Registrasi Berhasil!");
-                    System.out.println("ID User : " + user.getId().getValue());
-                    System.out.println("Role    : " + (role == 1 ? "BORROWER" : "LENDER"));
+                    logger.info("------------------------------------------");
+                    logger.info("Registrasi Berhasil!");
+                    logger.info("ID User : " + user.getId().getValue());
+                    logger.info("Role    : " + (role == 1 ? "BORROWER" : "LENDER"));
                     if (role == 1) {
                         var borrower = ctx.getRepos().getBorrowerRepository().findById(new com.p2p.domain.borrower.BorrowerId(user.getId().getValue()));
                         if (borrower != null) {
-                            System.out.println("Limit Awal (Kapasitas Cicilan Bulanan): Rp " + borrower.getLimitPinjaman().getAmount() + " (30% x Penghasilan Rp " + borrower.getPenghasilan().getAmount() + ")");
-                            System.out.println("Catatan        : Limit pengajuan riil akan dihitung secara dinamis saat pengajuan pinjaman");
-                            System.out.println("                 tergantung dari tenor dan jenis bunga yang dipilih.");
+                            logger.info("Limit Awal (Kapasitas Cicilan Bulanan): Rp " + borrower.getLimitPinjaman().getAmount() + " (30% x Penghasilan Rp " + borrower.getPenghasilan().getAmount() + ")");
+                            logger.info("Catatan        : Limit pengajuan riil akan dihitung secara dinamis saat pengajuan pinjaman");
+                            logger.info("                 tergantung dari tenor dan jenis bunga yang dipilih.");
                         }
                     }
-                    System.out.println("------------------------------------------");
+                    logger.info("------------------------------------------");
                 } catch (Exception e) {
-                    System.out.println("Registrasi gagal: " + e.getMessage());
+                    logger.warning("Registrasi gagal: " + e.getMessage());
                 }
                 return false;
             }
             case "2" -> {
-                System.out.println("\n=== LOGIN ===");
+                logger.info("=== LOGIN ===");
                 int attempt = 0;
                 boolean loginSukses = false;
 
                 while (attempt < 3 && !loginSukses) {
-                    System.out.print("Email    : ");
+                    logger.info("Email    : ");
                     String email = scanner.nextLine().trim();
-                    System.out.print("Password : ");
+                    logger.info("Password : ");
                     String password = scanner.nextLine().trim();
 
                     if (AppContext.ADMIN_EMAIL.equals(email) && AppContext.ADMIN_PASSWORD.equals(password)) {
                         ctx.setCurrentUserId("admin");
                         ctx.setCurrentRole("ADMIN");
-                        System.out.println("Login berhasil sebagai Admin.");
+                        logger.info("Login berhasil sebagai Admin.");
                         loginSukses = true;
                         break;
                     }
@@ -155,15 +157,15 @@ public class MainMenu {
                                 ctx.setCurrentRole("USER");
                             }
                         }
-                        System.out.println("Login berhasil sebagai " + ctx.getCurrentRole() + ".");
+                        logger.info("Login berhasil sebagai " + ctx.getCurrentRole() + ".");
                         loginSukses = true;
                     } catch (Exception e) {
                         attempt++;
-                        System.out.println("Login gagal: " + e.getMessage());
+                        logger.warning("Login gagal: " + e.getMessage());
                         if (attempt < 3) {
-                            System.out.println("Kesempatan mencoba: " + (3 - attempt) + " kali lagi.");
+                            logger.warning("Kesempatan mencoba: " + (3 - attempt) + " kali lagi.");
                         } else {
-                            System.out.println("Anda telah salah memasukkan email/password sebanyak 3 kali. Kembali ke menu utama.");
+                            logger.warning("Anda telah salah memasukkan email/password sebanyak 3 kali. Kembali ke menu utama.");
                         }
                     }
                 }
@@ -173,7 +175,7 @@ public class MainMenu {
                 return true;
             }
             default -> {
-                System.out.println("Pilihan tidak valid.");
+                logger.warning("Pilihan tidak valid.");
                 return false;
             }
         }

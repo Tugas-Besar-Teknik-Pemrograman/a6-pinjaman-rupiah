@@ -38,10 +38,14 @@ public class SiklusStatusPeminjamanSteps {
         assertEquals(expectedStatus, loan.getStatus());
     }
 
-    @Given("borrower telah mengajukan pinjaman dan statusnya {string}")
-    public void borrower_telah_mengajukan_pinjaman_dan_statusnya(String status) {
+    private void buatPinjamanDenganStatus(String status) {
         loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
         loan.ubahStatus(status);
+    }
+
+    @Given("borrower telah mengajukan pinjaman dan statusnya {string}")
+    public void borrower_telah_mengajukan_pinjaman_dan_statusnya(String status) {
+        buatPinjamanDenganStatus(status);
     }
 
     @When("Lender mendanai pinjaman tersebut")
@@ -141,8 +145,7 @@ public class SiklusStatusPeminjamanSteps {
 
     @Given("borrower memiliki pinjaman dengan status {string}")
     public void borrower_memiliki_pinjaman_dengan_status(String status) {
-        loan = new Loan(loanId, borrowerId, new Money(new BigDecimal("500000"), "IDR"));
-        loan.ubahStatus(status);
+        buatPinjamanDenganStatus(status);
     }
 
     @When("borrower melakukan pembayaran cicilan setelah jatuh tempo dengan dendanya")

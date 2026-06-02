@@ -43,23 +43,25 @@ public class BorrowerMenu {
             System.out.println("\n=== MENU BORROWER ===");
             System.out.println("1. Lihat Profil Borrower");
             System.out.println("2. Top Up Saldo");
-            System.out.println("3. Ajukan Pinjaman Baru");
-            System.out.println("4. Lihat Status Pinjaman");
-            System.out.println("5. Lihat Status Cicilan");
-            System.out.println("6. Bayar Cicilan");
-            System.out.println("7. Kotak Notifikasi");
-            System.out.println("8. Logout");
+            System.out.println("3. Tarik Saldo");
+            System.out.println("4. Ajukan Pinjaman Baru");
+            System.out.println("5. Lihat Status Pinjaman");
+            System.out.println("6. Lihat Status Cicilan");
+            System.out.println("7. Bayar Cicilan");
+            System.out.println("8. Kotak Notifikasi");
+            System.out.println("9. Logout");
             System.out.print("Pilih: ");
             String pilihan = scanner.nextLine().trim();
             switch (pilihan) {
                 case "1" -> menuProfil(borrowerIdStr);
                 case "2" -> menuTopUp(borrowerIdStr);
-                case "3" -> menuAjukanPinjaman(borrowerIdStr);
-                case "4" -> menuLihatStatusPinjaman(borrowerIdStr);
-                case "5" -> menuStatusCicilan(borrowerIdStr);
-                case "6" -> menuBayarCicilan(borrowerIdStr);
-                case "7" -> menuKotakNotifikasi(borrowerIdStr);
-                case "8" -> {
+                case "3" -> menuTarikSaldo(borrowerIdStr);
+                case "4" -> menuAjukanPinjaman(borrowerIdStr);
+                case "5" -> menuLihatStatusPinjaman(borrowerIdStr);
+                case "6" -> menuStatusCicilan(borrowerIdStr);
+                case "7" -> menuBayarCicilan(borrowerIdStr);
+                case "8" -> menuKotakNotifikasi(borrowerIdStr);
+                case "9" -> {
                     ctx.logout();
                     System.out.println("Logout berhasil.");
                     kembali = true;
@@ -170,6 +172,34 @@ public class BorrowerMenu {
             System.out.println("Gagal, input nominal harus berupa angka!");
         } catch (Exception e) {
             System.out.println("Gagal top up saldo: " + e.getMessage());
+        }
+    }
+
+    private void menuTarikSaldo(String borrowerIdStr) {
+        System.out.println("\n--- Tarik Saldo Borrower ---");
+
+        BorrowerId borrowerId = new BorrowerId(borrowerIdStr);
+        Borrower borrower = ctx.getRepos().getBorrowerRepository().findById(borrowerId);
+        if (borrower == null) {
+            System.out.println("Gagal, data Borrower tidak ditemukan.");
+            return;
+        }
+
+        System.out.println("Saldo saat ini : Rp " + borrower.getSaldoBalance().getAmount());
+        System.out.print("Masukkan nominal penarikan (Rp, minimal 100000): ");
+        try {
+            long nominal = Long.parseLong(scanner.nextLine().trim());
+            Money amount = new Money(BigDecimal.valueOf(nominal), Money.IDR);
+
+            ctx.getWithdrawalService().withdraw(borrowerId, amount);
+
+            Borrower updated = ctx.getRepos().getBorrowerRepository().findById(borrowerId);
+            System.out.println("Penarikan berhasil!");
+            System.out.println("Saldo terbaru  : Rp " + updated.getSaldoBalance().getAmount());
+        } catch (NumberFormatException e) {
+            System.out.println("Gagal, input nominal harus berupa angka!");
+        } catch (Exception e) {
+            System.out.println("Gagal tarik saldo: " + e.getMessage());
         }
     }
 

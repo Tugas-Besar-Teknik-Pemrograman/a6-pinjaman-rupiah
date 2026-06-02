@@ -223,7 +223,7 @@ public class AdminMenu {
                 long maturityDate = System.currentTimeMillis() + (28L * 24 * 60 * 60 * 1000); // +28 hari
                 selectedLoan.setTanggalJatuhTempoTimestemp(maturityDate);
 
-                Money feePreview = selectedLoan.getTargetNominal().multiply(new BigDecimal("0.01"));
+                Money feePreview = selectedLoan.getAdminFee();
 
                 loanService.prosesPencairan(selectedLoan.getId());
                 System.out.println("Pencairan pinjaman " + selectedLoan.getId() + " berhasil disetujui!");
@@ -252,47 +252,7 @@ public class AdminMenu {
     }
 
     private void laporanStatistikPlatform() {
-        List<User> allUsers = repos.getUserRepository().findAll();
-        List<Loan> allLoans = repos.getLoanRepository().findAll();
-        List<Borrower> allBorrowers = repos.getBorrowerRepository().findAll();
-        List<Lender> allLenders = repos.getLenderRepository().findAll();
-
-        // Calculate metrics
-        long totalUsers = allUsers.size();
-        long borrowerCount = allUsers.stream().filter(u -> u.getRole() == 1).count();
-        long lenderCount = allUsers.stream().filter(u -> u.getRole() == 2).count();
-        long adminCount = allUsers.stream().filter(u -> u.getRole() == 3).count();
-
-        BigDecimal totalDisbursed = allLoans.stream()
-                .filter(l -> "DISBURSED".equals(l.getStatus()) || "REPAYMENT".equals(l.getStatus()) || "CLOSED".equals(l.getStatus()))
-                .map(l -> l.getTargetNominal().getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal outstandingPrincipal = allLoans.stream()
-                .filter(l -> "REPAYMENT".equals(l.getStatus()))
-                .map(l -> l.getSisaPokok().getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal fundingInProgress = allLoans.stream()
-                .filter(l -> "FUNDING".equals(l.getStatus()) || "FUNDING_READY".equals(l.getStatus()))
-                .map(l -> l.getTotalTerkumpul().getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        long overdueCount = allLoans.stream().filter(l -> "OVERDUE".equals(l.getStatus())).count();
-        long totalLoans = allLoans.size();
-        double overdueRatio = totalLoans > 0 ? (double) overdueCount / totalLoans * 100 : 0;
-
-        BigDecimal totalLenderBalance = allLenders.stream()
-                .map(l -> l.getSaldoBalance().getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalInvestedAmount = allLoans.stream()
-                .map(l -> l.getTotalTerkumpul().getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalOverdueFees = allLoans.stream()
-                .map(l -> l.getTotalDendaTerkumpul().getAmount())
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        AdminStatistics stats = calculateAdminStatistics();
 
         // Display Laporan
         System.out.println("\n" + "=".repeat(80));
@@ -300,24 +260,24 @@ public class AdminMenu {
         System.out.println("=".repeat(80));
 
         System.out.println("\n[STATISTIK] DATA PENGGUNA:");
-        System.out.println("  - Total Pengguna Terdaftar: " + totalUsers);
-        System.out.println("  - Total Borrower: " + borrowerCount);
-        System.out.println("  - Total Lender: " + lenderCount);
-        System.out.println("  - Total Admin: " + adminCount);
+        System.out.println("  - Total Pengguna Terdaftar: " + stats.totalUsers);
+        System.out.println("  - Total Borrower: " + stats.borrowerCount);
+        System.out.println("  - Total Lender: " + stats.lenderCount);
+        System.out.println("  - Total Admin: " + stats.adminCount);
 
         System.out.println("\n[FINANSIAL] DATA DANA & PINJAMAN:");
-        System.out.println("  - Total Pinjaman Disalurkan: Rp" + formatCurrency(totalDisbursed));
-        System.out.println("  - Outstanding Principal (Dana Aktif Dipinjam): Rp" + formatCurrency(outstandingPrincipal));
-        System.out.println("  - Dana dalam Proses Funding: Rp" + formatCurrency(fundingInProgress));
+        System.out.println("  - Total Pinjaman Disalurkan: Rp" + formatCurrency(stats.totalDisbursed));
+        System.out.println("  - Outstanding Principal (Dana Aktif Dipinjam): Rp" + formatCurrency(stats.outstandingPrincipal));
+        System.out.println("  - Dana dalam Proses Funding: Rp" + formatCurrency(stats.fundingInProgress));
 
         System.out.println("\n[PERINGATAN] INDIKATOR KESEHATAN KREDIT:");
-        System.out.println("  - Jumlah Pinjaman OVERDUE: " + overdueCount + " dari " + totalLoans);
-        System.out.println("  - Rasio Keterlambatan: " + String.format("%.2f%%", overdueRatio));
-        System.out.println("  - Total Denda Terkumpul: Rp" + formatCurrency(totalOverdueFees));
+        System.out.println("  - Jumlah Pinjaman OVERDUE: " + stats.overdueCount + " dari " + stats.totalLoans);
+        System.out.println("  - Rasio Keterlambatan: " + String.format("%.2f%%", stats.overdueRatio));
+        System.out.println("  - Total Denda Terkumpul: Rp" + formatCurrency(stats.totalOverdueFees));
 
         System.out.println("\n[INVESTASI] DATA INVESTASI LENDER:");
-        System.out.println("  - Total Saldo Lender Terkumpul: Rp" + formatCurrency(totalLenderBalance));
-        System.out.println("  - Total Dana yang Sudah Diinvestasikan: Rp" + formatCurrency(totalInvestedAmount));
+        System.out.println("  - Total Saldo Lender Terkumpul: Rp" + formatCurrency(stats.totalLenderBalance));
+        System.out.println("  - Total Dana yang Sudah Diinvestasikan: Rp" + formatCurrency(stats.totalInvestedAmount));
 
         System.out.println("\n[PLATFORM] SALDO PLATFORM:");
         Money adminSaldo = ctx.getAdminSaldo();
@@ -328,19 +288,7 @@ public class AdminMenu {
 
     private void lihatSaldoPlatform() {
         Money adminSaldo = ctx.getAdminSaldo();
-        List<Loan> allLoans = repos.getLoanRepository().findAll();
-        
-        // Calculate total admin fees collected
-        BigDecimal totalAdminFees = BigDecimal.ZERO;
-        long totalLoansDisbursed = 0;
-        
-        for (Loan loan : allLoans) {
-            if ("DISBURSED".equals(loan.getStatus()) || "REPAYMENT".equals(loan.getStatus()) || "CLOSED".equals(loan.getStatus())) {
-                totalLoansDisbursed++;
-                Money adminFee = loan.getTargetNominal().multiply(new BigDecimal("0.01"));
-                totalAdminFees = totalAdminFees.add(adminFee.getAmount());
-            }
-        }
+        AdminStatistics stats = calculateAdminStatistics();
         
         // Display Saldo Platform
         System.out.println("\n" + "=".repeat(80));
@@ -352,13 +300,12 @@ public class AdminMenu {
         System.out.println("  - Mata Uang: " + adminSaldo.getCurrency());
         
         System.out.println("\n[STATISTIK] STATISTIK ADMIN FEE:");
-        System.out.println("  - Total Pinjaman Dicairkan: " + totalLoansDisbursed);
-        System.out.println("  - Total Admin Fee Terkumpul (1%): Rp" + formatCurrency(totalAdminFees));
+        System.out.println("  - Total Pinjaman Dicairkan: " + stats.totalLoansDisbursed);
+        System.out.println("  - Total Admin Fee Terkumpul (1%): Rp" + formatCurrency(stats.totalAdminFees));
         
         // Calculate average fee per loan
-        if (totalLoansDisbursed > 0) {
-            BigDecimal avgFee = totalAdminFees.divide(new BigDecimal(totalLoansDisbursed), 2, java.math.RoundingMode.HALF_UP);
-            System.out.println("  - Rata-rata Fee per Pinjaman: Rp" + formatCurrency(avgFee));
+        if (stats.totalLoansDisbursed > 0) {
+            System.out.println("  - Rata-rata Fee per Pinjaman: Rp" + formatCurrency(stats.avgFee));
         }
         
         System.out.println("\n" + "=".repeat(80));
@@ -433,5 +380,133 @@ private void menuSimulasiTenorSelanjutnya() {
         System.out.println("Gagal mensimulasikan tenor berikutnya: " + e.getMessage());
     }
 }
+
+    /**
+     * Helper method untuk menghitung semua statistik admin/platform.
+     * Mengembalikan object AdminStatistics yang berisi semua data yang dihitung,
+     * sehingga dapat digunakan ulang dan lebih mudah ditest.
+     */
+    private AdminStatistics calculateAdminStatistics() {
+        List<User> allUsers = repos.getUserRepository().findAll();
+        List<Loan> allLoans = repos.getLoanRepository().findAll();
+        List<Borrower> allBorrowers = repos.getBorrowerRepository().findAll();
+        List<Lender> allLenders = repos.getLenderRepository().findAll();
+
+        // User statistics
+        long totalUsers = allUsers.size();
+        long borrowerCount = allUsers.stream().filter(u -> u.getRole() == 1).count();
+        long lenderCount = allUsers.stream().filter(u -> u.getRole() == 2).count();
+        long adminCount = allUsers.stream().filter(u -> u.getRole() == 3).count();
+
+        // Loan & disbursement statistics
+        BigDecimal totalDisbursed = allLoans.stream()
+                .filter(l -> "DISBURSED".equals(l.getStatus()) || "REPAYMENT".equals(l.getStatus()) || "CLOSED".equals(l.getStatus()))
+                .map(l -> l.getTargetNominal().getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal outstandingPrincipal = allLoans.stream()
+                .filter(l -> "REPAYMENT".equals(l.getStatus()))
+                .map(l -> l.getSisaPokok().getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal fundingInProgress = allLoans.stream()
+                .filter(l -> "FUNDING".equals(l.getStatus()) || "FUNDING_READY".equals(l.getStatus()))
+                .map(l -> l.getTotalTerkumpul().getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Overdue & credit health indicators
+        long overdueCount = allLoans.stream().filter(l -> "OVERDUE".equals(l.getStatus())).count();
+        long totalLoans = allLoans.size();
+        double overdueRatio = totalLoans > 0 ? (double) overdueCount / totalLoans * 100 : 0;
+
+        BigDecimal totalOverdueFees = allLoans.stream()
+                .map(l -> l.getTotalDendaTerkumpul().getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Investor & investment statistics
+        BigDecimal totalLenderBalance = allLenders.stream()
+                .map(l -> l.getSaldoBalance().getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalInvestedAmount = allLoans.stream()
+                .map(l -> l.getTotalTerkumpul().getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Admin fee statistics
+        BigDecimal totalAdminFees = BigDecimal.ZERO;
+        long totalLoansDisbursed = 0;
+        
+        for (Loan loan : allLoans) {
+            if ("DISBURSED".equals(loan.getStatus()) || "REPAYMENT".equals(loan.getStatus()) || "CLOSED".equals(loan.getStatus())) {
+                totalLoansDisbursed++;
+                Money adminFee = loan.getAdminFee();
+                totalAdminFees = totalAdminFees.add(adminFee.getAmount());
+            }
+        }
+
+        BigDecimal avgFee = totalLoansDisbursed > 0 
+            ? totalAdminFees.divide(new BigDecimal(totalLoansDisbursed), 2, java.math.RoundingMode.HALF_UP)
+            : BigDecimal.ZERO;
+
+        return new AdminStatistics(
+            totalUsers, borrowerCount, lenderCount, adminCount,
+            totalDisbursed, outstandingPrincipal, fundingInProgress,
+            overdueCount, totalLoans, overdueRatio, totalOverdueFees,
+            totalLenderBalance, totalInvestedAmount,
+            totalAdminFees, totalLoansDisbursed, avgFee
+        );
+    }
+
+    /**
+     * Data class untuk menyimpan hasil perhitungan statistik admin.
+     * Memisahkan logika kalkulasi dari presentasi, memudahkan testing.
+     */
+    private static class AdminStatistics {
+        final long totalUsers;
+        final long borrowerCount;
+        final long lenderCount;
+        final long adminCount;
+        
+        final BigDecimal totalDisbursed;
+        final BigDecimal outstandingPrincipal;
+        final BigDecimal fundingInProgress;
+        
+        final long overdueCount;
+        final long totalLoans;
+        final double overdueRatio;
+        final BigDecimal totalOverdueFees;
+        
+        final BigDecimal totalLenderBalance;
+        final BigDecimal totalInvestedAmount;
+        
+        final BigDecimal totalAdminFees;
+        final long totalLoansDisbursed;
+        final BigDecimal avgFee;
+
+        AdminStatistics(
+            long totalUsers, long borrowerCount, long lenderCount, long adminCount,
+            BigDecimal totalDisbursed, BigDecimal outstandingPrincipal, BigDecimal fundingInProgress,
+            long overdueCount, long totalLoans, double overdueRatio, BigDecimal totalOverdueFees,
+            BigDecimal totalLenderBalance, BigDecimal totalInvestedAmount,
+            BigDecimal totalAdminFees, long totalLoansDisbursed, BigDecimal avgFee
+        ) {
+            this.totalUsers = totalUsers;
+            this.borrowerCount = borrowerCount;
+            this.lenderCount = lenderCount;
+            this.adminCount = adminCount;
+            this.totalDisbursed = totalDisbursed;
+            this.outstandingPrincipal = outstandingPrincipal;
+            this.fundingInProgress = fundingInProgress;
+            this.overdueCount = overdueCount;
+            this.totalLoans = totalLoans;
+            this.overdueRatio = overdueRatio;
+            this.totalOverdueFees = totalOverdueFees;
+            this.totalLenderBalance = totalLenderBalance;
+            this.totalInvestedAmount = totalInvestedAmount;
+            this.totalAdminFees = totalAdminFees;
+            this.totalLoansDisbursed = totalLoansDisbursed;
+            this.avgFee = avgFee;
+        }
+    }
 
 }

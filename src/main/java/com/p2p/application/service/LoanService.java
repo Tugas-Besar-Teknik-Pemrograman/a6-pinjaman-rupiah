@@ -55,9 +55,9 @@ public class LoanService {
         this.notificationService = notificationService;
     }
 
-    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor) throws Exception {
+    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor) throws BorrowerNotFoundException {
         Borrower borrower = borrowerRepository.findById(borrowerId);
-        if (borrower == null) throw new Exception("Borrower tidak ditemukan");
+        if (borrower == null) throw new BorrowerNotFoundException("Borrower tidak ditemukan");
         Loan loan = borrower.ajukanPinjaman(new LoanId(), amount, tenor);
         borrowerRepository.save(borrower);
         loanRepository.save(loan);
@@ -66,13 +66,13 @@ public class LoanService {
         return loan;
     }
 
-    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor, String interestType) throws Exception {
+    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor, String interestType) throws BorrowerNotFoundException {
         return ajukanPinjaman(borrowerId, amount, tenor, interestType, null);
     }
 
-    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor, String interestType, BigDecimal customRateOrMargin) throws Exception {
+    public Loan ajukanPinjaman(BorrowerId borrowerId, Money amount, int tenor, String interestType, BigDecimal customRateOrMargin) throws BorrowerNotFoundException {
         Borrower borrower = borrowerRepository.findById(borrowerId);
-        if (borrower == null) throw new Exception("Borrower tidak ditemukan");
+        if (borrower == null) throw new BorrowerNotFoundException("Borrower tidak ditemukan");
         Loan loan = borrower.ajukanPinjaman(new LoanId(), amount, tenor, interestType, customRateOrMargin);
         borrowerRepository.save(borrower);
         loanRepository.save(loan);
@@ -85,20 +85,20 @@ public class LoanService {
         return loanRepository.findById(loanId);
     }
 
-    public BayarCicilanResult bayarCicilan(LoanId loanId, Money amount) throws Exception {
+    public BayarCicilanResult bayarCicilan(LoanId loanId, Money amount) throws LoanNotFoundException, BorrowerNotFoundException, TagihanBelumTersediaException {
         Loan loan = loanRepository.findById(loanId);
-        if (loan == null) throw new Exception("Loan tidak ditemukan");
+        if (loan == null) throw new LoanNotFoundException("Loan tidak ditemukan");
 
         if ("REJECTED".equals(loan.getStatus()) || "CANCELED".equals(loan.getStatus())) {
             throw new IllegalStateException("Loan yang ditolak tidak bisa dibayar cicilannya");
         }
 
         Borrower borrower = borrowerRepository.findById(loan.getBorrowerId());
-        if (borrower == null) throw new Exception("Borrower tidak ditemukan");
+        if (borrower == null) throw new BorrowerNotFoundException("Borrower tidak ditemukan");
 
         Money tagihanBulanIni = loan.getTagihanBulanIni();
         if (tagihanBulanIni == null || tagihanBulanIni.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new Exception("Tagihan bulan ini belum tersedia");
+            throw new TagihanBelumTersediaException("Tagihan bulan ini belum tersedia");
         }
 
         if (borrower.getSaldoBalance().getAmount().compareTo(tagihanBulanIni.getAmount()) < 0) {
@@ -251,7 +251,7 @@ public class LoanService {
         loanRepository.save(loan);
     }
 
-    public void simulasiTenorBerikutnya(LoanId loanId) throws Exception {
+    public void simulasiTenorBerikutnya(LoanId loanId) {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) throw new IllegalArgumentException("Loan tidak ditemukan");
         String status = loan.getStatus();

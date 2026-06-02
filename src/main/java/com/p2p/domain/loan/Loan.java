@@ -94,7 +94,7 @@ public class Loan {
         generateMonthlyBill();
     }
 
-    public void bayarCicilan(String repaymentId, Money jumlahBayar) throws Exception {
+    public void bayarCicilan(String repaymentId, Money jumlahBayar) {
         bayarCicilan(jumlahBayar);
     }
 
@@ -127,19 +127,19 @@ public class Loan {
         }
     }
 
-    public void bayarCicilan(Money paymentAmount) throws Exception {
+    public void bayarCicilan(Money paymentAmount) {
         if (!"DISBURSED".equals(this.status) && !"REPAYMENT".equals(this.status) && !"OVERDUE".equals(this.status)) {
-            throw new Exception("Pinjaman belum dicairkan atau tidak aktif untuk pembayaran.");
+            throw new IllegalStateException("Pinjaman belum dicairkan atau tidak aktif untuk pembayaran.");
         }
         if (this.currentMonthBill == null) {
-            throw new Exception("Tidak ada tagihan aktif");
+            throw new IllegalStateException("Tidak ada tagihan aktif");
         }
         if (this.currentMonthBill.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new Exception("Tagihan bulan ini belum tersedia");
+            throw new IllegalStateException("Tagihan bulan ini belum tersedia");
         }
         // Bayar harus pas sesuai tagihan, tidak boleh kurang
         if (paymentAmount.getAmount().compareTo(this.currentMonthBill.getAmount()) < 0) {
-            throw new Exception("Nominal pembayaran kurang dari nominal tagihan");
+            throw new IllegalArgumentException("Nominal pembayaran kurang dari nominal tagihan");
         }
 
         // Catat denda ke total denda terkumpul sebelum di-nolkan

@@ -33,6 +33,7 @@ public class PencairanNotifikasiSteps {
     private Borrower currentBorrower;
     private Exception thrownException;
     private String notificationResult;
+    private String loanStatusBeforeAction;
 
     @Before
     public void setUp() {
@@ -41,6 +42,7 @@ public class PencairanNotifikasiSteps {
         notificationResult = null;
         currentLoan = null;
         currentBorrower = null;
+        loanStatusBeforeAction = null;
     }
     
     //Given
@@ -88,6 +90,8 @@ public void pencairan_untuk_loan_ditolak_karena_dana_belum_terpenuhi(String loan
     @When("sistem memproses pencairan untuk Loan {string}")
 public void sistem_memproses_pencairan_untuk_loan(String loanId) {
     try {
+        Loan loan = loanRepository.findById(new LoanId(loanId));
+        loanStatusBeforeAction = loan.getStatus();
         loanService.prosesPencairan(new LoanId(loanId));
     } catch (Exception e) {
         thrownException = e;
@@ -97,6 +101,8 @@ public void sistem_memproses_pencairan_untuk_loan(String loanId) {
 @When("sistem mengirimkan notifikasi pencairan untuk Loan {string}")
 public void sistem_mengirimkan_notifikasi_pencairan_untuk_loan(String loanId) {
     try {
+        Loan loan = loanRepository.findById(new LoanId(loanId));
+        loanStatusBeforeAction = loan.getStatus();
         notificationResult = loanService.kirimNotifikasiPencairan(new LoanId(loanId));
     } catch (Exception e) {
         thrownException = e;
@@ -107,14 +113,20 @@ public void sistem_mengirimkan_notifikasi_pencairan_untuk_loan(String loanId) {
     //Then
    @Then("status Loan {string} harus berubah menjadi {string}")
 public void status_loan_harus_berubah_menjadi(String loanId, String expectedStatus) {
-    Loan loan = loanRepository.findById(new LoanId(loanId));
-    assertEquals(expectedStatus, loan.getStatus());
+    Loan loan = verifyLoanAndGet(loanId, expectedStatus);
+    assertNotEquals(loanStatusBeforeAction, loan.getStatus(), "Status should have changed");
 }
 
 @Then("status Loan {string} tetap {string}")
 public void status_loan_tetap(String loanId, String expectedStatus) {
+    Loan loan = verifyLoanAndGet(loanId, expectedStatus);
+    assertEquals(loanStatusBeforeAction, loan.getStatus(), "Status should not have changed");
+}
+
+private Loan verifyLoanAndGet(String loanId, String expectedStatus) {
     Loan loan = loanRepository.findById(new LoanId(loanId));
     assertEquals(expectedStatus, loan.getStatus());
+    return loan;
 }
 
 @Then("Borrower dengan ID {string} harus menerima notifikasi berhasil")

@@ -5,6 +5,7 @@ import com.p2p.domain.borrower.Borrower;
 import com.p2p.domain.borrower.BorrowerId;
 import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.Loan;
+import com.p2p.domain.loan.LoanStatus;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.domain.loan.strategy.FixedInterestStrategy;
 import com.p2p.domain.loan.strategy.FloatingInterestStrategy;
@@ -77,7 +78,10 @@ public class BorrowerMenu {
             if (borrower.hasActiveLoan()) {
                 activeLoan = ctx.getRepos().getLoanRepository().findAll().stream()
                         .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
-                        .filter(l -> !"CLOSED".equals(l.getStatus()) && !"REJECTED".equals(l.getStatus()) && !"CANCELED".equals(l.getStatus()))
+                        .filter(l -> {
+                            LoanStatus s = l.getStatusEnum();
+                            return s != LoanStatus.CLOSED && s != LoanStatus.REJECTED && s != LoanStatus.CANCELED;
+                        })
                         .findFirst().orElse(null);
             }
 
@@ -113,7 +117,10 @@ public class BorrowerMenu {
             if (borrower.hasActiveLoan()) {
                 activeLoanIdStr = ctx.getRepos().getLoanRepository().findAll().stream()
                         .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
-                        .filter(l -> !"CLOSED".equals(l.getStatus()) && !"REJECTED".equals(l.getStatus()) && !"CANCELED".equals(l.getStatus()))
+                        .filter(l -> {
+                            LoanStatus s = l.getStatusEnum();
+                            return s != LoanStatus.CLOSED && s != LoanStatus.REJECTED && s != LoanStatus.CANCELED;
+                        })
                         .map(l -> l.getId().getValue()).findFirst().orElse(null);
             }
 
@@ -271,7 +278,10 @@ public class BorrowerMenu {
 
         List<Loan> activeLoans = ctx.getRepos().getLoanRepository().findAll().stream()
                 .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
-                .filter(l -> !"REJECTED".equals(l.getStatus()) && !"CANCELED".equals(l.getStatus()))
+                .filter(l -> {
+                    LoanStatus s = l.getStatusEnum();
+                    return s != LoanStatus.REJECTED && s != LoanStatus.CANCELED;
+                })
                 .toList();
 
         if (activeLoans.isEmpty()) { System.out.println("Anda belum memiliki pinjaman."); return; }
@@ -325,7 +335,10 @@ public class BorrowerMenu {
         try {
             List<Loan> activeLoans = ctx.getRepos().getLoanRepository().findAll().stream()
                     .filter(l -> l.getBorrowerId() != null && borrowerIdStr.equals(l.getBorrowerId().getValue()))
-                    .filter(l -> "DISBURSED".equals(l.getStatus()) || "REPAYMENT".equals(l.getStatus()) || "OVERDUE".equals(l.getStatus()))
+                    .filter(l -> {
+                        LoanStatus s = l.getStatusEnum();
+                        return s == LoanStatus.DISBURSED || s == LoanStatus.REPAYMENT || s == LoanStatus.OVERDUE;
+                    })
                     .toList();
 
             if (activeLoans.isEmpty()) {
@@ -353,7 +366,7 @@ public class BorrowerMenu {
             System.out.printf("Sisa Pokok        : Rp %,.0f%n", loan.getSisaTagihanKeseluruhan().getAmount());
             System.out.println("Status Pinjaman  : " + loan.getStatus());
 
-            if ("OVERDUE".equals(loan.getStatus())) {
+            if (loan.getStatusEnum() == LoanStatus.OVERDUE) {
                 Money denda = loan.getDendaBulanIni();
                 Money cicilanNormal = tagihan.subtract(denda != null ? denda : new Money(BigDecimal.ZERO, tagihan.getCurrency()));
                 System.out.printf("Cicilan Normal    : Rp %,.0f%n", cicilanNormal.getAmount());

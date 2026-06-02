@@ -8,6 +8,7 @@ import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.lender.LenderRepository;
 import com.p2p.domain.lender.ReturnRecord;
 import com.p2p.domain.loan.Loan;
+import com.p2p.domain.loan.LoanStatus;
 import com.p2p.domain.loan.LoanId;
 import com.p2p.domain.loan.LoanRepository;
 import com.p2p.domain.state.LoanStateFactory;
@@ -89,7 +90,8 @@ public class LoanService {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) throw new LoanNotFoundException("Loan tidak ditemukan");
 
-        if ("REJECTED".equals(loan.getStatus()) || "CANCELED".equals(loan.getStatus())) {
+        LoanStatus _s = loan.getStatusEnum();
+        if (_s == LoanStatus.REJECTED || _s == LoanStatus.CANCELED) {
             throw new IllegalStateException("Loan yang ditolak tidak bisa dibayar cicilannya");
         }
 
@@ -119,7 +121,7 @@ public class LoanService {
         loanRepository.save(loan);
         borrowerRepository.save(borrower);
 
-        if ("CLOSED".equals(loan.getStatus())) {
+        if (loan.getStatusEnum() == LoanStatus.CLOSED) {
             borrower.setHasActiveLoan(false);
             borrowerRepository.save(borrower);
         }
@@ -140,7 +142,7 @@ public class LoanService {
         // Fire event cicilan & lunas ke borrower
         if (loanEventPublisher != null) {
             loanEventPublisher.publishCicilanBerhasil(new CicilanBerhasilEvent(loanId, loan.getBorrowerId(), tagihanBulanIni));
-            if ("CLOSED".equals(loan.getStatus())) {
+            if (loan.getStatusEnum() == LoanStatus.CLOSED) {
                 loanEventPublisher.publishPinjamanLunas(new PinjamanLunasEvent(loanId, loan.getBorrowerId()));
             }
         }
@@ -152,7 +154,7 @@ public class LoanService {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) throw new IllegalArgumentException("Loan tidak ditemukan");
 
-        if (loan.getStatus().equals("FUNDING_READY")) {
+        if (loan.getStatusEnum() == LoanStatus.FUNDING_READY) {
             loan.cairkanPinjaman();
             Borrower borrower = borrowerRepository.findById(loan.getBorrowerId());
             if (borrower == null) throw new IllegalStateException("Borrower tidak ditemukan untuk pencairan");
@@ -170,7 +172,7 @@ public class LoanService {
             return;
         }
 
-        if (loan.getStatus().equals("FUNDING")) {
+        if (loan.getStatusEnum() == LoanStatus.FUNDING) {
             if (loan.getTotalTerkumpul().getAmount().compareTo(loan.getTargetNominal().getAmount()) < 0) {
                 throw new IllegalStateException("Pencairan ditolak, pendanaan belum terpenuhi");
             }
@@ -186,7 +188,7 @@ public class LoanService {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) throw new IllegalArgumentException("Loan tidak ditemukan");
         BorrowerId borrowerId = loan.getBorrowerId();
-        if (loan.getStatus().equals("DISBURSED")) {
+        if (loan.getStatusEnum() == LoanStatus.DISBURSED) {
             notificationService.kirimNotifikasi(borrowerId, "Dana berhasil dicairkan");
             return "berhasil";
         }
@@ -197,7 +199,7 @@ public class LoanService {
     public void menolakPencairan(LoanId loanId, String alasan) {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) throw new IllegalArgumentException("Loan tidak ditemukan");
-        if (!loan.getStatus().equals("FUNDING_READY")) {
+        if (loan.getStatusEnum() != LoanStatus.FUNDING_READY) {
             throw new IllegalStateException("Hanya pinjaman dengan status FUNDING_READY yang bisa ditolak");
         }
         if (lenderRepository != null) {
@@ -242,10 +244,10 @@ public class LoanService {
     public void simulasiMajukanJatuhTempo(LoanId loanId) {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) throw new IllegalArgumentException("Loan tidak ditemukan");
-        String status = loan.getStatus();
-        if (!"DISBURSED".equals(status) && !"REPAYMENT".equals(status)) {
+        LoanStatus status = loan.getStatusEnum();
+        if (status != LoanStatus.DISBURSED && status != LoanStatus.REPAYMENT) {
             throw new IllegalStateException(
-                "Simulasi hanya bisa dilakukan pada status DISBURSED atau REPAYMENT, status saat ini: " + status);
+                "Simulasi hanya bisa dilakukan pada status DISBURSED atau REPAYMENT, status saat ini: " + (status != null ? status.name() : loan.getStatus()));
         }
         loan.setTanggalJatuhTempo(LocalDate.now().minusDays(1));
         loanRepository.save(loan);
@@ -254,10 +256,10 @@ public class LoanService {
     public void simulasiTenorBerikutnya(LoanId loanId) {
         Loan loan = loanRepository.findById(loanId);
         if (loan == null) throw new IllegalArgumentException("Loan tidak ditemukan");
-        String status = loan.getStatus();
-        if (!"DISBURSED".equals(status) && !"REPAYMENT".equals(status) && !"OVERDUE".equals(status)) {
+        LoanStatus status2 = loan.getStatusEnum();
+        if (status2 != LoanStatus.DISBURSED && status2 != LoanStatus.REPAYMENT && status2 != LoanStatus.OVERDUE) {
             throw new IllegalStateException(
-                "Simulasi tenor berikutnya hanya bisa dilakukan pada status DISBURSED, REPAYMENT, atau OVERDUE. Status saat ini: " + status);
+                "Simulasi tenor berikutnya hanya bisa dilakukan pada status DISBURSED, REPAYMENT, atau OVERDUE. Status saat ini: " + (status2 != null ? status2.name() : loan.getStatus()));
         }
         if (loan.isLunas()) throw new IllegalStateException("Pinjaman sudah lunas.");
         if (loan.getTagihanBulanIni() != null

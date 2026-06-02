@@ -4,6 +4,7 @@ import com.p2p.domain.lender.Lender;
 import com.p2p.domain.lender.LenderId;
 import com.p2p.domain.lender.ReturnRecord;
 import com.p2p.domain.loan.Loan;
+import com.p2p.domain.loan.LoanStatus;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.presentation.cli.AppContext;
 
@@ -156,8 +157,8 @@ public class LenderMenu {
         System.out.println("\n=== PASAR PINJAMAN ===");
 
         List<Loan> loanFunding = ctx.getRepos().getLoanRepository().findAll().stream()
-                .filter(l -> "FUNDING".equals(l.getStatus()))
-                .toList();
+            .filter(l -> l.getStatusEnum() == LoanStatus.FUNDING)
+            .toList();
 
         if (loanFunding.isEmpty()) {
             System.out.println("Belum ada pinjaman yang bisa didanai saat ini.");
@@ -334,8 +335,8 @@ public class LenderMenu {
 
     /** Investasi masih aktif selama loan belum berakhir (lunas/ditolak/dibatalkan). */
     private boolean isInvestasiAktif(Loan loan) {
-        String s = loan.getStatus();
-        return !"CLOSED".equals(s) && !"REJECTED".equals(s) && !"CANCELED".equals(s);
+        var s = loan.getStatusEnum();
+        return s != LoanStatus.CLOSED && s != LoanStatus.REJECTED && s != LoanStatus.CANCELED;
     }
 
     private void menuInvestasiAktif() {

@@ -2,6 +2,10 @@ package com.p2p.domain.borrower;
 
 import com.p2p.domain.loan.Loan;
 import com.p2p.domain.loan.LoanId;
+import com.p2p.domain.loan.strategy.FixedInterestStrategy;
+import com.p2p.domain.loan.strategy.FloatingInterestStrategy;
+import com.p2p.domain.loan.strategy.InterestCalculationStrategy;
+import com.p2p.domain.loan.strategy.SyariahInterestStrategy;
 import com.p2p.domain.valueobject.Money;
 import com.p2p.domain.state.LoanStateFactory;
 import java.math.BigDecimal;
@@ -142,7 +146,7 @@ public class Borrower {
         validasiPinjaman(nominal);
         this.hasActiveLoan = true;
         Loan loan = new Loan(loanid, this.id, nominal, tenor);
-        loan.setInterestStrategy(new com.p2p.domain.loan.strategy.FixedInterestStrategy(new BigDecimal("0.05")));
+        loan.setInterestStrategy(new FixedInterestStrategy(new BigDecimal("0.05")));
         loan.setJenisBunga(INTEREST_FLAT);
         LoanStateFactory.pendingToFunding().ubahStatus(loan);
         return loan;
@@ -172,17 +176,17 @@ public class Borrower {
         return loan;
     }
 
-    private com.p2p.domain.loan.strategy.InterestCalculationStrategy dapatkanInterestStrategy(
+    private InterestCalculationStrategy dapatkanInterestStrategy(
             String interestType, BigDecimal rate, BigDecimal customRateOrMargin) {
         if (INTEREST_FLAT.equalsIgnoreCase(interestType) || INTEREST_FIXED.equalsIgnoreCase(interestType)) {
-            return new com.p2p.domain.loan.strategy.FixedInterestStrategy(rate);
+            return new FixedInterestStrategy(rate);
         }
         if (INTEREST_FLOAT.equalsIgnoreCase(interestType) || INTEREST_FLOATING.equalsIgnoreCase(interestType)) {
-            return new com.p2p.domain.loan.strategy.FloatingInterestStrategy(rate);
+            return new FloatingInterestStrategy(rate);
         }
         if (INTEREST_SYARIAH.equalsIgnoreCase(interestType)) {
             BigDecimal margin = (customRateOrMargin != null) ? customRateOrMargin : new BigDecimal("150000");
-            return new com.p2p.domain.loan.strategy.SyariahInterestStrategy(margin);
+            return new SyariahInterestStrategy(margin);
         }
         return null;
     }

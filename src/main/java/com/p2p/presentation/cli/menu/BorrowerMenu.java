@@ -237,7 +237,6 @@ public class BorrowerMenu {
                 System.out.printf("Bulan %2d: Pokok Rp %,.0f + %s Rp %,.0f = Cicilan Rp %,.0f%n",
                         index, principalPerMonth.getAmount(), "syariah".equals(interestType) ? "Margin" : "Bunga",
                         bungaBagian.getAmount(), cicilan.getAmount());
-                sisaPokok = sisaPokok.subtract(principalPerMonth);
             }
 
             System.out.println("-------------------------------------------------");
@@ -273,16 +272,17 @@ public class BorrowerMenu {
         }
 
         for (Loan loan : borrowerLoans) {
-            System.out.printf("Loan ID : %s%n", loan.getId().getValue());
-            System.out.printf("Status  : %s%n", loan.getStatus());
-            System.out.printf("Nominal : Rp %,.0f%n", loan.getTargetNominal().getAmount());
-            System.out.printf("Sisa Pokok : Rp %,.0f%n", loan.getSisaTagihanKeseluruhan().getAmount());
-            System.out.printf("Tenor   : %d bulan tersisa dari %d%n", loan.getTenorSisa(), loan.getTenor());
+            System.out.printf("Loan ID           : %s%n", loan.getId().getValue());
+            System.out.printf("Status            : %s%n", loan.getStatus());
+            System.out.printf("Pokok Pinjaman    : Rp %,.0f%n", loan.getTargetNominal().getAmount());
+            System.out.printf("Total Pengembalian: Rp %,.0f%n", loan.hitungTotalPengembalian().getAmount());
+            System.out.printf("Sisa Pokok        : Rp %,.0f%n", loan.getSisaTagihanKeseluruhan().getAmount());
+            System.out.printf("Tenor             : %d bulan tersisa dari %d%n", loan.getTenorSisa(), loan.getTenor());
             if (loan.getTagihanBulanIni() != null
                     && loan.getTagihanBulanIni().getAmount().compareTo(BigDecimal.ZERO) > 0) {
                 System.out.printf("Tagihan Bulan Ini : Rp %,.0f%n", loan.getTagihanBulanIni().getAmount());
             }
-            System.out.println(SEPARATOR_LINE); // FIX: Memanggil konstanta
+            System.out.println(SEPARATOR_LINE);
         }
     }
 
@@ -303,34 +303,49 @@ public class BorrowerMenu {
             int belumDibayar = loan.getTenorSisa();
 
             System.out.println("\n=== STATUS CICILAN ===");
-            System.out.println("Loan ID    : " + loan.getId().getValue());
-            System.out.println("Status     : " + loan.getStatus());
-            System.out.printf("Nominal    : Rp %,.0f%n", loan.getTargetNominal().getAmount());
-            System.out.printf("Sisa Pokok : Rp %,.0f%n", loan.getSisaTagihanKeseluruhan().getAmount());
+            System.out.println("Loan ID           : " + loan.getId().getValue());
+            System.out.println("Status            : " + loan.getStatus());
+            System.out.printf("Pokok Pinjaman    : Rp %,.0f%n", loan.getTargetNominal().getAmount());
+            System.out.printf("Total Pengembalian: Rp %,.0f%n", loan.hitungTotalPengembalian().getAmount());
+            System.out.printf("Sisa Pokok        : Rp %,.0f%n", loan.getSisaTagihanKeseluruhan().getAmount());
             System.out.println(SEPARATOR_LINE); // FIX: Memanggil konstanta
             System.out.printf("Total Tenor    : %d bulan%n", totalTenor);
             System.out.printf("Sudah Dibayar  : %d cicilan (bulan 1 s/d %d)%n", sudahDibayar, sudahDibayar);
             System.out.printf("Belum Dibayar  : %d cicilan (bulan %d s/d %d)%n", belumDibayar, sudahDibayar + 1, totalTenor);
             System.out.println(SEPARATOR_LINE); // FIX: Memanggil konstanta
 
-            // Detail per cicilan
-            Money sisaPokok = loan.getTargetNominal();
+            // Detail per cicilan — rekonstruksi sisa pokok dari nilai aktual domain
             Money principalPerMonth = loan.getTargetNominal().divide(BigDecimal.valueOf(totalTenor), RoundingMode.HALF_UP);
+            Money[] sisaPokokPerCicilan = new Money[totalTenor + 1];
+            int sudahBayar = totalTenor - loan.getTenorSisa();
+            sisaPokokPerCicilan[sudahBayar] = loan.getSisaPokok();
+            for (int k = sudahBayar - 1; k >= 0; k--) {
+                sisaPokokPerCicilan[k] = sisaPokokPerCicilan[k + 1].add(principalPerMonth);
+            }
+            for (int k = sudahBayar + 1; k <= totalTenor; k++) {
+                sisaPokokPerCicilan[k] = sisaPokokPerCicilan[k - 1].subtract(principalPerMonth);
+            }
 
             for (int i = 1; i <= totalTenor; i++) {
                 String statusCicilan;
                 if (i <= sudahDibayar) {
-                    statusCicilan = "[✓] LUNAS";
+                    statusCicilan = "[OK] LUNAS      ";
                 } else if (i == sudahDibayar + 1) {
-                    statusCicilan = "[→] TAGIHAN SAAT INI";
+                    statusCicilan = "[>>] TAGIHAN INI";
                 } else {
-                    statusCicilan = "[ ] BELUM";
+                    statusCicilan = "[ ] BELUM       ";
                 }
-                // Estimasi cicilan (tanpa denda, hanya pokok+bunga normal)
-                Money estimasi = loan.hitungEstimasiCicilan();
-                System.out.printf("Cicilan ke-%2d: %s  | Est. Rp %,.0f | Sisa Pokok: Rp %,.0f%n",
-                        i, statusCicilan, estimasi.getAmount(), sisaPokok.getAmount());
-                sisaPokok = sisaPokok.subtract(principalPerMonth);
+                // Hitung pokok & bunga per cicilan menggunakan sisa pokok saat cicilan tsb
+                Money spCicilan = sisaPokokPerCicilan[i - 1];
+                Money totalCicilan = loan.hitungCicilanDenganSisaPokok(spCicilan);
+                Money bungaCicilan = totalCicilan.subtract(principalPerMonth);
+                Money spSetelah = (i < totalTenor) ? sisaPokokPerCicilan[i] : new Money(java.math.BigDecimal.ZERO, com.p2p.domain.valueobject.Money.IDR);
+                System.out.printf("Cicilan ke-%d [%s]%n", i, statusCicilan.trim());
+                System.out.printf("  Pokok   : Rp %,.0f%n", principalPerMonth.getAmount());
+                System.out.printf("  Bunga   : Rp %,.0f%n", bungaCicilan.getAmount());
+                System.out.printf("  Total   : Rp %,.0f%n", totalCicilan.getAmount());
+                System.out.printf("  Sisa Pokok setelah bayar: Rp %,.0f%n", spSetelah.getAmount());
+                System.out.println("  - - - - - - - - - - - - - -");
             }
             System.out.println("==============================");
         }
@@ -369,29 +384,35 @@ public class BorrowerMenu {
                 return;
             }
 
+            // Hitung rincian pokok & bunga cicilan ini
+            Money ppMonth = loan.getTargetNominal().divide(BigDecimal.valueOf(totalTenor), RoundingMode.HALF_UP);
+            Money dendaIni = (loan.getStatusEnum() == LoanStatus.OVERDUE && loan.getDendaBulanIni() != null)
+                    ? loan.getDendaBulanIni() : new Money(BigDecimal.ZERO, Money.IDR);
+            Money cicilanNormalSaja = tagihan.subtract(dendaIni);
+            Money bungaIni = cicilanNormalSaja.subtract(ppMonth);
+            Money sisaPokokSetelah = loan.getSisaTagihanKeseluruhan().subtract(ppMonth);
+            if (sisaPokokSetelah.getAmount().compareTo(BigDecimal.ZERO) < 0)
+                sisaPokokSetelah = new Money(BigDecimal.ZERO, Money.IDR);
+
             System.out.println("\n=== PEMBAYARAN CICILAN ===");
-            System.out.println("Loan ID          : " + id.getValue());
-            // POIN 4: tampilkan cicilan ke berapa
-            System.out.printf("Cicilan ke        : %d dari %d%n", bulanSekarang, totalTenor);
-            System.out.printf("Sisa Tenor        : %d bulan lagi%n", loan.getTenorSisa());
-            System.out.printf("Sisa Pokok        : Rp %,.0f%n", loan.getSisaTagihanKeseluruhan().getAmount());
-            System.out.println("Status Pinjaman  : " + loan.getStatus());
-
-            if (loan.getStatusEnum() == LoanStatus.OVERDUE) {
-                Money denda = loan.getDendaBulanIni();
-                Money cicilanNormal = tagihan
-                        .subtract(denda != null ? denda : new Money(BigDecimal.ZERO, tagihan.getCurrency()));
-                System.out.printf("Cicilan Normal    : Rp %,.0f%n", cicilanNormal.getAmount());
-                System.out.printf("Denda Overdue (2%%): Rp %,.0f%n",
-                        denda != null ? denda.getAmount() : BigDecimal.ZERO);
-            }
-
-            System.out.printf("Total Tagihan     : Rp %,.0f%n", tagihan.getAmount());
-            System.out.printf("Saldo Anda        : Rp %,.0f%n",
+            System.out.println("Loan ID           : " + id.getValue());
+            System.out.printf("Cicilan ke         : %d dari %d%n", bulanSekarang, totalTenor);
+            System.out.printf("Sisa Tenor         : %d bulan lagi%n", loan.getTenorSisa());
+            System.out.println("Status Pinjaman    : " + loan.getStatus());
+            System.out.println("--------------------------");
+            System.out.println("Rincian Tagihan Bulan Ini:");
+            System.out.printf("  Sisa Pokok saat ini  : Rp %,.0f%n", loan.getSisaTagihanKeseluruhan().getAmount());
+            System.out.printf("  Pokok (lunasi utang) : Rp %,.0f%n", ppMonth.getAmount());
+            System.out.printf("  Bunga                : Rp %,.0f%n", bungaIni.getAmount());
+            if (loan.getStatusEnum() == LoanStatus.OVERDUE)
+                System.out.printf("  Denda Overdue (2%%)   : Rp %,.0f%n", dendaIni.getAmount());
+            System.out.printf("  Total Tagihan        : Rp %,.0f%n", tagihan.getAmount());
+            System.out.printf("  Sisa Pokok setelah   : Rp %,.0f%n", sisaPokokSetelah.getAmount());
+            System.out.println("--------------------------");
+            System.out.printf("Saldo Anda         : Rp %,.0f%n",
                     ctx.getRepos().getBorrowerRepository().findById(new BorrowerId(borrowerIdStr)).getSaldoBalance()
                             .getAmount());
             System.out.println("--------------------------");
-            // POIN 3: bayar harus pas, langsung pakai tagihan
             System.out.println("Pembayaran akan dilakukan sebesar tagihan penuh.");
             System.out.print("Konfirmasi bayar Rp " + String.format("%,.0f", tagihan.getAmount()) + "? (y/n): ");
             if (!"y".equalsIgnoreCase(scanner.nextLine().trim())) {
@@ -401,12 +422,18 @@ public class BorrowerMenu {
 
             ctx.getLoanService().bayarCicilan(id, tagihan);
 
-            System.out.println("\n✓ Pembayaran cicilan ke-" + bulanSekarang + " berhasil!");
-            System.out.printf("  Dibayar  : Rp %,.0f%n", tagihan.getAmount());
+            System.out.println("\n[OK] Pembayaran cicilan ke-" + bulanSekarang + " berhasil!");
+            System.out.printf("  Total Dibayar        : Rp %,.0f%n", tagihan.getAmount());
+            System.out.printf("  -> Pokok (utang --)  : Rp %,.0f%n", ppMonth.getAmount());
+            System.out.printf("  -> Bunga             : Rp %,.0f%n", bungaIni.getAmount());
+            if (dendaIni.getAmount().compareTo(BigDecimal.ZERO) > 0)
+                System.out.printf("  -> Denda Overdue     : Rp %,.0f%n", dendaIni.getAmount());
             if (loan.isLunas()) {
-                System.out.println("  Status   : LUNAS - Selamat, pinjaman Anda telah selesai!");
+                System.out.println("  Sisa Pokok           : Rp 0");
+                System.out.println("  Status               : LUNAS - Selamat, pinjaman Anda telah selesai!");
             } else {
-                System.out.printf("  Sisa     : %d cicilan lagi%n", loan.getTenorSisa());
+                System.out.printf("  Sisa Pokok           : Rp %,.0f%n", loan.getSisaPokok().getAmount());
+                System.out.printf("  Sisa                 : %d cicilan lagi%n", loan.getTenorSisa());
             }
         } catch (Exception e) {
             System.out.println("Gagal: " + e.getMessage());

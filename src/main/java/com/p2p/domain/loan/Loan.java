@@ -356,7 +356,33 @@ public class Loan {
         return interestStrategy.hitungCicilan(targetNominal, sisaPokok, tenor);
     }
 
-    public Money hitungEstimasiReturnLender(LenderId lenderId) {
+    /**
+     * Hitung total pengembalian dari pokok awal (semua tenor, tanpa denda).
+     * Menghitung per-bulan dengan sisa pokok yang berkurang setiap cicilan.
+     */
+    /**
+     * Hitung cicilan untuk bulan tertentu berdasarkan sisa pokok yang diberikan.
+     * Digunakan untuk menampilkan rincian per cicilan di UI.
+     */
+    public Money hitungCicilanDenganSisaPokok(Money sisaPokokSaatItu) {
+        if (interestStrategy == null) return new Money(BigDecimal.ZERO, Money.IDR);
+        return interestStrategy.hitungCicilan(this.targetNominal, sisaPokokSaatItu, this.tenor);
+    }
+
+        public Money hitungTotalPengembalian() {
+        if (interestStrategy == null) return new Money(BigDecimal.ZERO, Money.IDR);
+        BigDecimal total = BigDecimal.ZERO;
+        Money sp = this.targetNominal;
+        Money pp = this.targetNominal.divide(new BigDecimal(this.tenor), RoundingMode.HALF_UP);
+        for (int k = 0; k < this.tenor; k++) {
+            Money cicilan = interestStrategy.hitungCicilan(this.targetNominal, sp, this.tenor);
+            total = total.add(cicilan.getAmount());
+            sp = sp.subtract(pp);
+        }
+        return new Money(total, Money.IDR);
+    }
+
+        public Money hitungEstimasiReturnLender(LenderId lenderId) {
         if (!STATUS_DISBURSED.equals(status) && !STATUS_REPAYMENT.equals(status) && !STATUS_OVERDUE.equals(status)) {
             return new Money(BigDecimal.ZERO, Money.IDR);
         }

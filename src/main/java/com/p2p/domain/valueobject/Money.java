@@ -74,4 +74,9 @@ public class Money {
     public int hashCode() {
         return Objects.hash(amount, currency);
     }
+
+    @Override
+    public String toString() {
+        return String.format("Rp %,.0f", amount);
+    }
 }

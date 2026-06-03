@@ -145,12 +145,12 @@ public class MainMenu {
             System.out.print("Password : ");
             String password = scanner.nextLine().trim();
 
-            if (checkAdminLogin(email, password)) {
-                loginSukses = true;
-                break;
-            }
-
             try {
+                if (checkAdminLogin(email, password)) {
+                    loginSukses = true;
+                    break;
+                }
+
                 var user = ctx.getUserService().login(email, password);
                 String userIdStr = user.getId().getValue();
                 ctx.setCurrentUserId(userIdStr);
@@ -168,11 +168,15 @@ public class MainMenu {
     }
 
     private boolean checkAdminLogin(String email, String password) {
-        if (AppContext.ADMIN_EMAIL.equals(email) && AppContext.ADMIN_PASSWORD.equals(password)) {
-            ctx.setCurrentUserId("admin");
-            ctx.setCurrentRole(ROLE_ADMIN);
-            System.out.println("Login berhasil sebagai Admin.");
-            return true;
+        if (AppContext.ADMIN_EMAIL.equalsIgnoreCase(email)) {
+            if (AppContext.ADMIN_PASSWORD.equals(password)) {
+                ctx.setCurrentUserId("admin");
+                ctx.setCurrentRole(ROLE_ADMIN);
+                System.out.println("Login berhasil sebagai Admin.");
+                return true;
+            } else {
+                throw new IllegalArgumentException("Password salah");
+            }
         }
         return false;
     }
